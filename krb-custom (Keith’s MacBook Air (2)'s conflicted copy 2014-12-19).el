@@ -1,0 +1,80 @@
+(message "Begin Processing ~/emacs/krb-custom.el" )
+;;(describe-face (quote (mode-line)))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(TeX-mode-hook
+   (quote
+    ((lambda nil
+       (setq hier-imenu-levels
+             (quote
+              (("\\part" . 0)
+               ("\\part*" . 0)
+               ("\\chapter" . 1)
+               ("\\chapter*" . 1)
+               ("\\section" . 2)
+               ("\\section*" . 2)
+               ("\\subsection" . 3)
+               ("\\subsection*" . 3)
+               ("\\subsubsection" . 4)
+               ("\\subsubsection*" . 4)
+               ("\\paragraph" . 5)
+               ("\\subparagraph" . 6)))
+             hier-imenu-header-name-function
+             (quote ydi-latex-header-name)
+             hier-imenu-anchor-end-of-header t hier-imenu-style
+             (quote numbered)
+             imenu-create-index-function
+             (quote imenu-default-create-index-function)
+             imenu-generic-expression
+             (quote
+              (("Labels" "\\\\label{\\([^}]+\\)}" 1)
+               (imenu-create-hierarchical-index)))))
+     (lambda nil
+       (flyspell-mode)))))
+ '(browse-url-browser-function (quote browse-url-generic))
+ '(browse-url-generic-program "open")
+ '(column-number-mode t)
+ '(evernote-password-cache t)
+ '(font-lock-maximum-decoration t)
+ '(global-font-lock-mode t)
+ '(gnus-check-new-newsgroups (quote ask-server) t)
+ '(gnus-nntp-server nil t)
+ '(gnus-read-active-file (quote some) t)
+ '(gnus-secondary-select-methods (quote ((nnml "private"))))
+ '(gnus-select-method (quote (nntp "localhost")))
+ '(ispell-program-name "/opt/local/bin/aspell")
+ '(mode-line-format
+   (quote
+    ("-%1*-<%b>--" global-mode-string "--"
+     (-3 . "%p")
+     "--#%l:%c-" "-%[(" mode-name minor-mode-alist "%n" mode-line-process ")%]-" "-%-")))
+ '(mode-line-inverse-video t t)
+ '(muse-project-alist (quote (("WikiPlanner" ("~/plans" "index")))))
+ '(ns-antialias-text nil)
+ '(paren-match-face (quote paren-face-match-light))
+ '(paren-sexp-mode t)
+ '(ps-printer-name "/Users/kbisset/tmp/emacs.ps")
+ '(safe-local-variable-values (quote ((visual-line-mode . t) (TeX-master . draft\.tex))))
+ '(save-place t nil (saveplace))
+ '(size-indication-mode nil)
+ '(sudoku-download t)
+ '(sudoku-download-method "wget"))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:inherit nil :stipple nil :background "black" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 130 :width normal :foundry "nil" :family "Source Code Pro"))))
+ '(flymake-errline ((((class color)) (:background "LightPink" :foreground "black"))))
+ '(flymake-warnline ((((class color)) (:background "LightBlue2" :foreground "black"))))
+ '(mode-line ((t (:background "#073642" :foreground "keyboardFocusIndicatorColor"))))
+ '(mode-line-highlight ((((class color) (min-colors 88)) (:background "red" :foreground "black"))))
+ '(paren-face-match-light ((t (:slant italic))))
+ '(region ((t (:background "selectedTextBackgroundColor" :foreground "selectedTextColor"))))
+ '(smerge-refined-change ((t (:background "dark green")))))
+(message "End Processing ~/emacs/krb-custom.el" )
+
