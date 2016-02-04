@@ -32,7 +32,7 @@
               (("Labels" "\\\\label{\\([^}]+\\)}" 1)
                (imenu-create-hierarchical-index)))))
      (lambda nil
-       (flyspell-mode)))))
+       (flyspell-mode)))) t)
  '(browse-url-browser-function (quote browse-url-generic))
  '(browse-url-generic-program "open")
  '(font-lock-maximum-decoration t)
@@ -77,7 +77,7 @@
  '(default ((t (:inherit nil :stipple nil :background "black" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 140 :width normal :foundry "nil" :family "Source Code Pro"))))
  '(flymake-errline ((((class color)) (:background "LightPink" :foreground "black"))))
  '(flymake-warnline ((((class color)) (:background "LightBlue2" :foreground "black"))))
- '(mode-line ((t (:background "#073642" :foreground "#93a1a1"))))
+;; '(mode-line ((t (:background 'krb-modeline-background :foreground `krb-modeline-foreground))))
  '(mode-line-highlight ((((class color) (min-colors 88)) (:background "red" :foreground "black"))))
  '(mode-line-inactive ((default (:inherit mode-line)) (((class color) (min-colors 88) (background dark)) (:background "grey30" :foreground "red" :weight light))))
  '(paren-face-match-light ((t (:slant italic))))

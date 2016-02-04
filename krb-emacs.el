@@ -906,8 +906,9 @@ used instead of `browse-url-new-window-flag'."
                 minor-mode-alist 
                 "%n" 
                 mode-line-process 
-                ")%]-" 
-                "-%-"
+                ")%] " 
+                system-name
+                " -%-"
                 )))
 
 (defun xbuffy-command ()  
@@ -1636,3 +1637,26 @@ Return a list of one element based on major mode."
 (global-set-key "\C-cew" 'evernote-write-note)
 (global-set-key "\C-cep" 'evernote-post-region)
 (global-set-key "\C-ceb" 'evernote-browser)
+
+(set-face-attribute 'default nil
+                    :family "Source Code Pro"
+                    :height 160
+                    :weight 'normal
+                    :width 'normal)
+
+;;; Host specific settings
+(setq krb-default-modeline-color (cons (face-background 'mode-line)
+                                       (face-foreground 'mode-line)))
+(setq krb-modeline-color
+      (cond 
+       ((string= system-name "Keiths-MacBook-Pro.local") '("#93a1a1" . "Purple"))
+       ((string= system-name "vagrant-ubuntu-trusty-64") '("gainsboro" . "66C26C"))
+       ((string= system-name "katrina") '("#fc8d62" . "#4B4D54"))
+       (t krb-default-modeline-color)))
+
+(set-face-foreground 'mode-line (car krb-modeline-color))
+(set-face-background 'mode-line (cdr krb-modeline-color))
+
+;; Inverse for inactive
+(set-face-foreground 'mode-line-inactive (cdr krb-modeline-color))
+(set-face-background 'mode-line-inactive (car krb-modeline-color))
