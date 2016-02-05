@@ -1651,7 +1651,7 @@ Return a list of one element based on major mode."
       (cond 
        ((string= system-name "Keiths-MacBook-Pro.local") '("#93a1a1" . "Purple"))
        ((string= system-name "vagrant-ubuntu-trusty-64") '("gainsboro" . "66C26C"))
-       ((string= system-name "katrina") '("#fc8d62" . "#4B4D54"))
+       ((string= system-name "katrina") '("#4B4D54" . "#fc8d62"))
        (t krb-default-modeline-color)))
 
 (set-face-foreground 'mode-line (car krb-modeline-color))
