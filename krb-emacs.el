@@ -1650,7 +1650,7 @@ Return a list of one element based on major mode."
 (setq krb-modeline-color
       (cond 
        ((string= system-name "Keiths-MacBook-Pro.local") '("#93a1a1" . "Purple"))
-       ((string= system-name "vagrant-ubuntu-trusty-64") '("gainsboro" . "66C26C"))
+       ((string= system-name "vagrant-ubuntu-trusty-64") '("#494d54" . "#66C26C"))
        ((string= system-name "katrina") '("#fc8d62" . "#4B4D54"))
        (t krb-default-modeline-color)))
 
@@ -1660,3 +1660,5 @@ Return a list of one element based on major mode."
 ;; Inverse for inactive
 (set-face-foreground 'mode-line-inactive (cdr krb-modeline-color))
 (set-face-background 'mode-line-inactive (car krb-modeline-color))
+
+
