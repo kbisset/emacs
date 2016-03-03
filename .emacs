@@ -26,7 +26,7 @@
 ;;        Info-default-directory-list
 ;;        ))
 
-(setq biff-listup-when-start nil)
+;;(setq biff-listup-when-start nil)
 
 ;
 ;(require 'tex-site)
