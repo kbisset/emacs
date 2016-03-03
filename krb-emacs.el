@@ -10,6 +10,7 @@
       (setq the-plist (cddr the-plist)))
   alist))
 (require 'color-theme)
+(require 'color-theme-hober)
 (color-theme-hober)
 
 ;; (eval-after-load "color-theme"
@@ -1651,11 +1652,11 @@ Return a list of one element based on major mode."
 ;; (global-set-key "\C-cep" 'evernote-post-region)
 ;; (global-set-key "\C-ceb" 'evernote-browser)
 
-(set-face-attribute 'default nil
-                    :family "Source Code Pro"
-                    :height 160
-                    :weight 'normal
-                    :width 'normal)
+;; (set-face-attribute 'default nil
+;;                     :family "Source Code Pro"
+;;                     :height 160
+;;                     :weight 'normal
+;;                     :width 'normal)
 
 ;;; Host specific settings
 (setq krb-default-modeline-color (cons (face-background 'mode-line)
@@ -1675,6 +1676,3 @@ Return a list of one element based on major mode."
 ;; Inverse for inactive
 (set-face-foreground 'mode-line-inactive (cdr krb-modeline-color))
 (set-face-background 'mode-line-inactive (car krb-modeline-color))
-
-
-o
