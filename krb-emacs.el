@@ -1664,6 +1664,8 @@ Return a list of one element based on major mode."
       (cond 
        ((string= system-name "Keiths-MacBook-Pro.local") '("#93a1a1" . "Purple"))
        ((string= system-name "vagrant-ubuntu-trusty-64") '("#494d54" . "#66C26C"))
+       ((string= system-name "stormtrooper") '("#4B4D54" . "#90C3D4"))
+       ((string= system-name "cloud") '("#4B4D54" . "#fc8d62"))
        ((string= system-name "katrina") '("#4B4D54" . "#fc8d62"))
        (t krb-default-modeline-color)))
 
@@ -1675,3 +1677,4 @@ Return a list of one element based on major mode."
 (set-face-background 'mode-line-inactive (car krb-modeline-color))
 
 
+o
