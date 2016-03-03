@@ -1,12 +1,24 @@
 ;;(add-to-list 'load-path "/opt/local/share/emacs/site-lisp/color-theme-6.6.0")
- (require 'color-theme)
- (eval-after-load "color-theme"
- 	'(progn
+(defun plist-to-alist (the-plist)
+  (defun get-tuple-from-plist (the-plist)
+    (when the-plist
+      (cons (car the-plist) (cadr the-plist))))
+
+  (let ((alist '()))
+    (while the-plist
+      (add-to-list 'alist (get-tuple-from-plist the-plist))
+      (setq the-plist (cddr the-plist)))
+  alist))
+(require 'color-theme)
+(color-theme-hober)
+
+;; (eval-after-load "color-theme"
+;; 	'(progn
 ;; 		(color-theme-initialize)
- 		(color-theme-hober)
+;; 		(color-theme-hober)
 ;;		(require 'color-theme-solarized)
 ;; 		(color-theme-solarized-dark)
-    ))
+;;    ))
 
 (setq inhibit-startup-echo-area-message t)
 (setq inhibit-startup-message t)
@@ -1624,20 +1636,20 @@ Return a list of one element based on major mode."
 
 
 ;; EverNote integration
-(add-to-list 'load-path "~/emacs/evernote-mode")
-(require 'evernote-mode)
-(setq evernote-developer-token "S=s40:U=4332bf:E=14c80a08a4e:C=14528ef5e52:P=1cd:A=en-devtoken:V=2:H=1e146158564df74b15f1b43ee8ebf8e9")
-(setq enh-enclient-command "/opt/local/bin/enclient.rb")
+;; (add-to-list 'load-path "~/emacs/evernote-mode")
+;; (require 'evernote-mode)
+;; (setq evernote-developer-token "S=s40:U=4332bf:E=14c80a08a4e:C=14528ef5e52:P=1cd:A=en-devtoken:V=2:H=1e146158564df74b15f1b43ee8ebf8e9")
+;; (setq enh-enclient-command "/opt/local/bin/enclient.rb")
 
-(setq evernote-enml-formatter-command '("w3m" "-dump" "-I" "UTF8" "-O" "UTF8"))
-(setq evernote-password-cache t)
-(global-set-key "\C-cec" 'evernote-create-note)
-(global-set-key "\C-ceo" 'evernote-open-note)
-(global-set-key "\C-ces" 'evernote-search-notes)
-(global-set-key "\C-ceS" 'evernote-do-saved-search)
-(global-set-key "\C-cew" 'evernote-write-note)
-(global-set-key "\C-cep" 'evernote-post-region)
-(global-set-key "\C-ceb" 'evernote-browser)
+;; (setq evernote-enml-formatter-command '("w3m" "-dump" "-I" "UTF8" "-O" "UTF8"))
+;; (setq evernote-password-cache t)
+;; (global-set-key "\C-cec" 'evernote-create-note)
+;; (global-set-key "\C-ceo" 'evernote-open-note)
+;; (global-set-key "\C-ces" 'evernote-search-notes)
+;; (global-set-key "\C-ceS" 'evernote-do-saved-search)
+;; (global-set-key "\C-cew" 'evernote-write-note)
+;; (global-set-key "\C-cep" 'evernote-post-region)
+;; (global-set-key "\C-ceb" 'evernote-browser)
 
 (set-face-attribute 'default nil
                     :family "Source Code Pro"
