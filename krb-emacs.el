@@ -921,7 +921,7 @@ used instead of `browse-url-new-window-flag'."
                 "%n" 
                 mode-line-process 
                 ")%] " 
-                system-name
+                user-login-name "@" system-name
                 " -%-"
                 )))
 
