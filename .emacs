@@ -5,10 +5,10 @@
 ;;(require 'cl)
 (setenv "PATH" (concat (getenv "PATH") ":/opt/local/bin"))
 (setq load-path (cons (expand-file-name "/opt/local/share/emacs/site-lisp") load-path))
-(setq load-path (cons (expand-file-name "~/emacs") load-path))
-(setq load-path (cons (expand-file-name "~/emacs/muse/lisp") load-path))
-(setq load-path (cons (expand-file-name "~/emacs/planner") load-path))
-(setq load-path (cons (expand-file-name "~/emacs/remember-2.0") load-path))
+(setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs")) load-path))
+(setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs/muse/lisp")) load-path))
+(setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs/planner")) load-path))
+(setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs/remember-2.0")) load-path))
 ;(setq load-path (cons (expand-file-name "~/emacs/color-theme") load-path))
 ;(setq load-path (cons (expand-file-name "/sw/share/emacs22-carbon/site-lisp") load-path))
 ;(setq load-path (cons (expand-file-name "/sw/share/emacs22/site-lisp") load-path))
@@ -37,7 +37,7 @@
 
 ;(setq load-path (cons (expand-file-name "~/Emacs") load-path))
 ;(eval-after-load "shell" '(load "shellc"))
-(setq custom-file "~/emacs/krb-custom.el")
+(setq custom-file (concat "~" init-file-user "/emacs/krb-custom.el"))
 (require 'custom)
 (load-file custom-file)
 
