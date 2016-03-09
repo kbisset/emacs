@@ -924,7 +924,12 @@ used instead of `browse-url-new-window-flag'."
                 user-login-name "@" system-name
                 " -%-"
                 )))
-
+(setq frame-title-format
+      (append nil 
+              '(""
+                user-login-name "@" system-name
+                " [%b]"
+                ))) 
 (defun xbuffy-command ()  
   (interactive)
   (select-frame (next-frame))
