@@ -47,7 +47,7 @@ host=`hostname -s`
 # 106 Light cyan
 # 107 White
 
-
+echo "host: $host"
 if [ $host = "stormtrooper" ]; then
     promptColor="01;36"
 elif [ $host = "vagrant-ubuntu-trusty-64" ]; then
@@ -59,8 +59,10 @@ elif [ $host = "cloud" ]; then
 elif [ $host = "Keiths-MacBook-Pro" ]; then
     promptColor="01;35"
 else
+    echo "Using default colors"
     promptColor="01;33"
 fi
+echo "promptColor: $promptColor"
 
 PS1='\n${debian_chroot:+($debian_chroot)}\[\033['$promptColor'm\]\u@\h\[\033[00m\]:\[\033['$promptColor'm\]\W\[\033[00m\]\$ '
 
@@ -69,7 +71,7 @@ export LS_COLORS
 
 alias ls="ls -F"
 
-PS1='\n\[\033[01;35m\]\u@\h\[\033[00m\]:\[\033[01;35m\]\W\[\033[00m\]\$ '
+#PS1='\n\[\033[01;35m\]\u@\h\[\033[00m\]:\[\033[01;35m\]\W\[\033[00m\]\$ '
 PROMPT_COMMAND='echo -ne "\033]1;${USER}@${host}\007\033]2;${host}\007"'
 
 #export ROS_PARALLEL_JOBS=-jn
