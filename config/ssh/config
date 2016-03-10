@@ -77,6 +77,17 @@ Host vm
   IdentitiesOnly yes
   LogLevel FATAL
 
+Host vm-direct
+  HostName 172.28.128.3
+  User vagrant
+#  Port 2222
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentityFile "/Users/keith/software/snitch/.vagrant/machines/default/virtualbox/private_key"
+  IdentitiesOnly yes
+  LogLevel FATAL
+
 host katrina
    hostname katrina
    IdentityFile ~/.ssh/macbook-katrina
@@ -107,6 +118,20 @@ Host sdmachine2
       
 Host cloud
      User ubuntu
+     ForwardAgent yes
+     ForwardX11 yes
+     ForwardX11Trusted yes
+
+Host kst
+     User keith
+     Hostname stormtrooper
+     ForwardAgent yes
+     ForwardX11 yes
+     ForwardX11Trusted yes
+
+Host ust
+     User ubuntu
+     Hostname stormtrooper
      ForwardAgent yes
      ForwardX11 yes
      ForwardX11Trusted yes
