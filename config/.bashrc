@@ -78,3 +78,7 @@ export IGNOREEOF=2
 export VISUAL="emacs -nw"
 export EDITOR="$VISUAL"
 export GIT_EDITOR="$VISUAL"
+
+stty erase 
+
+unset command_not_found_handle
