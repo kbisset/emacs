@@ -42,7 +42,7 @@
 (load-file custom-file)
 
 (cd "~")
-(set-face-font 'default "-adobe-Source Code Pro-normal-normal-normal-*-*-110-*-*-m-0-iso10646-1")
+(set-face-font 'default "-adobe-Source Code Pro-normal-normal-normal-*-*-150-*-*-m-0-iso10646-1")
 ;;(set-default-font "-adobe-Source Code Pro-normal-normal-normal-*-*-110-*-*-m-0-iso10646-1" nil nil)
 ;;(set-default-font "-adobe-Source Code Pro-normal-normal-normal-*-*-120-*-*-m-0-iso10646-1" nil nil)
 
