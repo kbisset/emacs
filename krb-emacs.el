@@ -219,7 +219,7 @@ used instead of `browse-url-new-window-flag'."
 (defun krb-c-mode-common-hook ()
   ;; load the dmacro stuff
   (require 'dmacro)
-  (dmacro-load "~/emacs/krb.dm")
+  (dmacro-load (concat "~" init-file-user "/emacs/krb.dm"))
   (auto-fill-mode t)
   (setq auto-dmacro-alist '(("\\.C$" . srcmasthead)
                             ("Test.*\\.C$" . testsrcmasthead)
