@@ -14,8 +14,11 @@
  '(gnus-read-active-file (quote some) t)
  '(gnus-secondary-select-methods (quote ((nnml "private"))))
  '(gnus-select-method (quote (nntp "localhost")))
+ '(indicate-buffer-boundaries (quote right))
+ '(indicate-empty-lines t)
  '(ispell-program-name "/opt/local/bin/aspell")
  '(iswitchb-case t)
+ '(menu-bar-mode nil)
  '(mode-line-inverse-video t t)
  '(muse-project-alist (quote (("WikiPlanner" ("~/plans" "index")))))
  '(ns-antialias-text nil t)
@@ -39,6 +42,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(default ((t (:inherit nil :stipple nil :background "black" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "nil" :family "Source Code Pro"))))
+ '(border ((t nil)))
  '(flymake-errline ((((class color)) (:background "LightPink" :foreground "black"))))
  '(flymake-warnline ((((class color)) (:background "LightBlue2" :foreground "black"))))
  '(mode-line-highlight ((((class color) (min-colors 88)) (:background "red" :foreground "black"))))

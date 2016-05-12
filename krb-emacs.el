@@ -63,6 +63,12 @@
 
 ; xml files
 (add-to-list 'auto-mode-alist '("\\.xsd$" . nxml-mode))
+
+; protobuf files
+(add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
+(autoload 'protobuf-mode "protobuf-mode"
+  "Mode for editing Google protobuf files" t)
+
 ; fvwmrc mode
 ;;; (autoload 'fvwm-mode "fvwm-mode"
 ;;;   "Mode for editing fvwm's config files" t)
@@ -629,12 +635,20 @@ used instead of `browse-url-new-window-flag'."
 
 ;; ;(load-library "compile2")
 
-(defvar compile-command "make -k")
+(defvar compile-command "cd $HOME/cws/src/snitch && catkin build")
 (global-set-key "\C-x~" 'find-this-error)
 (global-set-key "\eM" 'remote-compile)
 ;;(setq remote-shell-program "/local/bin/ssh")
 (global-set-key "\em" 'compile)
 (global-set-key "\ek" 'kill-compilation)
+
+;; Colorize compiler output
+(ignore-errors
+  (require 'ansi-color)
+  (defun my-colorize-compilation-buffer ()
+    (when (eq major-mode 'compilation-mode)
+      (ansi-color-apply-on-region compilation-filter-start (point-max))))
+  (add-hook 'compilation-filter-hook 'my-colorize-compilation-buffer))
 
 ;; framepop stuff
 ;; User variables are `framepop-max-frame-size', `framepop-min-frame-size'
@@ -1677,6 +1691,9 @@ Return a list of one element based on major mode."
 
 (set-face-foreground 'mode-line (car krb-modeline-color))
 (set-face-background 'mode-line (cdr krb-modeline-color))
+(set-face-foreground 'fringe (cdr krb-modeline-color))
+(set-face-background 'fringe (car krb-modeline-color))
+
 
 ;; Inverse for inactive
 (set-face-foreground 'mode-line-inactive (cdr krb-modeline-color))
