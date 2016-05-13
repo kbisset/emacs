@@ -1680,6 +1680,18 @@ Return a list of one element based on major mode."
 ;;; Host specific settings
 (setq krb-default-modeline-color (cons (face-background 'mode-line)
                                        (face-foreground 'mode-line)))
+(setq krb-default-background-color "black")
+(setq krb-background-color
+      (cond 
+;       ((string= system-name "Keiths-MacBook-Pro.local") "#93a1a1")
+       ((string= system-name "vagrant-ubuntu-trusty-64") "#071200")
+       ((string= system-name "stormtrooper") "#001220")
+;       ((string= system-name "cloud") "")
+;       ((string= system-name "katrina") "")
+       (t krb-default-modeline-color)))
+
+(set-background-color krb-background-color)
+
 (setq krb-modeline-color
       (cond 
        ((string= system-name "Keiths-MacBook-Pro.local") '("#93a1a1" . "Purple"))
