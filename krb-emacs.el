@@ -1688,6 +1688,7 @@ Return a list of one element based on major mode."
        ((string= system-name "stormtrooper") "#001220")
 ;       ((string= system-name "cloud") "")
 ;       ((string= system-name "katrina") "")
+       ((string= system-name "deep3") "#222200")
        (t krb-default-modeline-color)))
 
 (set-background-color krb-background-color)
@@ -1699,6 +1700,7 @@ Return a list of one element based on major mode."
        ((string= system-name "stormtrooper") '("#4B4D54" . "#90C3D4"))
        ((string= system-name "cloud") '("#4B4D54" . "#fc8d62"))
        ((string= system-name "katrina") '("#4B4D54" . "#fc8d62"))
+       ((string= system-name "deep3") '("#4B4D54" . "#DEDE16"))
        (t krb-default-modeline-color)))
 
 (set-face-foreground 'mode-line (car krb-modeline-color))
