@@ -1511,7 +1511,7 @@ used instead of `browse-url-new-window-flag'."
 ;; flymake
 ;;     (add-hook 'find-file-hooks 'flymake-find-file-hook)
 
-(setq x-mouse-click-focus-ignore-position t)
+(setq x-mouse-click-focus-ignore-position nil)
 (global-set-key (quote [f13]) (quote clipboard-yank))
 (server-start nil)
 
