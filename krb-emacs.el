@@ -1683,7 +1683,7 @@ Return a list of one element based on major mode."
 (setq krb-default-background-color "black")
 (setq krb-background-color
       (cond 
-;       ((string= system-name "Keiths-MacBook-Pro.local") "#93a1a1")
+       ((string= system-name "Keiths-MacBook-Pro.local") "#1a042b")
        ((string= system-name "vagrant-ubuntu-trusty-64") "#001900")
        ((string= system-name "stormtrooper") "#001220")
 ;       ((string= system-name "cloud") "")
