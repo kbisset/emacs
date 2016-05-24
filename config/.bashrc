@@ -90,3 +90,4 @@ export HISTFILESIZE=10000
 export HISTFILE=$HOME/.bash_history-krb
 export HISTCONTROL=ignoredups:ignoredups
 
+export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
