@@ -1687,9 +1687,9 @@ Return a list of one element based on major mode."
        ((string= system-name "vagrant-ubuntu-trusty-64") "#001900")
        ((string= system-name "stormtrooper") "#00002f")
 ;       ((string= system-name "cloud") "")
-;       ((string= system-name "katrina") "")
+       ((string= system-name "katrina") "#211700")
        ((string= system-name "deep3") "#222200")
-       (t krb-default-modeline-color)))
+       (t krb-default-background-color)))
 
 (set-background-color krb-background-color)
 
