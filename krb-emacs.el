@@ -853,8 +853,8 @@ used instead of `browse-url-new-window-flag'."
       require-final-newline     1
       visible-bell              nil
       mode-line-inverse-video nil
-      frame-title-format '( "" system-name " -- %b")
-      icon-title-format  "%b"
+      frame-title-format '( "--Emacs--" system-name "--%b--")
+;;      icon-title-format  '( "--Emacs--" system-name "--" )
       ispell-dicionary "~/.ispell-dict"
       ispell-enable-tex-parser t
       next-line-add-newlines nil
