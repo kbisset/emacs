@@ -83,7 +83,7 @@ stty erase 
 
 unset command_not_found_handle
 
-source /home/keith/emacs/config/standalone-prompt.sh
+source $HOME/emacs/config/standalone-prompt.sh
 
 export HISTSIZE=INFINITE
 export HISTFILESIZE=10000
@@ -91,3 +91,5 @@ export HISTFILE=$HOME/.bash_history-krb
 export HISTCONTROL=ignoredups:ignoredups
 
 export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
+
+export LESS="-n-R-X-P--Less-- ?f%f:stdin. ?pB(%pB\%):."
