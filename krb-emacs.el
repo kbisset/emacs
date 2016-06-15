@@ -1712,3 +1712,5 @@ Return a list of one element based on major mode."
 ;; Inverse for inactive
 (set-face-foreground 'mode-line-inactive (cdr krb-modeline-color))
 (set-face-background 'mode-line-inactive (car krb-modeline-color))
+
+; force change
