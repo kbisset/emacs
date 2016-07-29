@@ -5,6 +5,8 @@
 ;;(require 'cl)
 (setenv "PATH" (concat (getenv "PATH") ":/opt/local/bin"))
 (setq load-path (cons (expand-file-name "/opt/local/share/emacs/site-lisp") load-path))
+;(setq load-path (cons (expand-file-name "/usr/share/emacs24/site-lisp/magit") load-path))
+(setq load-path (cons (expand-file-name "/opt/local/share/emacs/site-lisp") load-path))
 (setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs")) load-path))
 (setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs/muse/lisp")) load-path))
 (setq load-path (cons (expand-file-name (concat "~" init-file-user "/emacs/planner")) load-path))
@@ -41,15 +43,13 @@
 (require 'custom)
 (load-file custom-file)
 
-(cd "~")
+;;(cd "~")
 
 (if (string= system-name "Keiths-MacBook-Pro.local")
     (set-face-font 'default "-adobe-Source Code Pro-normal-normal-normal-*-*-180-*-*-m-0-iso10646-1"))
+
 ;;(set-default-font "-adobe-Source Code Pro-normal-normal-normal-*-*-110-*-*-m-0-iso10646-1" nil nil)
 ;;(set-default-font "-adobe-Source Code Pro-normal-normal-normal-*-*-120-*-*-m-0-iso10646-1" nil nil)
-
-
-
 ;;; This was installed by package-install.el.
 ;;; This provides support for the package system and
 ;;; interfacing with ELPA, the package archive.

@@ -1,0 +1,6 @@
+# set match-hidden-files off
+# completion-ignore-case on
+# completion-map-case on
+# mark-modified-lines on
+# revert-all-at-newline on
+
