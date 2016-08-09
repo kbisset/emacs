@@ -1,13 +1,43 @@
 [push]
 	default = simple
 [user]
-	name = Keith Bisset
+	name = Keith
 	email = keith@snitch.co
 [core]
 	excludesfile = /Users/keith/.gitignore_global
+
+[color]
+  ui = auto
+
+[difftool]
+prompt = false
+
+[difftool "ediff"]
+cmd = emacs --eval \"(ediff-files \\\"$LOCAL\\\" \\\"$REMOTE\\\")\"
+
+[difftool "ediffclient"]
+cmd = emacsclient --eval \"(ediff-files \\\"$LOCAL\\\" \\\"$REMOTE\\\")\"
+
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
+
+[mergetool "ediff"]
+  cmd = emacsclient -c -a \"\"  --eval \"(ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\")\"
+
 [mergetool "sourcetree"]
 	cmd = /Applications/SourceTree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
+
+[alias]
+# make a pretty graphical picture of commits. Add this to your .gitconfig and call it with git glog
+        glog = log --date=local --graph --all --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ad)%C(reset) -%C(bold yellow)%d%C(reset) %C(white)%s%C(reset) %C(bold white)— %an%C(reset)' --abbrev-commit
+
+[alias]
+# make a pretty graphical picture of commits, limited to a set of branches. Add this to your .gitconfig and call it with, e.g., git glog origin/master my_feature_branch
+
+glogb = log --date=local --graph --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ad)%C(reset) -%C(bold yellow)%d%C(reset) %C(white)%s%C(reset) %C(bold white)— %an%C(reset)' --abbrev-commit
+
+ediff = difftool --tool=ediffclient
+ediffnc = difftool --tool=ediff
+emerge = mergetool --tool=ediff
