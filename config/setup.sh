@@ -28,3 +28,8 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
         cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
     fi
 fi
+
+if [ ! -f ~/.gitconfig ]; then
+    echo "Setting up git"
+    ln -s ~/emacs/config/.gitconfig ~/.gitconfig
+fi
