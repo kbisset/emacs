@@ -1724,3 +1724,10 @@ Return a list of one element based on major mode."
 (set-face-background 'mode-line-inactive (car krb-modeline-color))
 
 ; force change
+
+(require 'ansi-color)
+(defun colorize-compilation-buffer ()
+  (toggle-read-only)
+  (ansi-color-apply-on-region compilation-filter-start (point))
+  (toggle-read-only))
+(add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
