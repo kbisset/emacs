@@ -2,7 +2,7 @@
 	default = simple
 [user]
 	name = Keith
-	email = keith@snitch.co
+	email = keith@light.house
 [core]
 	excludesfile = /Users/keith/.gitignore_global
 
