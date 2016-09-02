@@ -100,7 +100,7 @@ stty erase 
 
 unset command_not_found_handle
 
-source $HOME/emacs/config/standalone-prompt.sh
+source /home/keith/emacs/config/standalone-prompt.sh
 
 export HISTSIZE=INFINITE
 export HISTFILESIZE=10000
