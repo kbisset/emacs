@@ -16,12 +16,12 @@
 # Site-wide defaults for some commonly used options.  For a comprehensive
 # list of available options, their meanings and defaults, please see the
 # ssh_config(5) man page.
-# sinletna
-# Host *
+#Host *
 #   ForwardAgent no
 ForwardX11 yes
 ForwardX11Trusted yes
 ServerAliveInterval 120
+ServerAliveInterval 60
 
 #   RhostsRSAAuthentication no
 #   RSAAuthentication yes
@@ -132,6 +132,14 @@ Host kst
 Host ust
      User ubuntu
      Hostname stormtrooper
+     ForwardAgent yes
+     ForwardX11 yes
+     ForwardX11Trusted yes
+
+Host cb1
+     Hostname cb1
+     ProxyCommand ssh -Y ubuntu@jarvis.ubercam.net nc localhost 39001
+     User ubuntu
      ForwardAgent yes
      ForwardX11 yes
      ForwardX11Trusted yes
