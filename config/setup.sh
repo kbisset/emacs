@@ -23,6 +23,7 @@ fi
 
 if [ ! -f ~/.ssh/id_rsa.pub ]; then
     echo "Setting up ssh"
+    mkdir -p ~/.ssh
     cp ~/emacs/config/ssh/id_rsa.pub ~/.ssh/id_rsa.pub
     if [ ! -f ~/.ssh/authorized_keys ]; then
         cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
@@ -32,4 +33,9 @@ fi
 if [ ! -f ~/.gitconfig ]; then
     echo "Setting up git"
     ln -s ~/emacs/config/.gitconfig ~/.gitconfig
+fi
+
+if [ ! -f ~/bin ]; then
+    echo "Setting up bin"
+    ln -s ~/emacs/config/bin ~/bin
 fi
