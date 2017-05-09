@@ -1,4 +1,4 @@
-if [ -f $HOME/.bashrc.local ]; then
+if test -f $HOME/.bashrc.local ; then
     source $HOME/.bashrc.local
 fi
 
@@ -85,8 +85,8 @@ export LS_COLORS
 
 alias ls="ls -F"
 
-alias kgit="git -c user.name=Keith -c user.email=keith@snitch.co"
-#PS1='\n\[\033[01;35m\]\u@\h\[\033[00m\]:\[\033[01;35m\]\W\[\033[00m\]\$ '
+alias git="/usr/bin/git -c user.name=Keith -c user.email=keith@light.house"
+#Ps1='\n\[\033[01;35m\]\u@\h\[\033[00m\]:\[\033[01;35m\]\W\[\033[00m\]\$ '
 PROMPT_COMMAND='echo -ne "\033]1;${USER}@${host}\007\033]2;${host}\007"; history_write'
 
 #export ROS_PARALLEL_JOBS=-jn
@@ -95,6 +95,11 @@ export IGNOREEOF=2
 export VISUAL="emacs -nw"
 export EDITOR="$VISUAL"
 export GIT_EDITOR="$VISUAL"
+
+if [ -f ~/.git-completion.bash ]
+then
+	source ~/.git-completion.bash
+fi
 
 stty erase 
 
@@ -110,3 +115,12 @@ export HISTCONTROL=ignoredups:ignoredups
 export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
 
 export LESS="-n-R-X-P--Less-- ?f%f:stdin. ?pB(%pB\%):."
+
+if test -f /opt/ros/indigo/setup.bash ; then
+    source /opt/ros/indigo/setup.bash
+fi
+
+if test -f /opt/ros/kinetic/setup.bash ; then
+    source /opt/ros/kinetic/setup.bash
+fi
+

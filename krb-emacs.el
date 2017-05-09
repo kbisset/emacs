@@ -3,7 +3,6 @@
   (defun get-tuple-from-plist (the-plist)
     (when the-plist
       (cons (car the-plist) (cadr the-plist))))
-
   (let ((alist '()))
     (while the-plist
       (add-to-list 'alist (get-tuple-from-plist the-plist))
@@ -41,7 +40,12 @@
 (setq tcl-indent-level 2)
 ;(setq auto-mode-alist (append '(("\\.bml$" . tcl-mode)) auto-mode-alist))
 (setq auto-mode-alist (append '(("\\.kml$" . nxml-mode)) auto-mode-alist))
-;(add-hook 'tcl-mode-hook 'tcl-guess-application)
+(require 'cmake-mode)
+(setq auto-mode-alist
+      (append '(("CMakeLists\\.txt\\'" . cmake-mode)
+                ("\\.cmake\\'" . cmake-mode))
+              auto-mode-alist))
+                                        ;(add-hook 'tcl-mode-hook 'tcl-guess-application)
 ;(add-hook 'tcl-mode-hook 'tcl-auto-fill-mode)
 
 ; perl mode
@@ -1731,3 +1735,28 @@ Return a list of one element based on major mode."
   (ansi-color-apply-on-region compilation-filter-start (point))
   (toggle-read-only))
 (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
+
+(require 'package)
+
+(add-to-list 'package-archives
+             '("MELPA Stable" . "https://stable.melpa.org/packages/") 
+             '("MELPA" . "https://melpa.org/packages/"))
+(package-initialize)
+(require 'use-package)
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+;; (use-package flycheck-color-mode-line
+;;   :ensure t
+;;   :init (add-hook 'flycheck-mode-hook 'flycheck-color-mode-line-mode))
+(use-package flycheck-pos-tip)
+
+;; Use both diffs 
+(defun ediff-copy-both-to-C ()
+  (interactive)
+  (ediff-copy-diff ediff-current-difference nil 'C nil
+                   (concat
+                    (ediff-get-region-contents ediff-current-difference 'A ediff-control-buffer)
+                    (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
+(defun add-d-to-ediff-mode-map () (define-key ediff-mode-map "d" 'ediff-copy-both-to-C))
+(add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)

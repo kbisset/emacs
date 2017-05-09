@@ -5,7 +5,7 @@
 	email = keith@light.house
 [core]
 	excludesfile = /Users/keith/.gitignore_global
-
+    
 [color]
   ui = auto
 
