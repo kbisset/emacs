@@ -92,7 +92,7 @@ PROMPT_COMMAND='echo -ne "\033]1;${USER}@${host}\007\033]2;${host}\007"; history
 #export ROS_PARALLEL_JOBS=-jn
 export IGNOREEOF=2
 
-export VISUAL="emacs -nw"
+export VISUAL="emacs -nw -u keith"
 export EDITOR="$VISUAL"
 export GIT_EDITOR="$VISUAL"
 
@@ -125,3 +125,7 @@ if test -f /opt/ros/kinetic/setup.bash ; then
 fi
 
 PATH="/home/keith/bin:$PATH"
+
+alias psjarvis="ps uaxww | grep -e 'jarvis2|tlgen|barista'"
+alias emacs="/usr/bin/emacs -u keith"
+alias ls="ls -H"
