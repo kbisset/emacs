@@ -35,7 +35,13 @@ if [ ! -f ~/.gitconfig ]; then
     ln -s ~/emacs/config/.gitconfig ~/.gitconfig
 fi
 
-if [ ! -f ~/bin ]; then
+if [ ! -d ~/bin ]; then
     echo "Setting up bin"
     ln -s ~/emacs/config/bin ~/bin
+fi
+
+if [ ! -f ~/.config/htop/htoprc ]; then
+    echo "Setting up htop"
+    mkdir -p ~/.config/htop
+    ln -s ~/emacs/config/htoprc ~/.config/htop
 fi

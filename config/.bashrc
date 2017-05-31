@@ -125,7 +125,7 @@ if test -f /opt/ros/kinetic/setup.bash ; then
 fi
 
 PATH="/home/keith/bin:$PATH"
-
+export HTOPRC="/home/keith/.config/htop/htoprc"
 alias psjarvis="ps uaxww | grep -e 'jarvis2|tlgen|barista'"
 alias emacs="/usr/bin/emacs -u keith"
 alias ls="ls -H"
