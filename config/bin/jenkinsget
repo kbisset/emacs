@@ -11,7 +11,7 @@ else
 fi
 
 wget --auth-no-challenge --http-user=keith --http-password=495a55e89b0fec70cad0b436b833a917 $URL
-if [ UNZIP -eq 1 ]; then
+if [ $UNZIP -eq 1 ]; then
     unzip archive.zip
     mv archive/build/jarvis2/dist/*.txz .
     rm -rf archive archive.zip
