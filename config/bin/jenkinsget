@@ -1,6 +1,7 @@
 #!/bin/sh
 if [ "$1" = "--url" ]; then
     URL=$2
+    UNZIP=0
 elif [ "X$1" != "X" ]; then
     URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/master/$1/artifact/build/jarvis2/dist/jarvis-master-$1-$2.txz
     UNZIP=0
