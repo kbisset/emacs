@@ -1,0 +1,3 @@
+--mongo_uri=mongodb://deep3:27017
+--amqp_host=deep3
+--doorman_host=deep3

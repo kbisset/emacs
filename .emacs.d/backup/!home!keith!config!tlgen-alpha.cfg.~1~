@@ -1,0 +1,5 @@
+--flagfile=./ros-pkg/service/jarvis2/dist/etc/alpha.cfg
+--caffe_config_path=./ros-pkg/service/jarvis2/dist/etc/config
+--config=./ros-pkg/service/jarvis2/dist/etc/config/mosaic.yml
+--personid_config_files=./ros-pkg/service/jarvis2/dist/etc/config/personid/PersonidConfig_base.prototxt:./ros-pkg/service/jarvis2/dist/etc/config/personid/PersonidConfig_jarvis.prototxt
+--snitch_config_pid_dir=./ros-pkg/service/jarvis2/dist/etc/config/personid/

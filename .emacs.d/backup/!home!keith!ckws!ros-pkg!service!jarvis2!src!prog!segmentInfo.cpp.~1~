@@ -1,0 +1,18 @@
+  google::SetUsageMessage("Usage: generate_timelapse <sensor> <timestamp>\n"
+                          "sensor can be a specific one, \"all\" for all, or \"mongo\" to montior mongodb.\n"
+                          "timestamp can be a specific one, \"0\" for all, or \"week\" for the last week (ignored for queue).");
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  ros::Time::init();
+//  FLAGS_vis_level = 0;  // necessary or cpp_netlib segfaults
+  if (!(argc == 3
+        || (argc == 2 && (std::string(argv[1]) == "queue" ||
+                          std::string(argv[1]) == "mongo")) 
+        || (argc >= 4 && argc%2 == 0 && std::string(argv[1]) == "list")
+        )) {
+    std::cout << "Args (" << argc << ") :";
+    for (int i=0; i < argc; ++i)
+      std::cout << " " << argv[i];
+    std::cout << "\n";
+      google::ShowUsageWithFlags(argv[0]);
+      return 0;
+    }

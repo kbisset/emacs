@@ -1,0 +1,1157 @@
+#include <iostream>
+#include <iomanip>
+#include <locale>
+#include <streambuf>
+#include <cfloat>
+#include <cctype>
+#include <ctime>
+#include <limits>
+#include <algorithm>
+#include <sys/sysinfo.h>
+#include <sys/stat.h>
+#include <ios>
+
+#include "jarvis/aws.h"
+#include "online_learning/blob.h"
+#include "jarvis/smart_timelapse.h"
+#include "jarvis/track_publisher.h"
+#include "jarvis/track_encoder.h"
+#include <bag_of_tricks/sensor_site.h>
+#include <bag_of_tricks/thread.h>
+#include <bag_of_tricks/string.h>
+#include <bag_of_tricks/GitSHA1.h>
+#include <mongo/client/dbclient.h>
+#include <mongo/bson/bson.h>
+#include <aws/core/client/ClientConfiguration.h>
+#include <aws/s3/S3Client.h>
+#include <aws/s3/model/PutObjectRequest.h>
+#include <opencv/highgui.h>
+#include <gflags/gflags.h>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+#include <boost/locale/generator.hpp>
+#include <boost/locale/date_time.hpp>
+#include <boost/locale/format.hpp>
+#include <boost/timer/timer.hpp>
+#include <boost/lexical_cast.hpp>
+#include "ubercam_msgs/rgbd_frame.h"
+#include <jarvis/track_processor.h>
+
+using std::string;
+using std::vector;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::lock_guard;
+using std::mutex;
+namespace bl = boost::locale;
+namespace blp = boost::locale::period;
+namespace m = mongo;
+namespace s3 = Aws::S3;
+
+extern bool g_quitting;
+
+DEFINE_string(mongo_uri, "mongodb://localhost", "mongodb connection uri");
+DEFINE_bool(day_timelapse_only, false, "only generate full day timelases");
+static const bool mongo_uri_validator = google::RegisterFlagValidator(&FLAGS_mongo_uri,
+  [](const char *, const std::string &value) -> bool { (void) mongo_uri_validator;
+    string error; return m::ConnectionString::parse(value, error).isValid();
+  });
+
+DEFINE_double(mongo_socket_timeout, 5, "mongo socket timeout (seconds)");
+DEFINE_string(s3_snippets, "archive-test.snitch.ai", "S3 bucket name for track snippets");
+DEFINE_string(disk_snippets, "", "directory path for track snippets");
+
+DEFINE_bool(track_snippets, false, "Create video snippets for tracks");
+DEFINE_bool(event_snippets, true, "Create video snippets for events");
+DEFINE_bool(story_snippets, true, "Create video snippets for stories");
+DEFINE_bool(single_threaded_stories, false, "Use only one thread to generate stories");
+
+
+DEFINE_int32(timelapses_holdoff, 30, "Wait time before generating a timelapse, in case more events happen");
+const int kSegmentHours = 3;
+static_assert(24 % kSegmentHours == 0, "kSegmentHours must cleanly divide 24 hours");
+
+
+const TrackPublisher::GenerateOptions TrackPublisher::GenerateOptions::DEFAULT;
+
+static int64_t frameTimeStamp(const Instance& frame) {
+  return (int64_t) (1000 * frame.rawRef().timestamp_); // TODO don't rely on the light/heavy state of the Instance, and needs to move elsewhere anyway
+}
+
+struct BSONizable {
+  enum View { QUERY, ALL };
+  virtual ~BSONizable() {};
+  virtual m::BSONObjBuilder& toBSON(m::BSONObjBuilder& builder, View view = ALL) const { return builder; }
+  operator m::BSONObj() const { m::BSONObjBuilder builder; return toBSON(builder).obj(); }
+  operator m::Query() const { m::BSONObjBuilder builder; return m::Query(toBSON(builder, QUERY).obj()); }
+};
+
+struct MongoTrackDetails : public BSONizable { typedef BSONizable super;
+  int64_t start_;
+  int32_t seed_;
+  int64_t duration_;
+  // Not currently used but could be for debugging.
+  // Will contain the Label object coming out of TrackProcessor.
+  std::map<string, double> prediction_;
+  // Should include "alert" if this track is alertable, "pet" if it's a pet, "person" if ...  etc.
+  std::set<string> label_;  
+
+  MongoTrackDetails(Dataset::Ptr track);
+  m::BSONObjBuilder& toBSON(m::BSONObjBuilder& builder, View view) const override;
+};
+
+MongoTrackDetails::MongoTrackDetails(Dataset::Ptr track)
+{
+  start_ = frameTimeStamp(*track->begin());
+  duration_ = frameTimeStamp(*(track->end()-1)) - start_;
+
+  // Determine seed_ point for uniquely identifying tracks that start at the same time
+  if (!track->empty()) {
+    int16_t x, y;
+    track->instances_[0].rawRef().rbm_->serializeTo(&x, &y);
+    seed_ = y << 16 | (x & 0xffff);
+  } else {
+    seed_ = 0;
+  }
+
+  // Generate summary label set and prediction data
+  const NameMapping& cmap = track->nameMapping("cmap");
+  Label label = track->label();
+  for (int i=0, n=cmap.size(); i<n; i++) {
+    const Label::Scalar logodds = label(i);
+    prediction_[cmap.toName(i)] = logodds;
+  }
+
+  
+  // Set the strings in the label_ field to correspond exactly to categories
+  // exposed to the user on the front end.  Each string in label_ should correspond
+  // to an object category on the front end.  When you tap on that category,
+  // event videos that contain an object with this label string attached will appear.
+  // 
+  // Right now this will be "alert", "Pet", and "small", corresponding to user-facing
+  // category strings of "People", "Pets", and "Small objects".  "alert" isn't going
+  // to change because we use the presence or absence of "alert" elsewhere.
+  //
+  // It's possible that logic here needs to be quantitatively tested.  If and when
+  // that becomes the case, this logic must move into TrackProcessor so it can
+  // easily be tested offline.
+  //
+  // When browsing accuracy for pet, person, child, etc. classification is 99%+ even
+  // without the crutch of size filtering, we'll rework this logic and remove the
+  // "Small objects" category.
+
+  label_ = track->labelStringSet();
+
+  // Remove all labels used for debugging
+  if(label_.count("x") > 0)   label_.erase("x");
+  if(label_.count("y") > 0)   label_.erase("y");
+  if(label_.count("z") > 0)   label_.erase("z");
+  if(label_.count("px") > 0)  label_.erase("px");
+  if(label_.count("fat") > 0) label_.erase("fat");
+
+  // Remove "moving" because that's not a user-facing category.
+  if(label_.count("moving") > 0)
+    label_.erase("moving");
+
+  // unclear pet is not published
+  if(label_.count("pet") > 0 && label_.count("unclear") > 0)
+    label_.erase("pet");
+
+  // "unclear" label mapped to "small" for legacy reason
+  if(label_.count("unclear") > 0) {
+    label_.erase("unclear");
+    label_.insert("small");
+  }
+}
+
+m::BSONObjBuilder& MongoTrackDetails::toBSON(m::BSONObjBuilder& builder, View view) const
+{
+  super::toBSON(builder, view)
+    .append("start", m::Date_t(start_))
+    .append("seed", seed_)
+//    .append("commit", BagOfTricks::git_sha1)
+    ;
+  if (view == ALL) builder
+    .append("duration", (long long) duration_)
+    .append("prediction", prediction_)
+    .append("label", label_);
+  return builder;
+}
+
+
+struct MongoTrack : public MongoTrackDetails { typedef MongoTrackDetails super;
+  SensorId device_;
+  string dataset_;
+
+  MongoTrack(const SensorId& sensor, Dataset::Ptr track);
+  m::BSONObjBuilder& toBSON(m::BSONObjBuilder& builder, View view) const override;
+};
+
+
+MongoTrack::MongoTrack(const SensorId& sensor, Dataset::Ptr track)
+: MongoTrackDetails(track), device_(sensor)
+{
+  // Serialize track into dataset_
+  std::ostringstream os;
+  TrackDataset tds;
+  tds.tracks_.push_back(track);
+  tds.serialize(os);
+  dataset_ = os.str();
+}
+
+m::BSONObjBuilder& MongoTrack::toBSON(m::BSONObjBuilder& builder, View view) const
+{
+  std::string site = Utility::SensorSite::instance().getSite(device_.numeric());
+  builder
+    .append("device", device_.str())
+    .append("site", site);
+  super::toBSON(builder, view);
+  if (view == ALL) builder
+    .appendBinData("dataset", dataset_.size(), m::BinDataGeneral, dataset_.data());
+  return builder;
+}
+
+
+struct MongoEvent : public BSONizable { typedef BSONizable super;
+  SensorId device_;
+  std::string site_;
+  int64_t start_;
+  int64_t end_;
+  int64_t duration_;
+  std::vector<MongoTrackDetails> tracks_;
+  std::set<string> labels_;
+  std::string dataset_;
+
+  MongoEvent(const SensorId& sensor, TrackDataset::Ptr track);
+  m::BSONObjBuilder& toBSON(m::BSONObjBuilder& builder, View view) const override;
+};
+
+MongoEvent::MongoEvent(const SensorId& sensor, TrackDataset::Ptr event)
+: device_(sensor)
+{
+  int64_t start = std::numeric_limits<decltype(start)>::max();
+  int64_t end = std::numeric_limits<decltype(end)>::min();
+
+  site_ = Utility::SensorSite::instance().getSite(sensor.numeric());
+
+  for (const auto& ds : event->tracks_) {
+    tracks_.emplace_back(ds);
+    MongoTrackDetails& track = tracks_.back();
+    start = std::min(start, track.start_);
+    end = std::max(end, track.start_+track.duration_);
+    for(string str : track.label_) 
+      labels_.insert(str);
+  }
+  start_ = start;
+  end_ = end;
+  duration_ = end - start;
+
+  std::ostringstream os;
+  event->serialize(os);
+  dataset_ = os.str();
+}
+
+m::BSONObjBuilder& MongoEvent::toBSON(m::BSONObjBuilder& builder, View view) const
+{
+  super::toBSON(builder, view)
+    .append("device", device_.str())
+    .append("site", site_)
+    .append("start", m::Date_t(start_))
+//    .append("commit", BagOfTricks::git_sha1)
+    ;
+  if (view == ALL) builder
+    .append("duration", (long long) duration_)
+    .append("labels", labels_)
+    .append("tracks", tracks_)
+    .appendBinData("dataset", dataset_.size(), m::BinDataGeneral, dataset_.data());
+  return builder;
+}
+
+struct MongoStory : public BSONizable {
+  typedef BSONizable super;
+
+  MongoStory(const SensorId& device, int level, int64_t start);
+  SensorId device_;
+  int level_;
+  int64_t start_;
+  int64_t duration_ = 0;
+  std::map<string, int> labels_;
+
+  m::BSONObjBuilder& toBSON(m::BSONObjBuilder& builder, View view) const override;
+};
+
+MongoStory::MongoStory(const SensorId& device, int level, int64_t start)
+: device_(device), level_(level), start_(start)
+{}
+
+m::BSONObjBuilder& MongoStory::toBSON(m::BSONObjBuilder& builder, View view) const
+{
+  std::string site = Utility::SensorSite::instance().getSite(device_.numeric());
+  super::toBSON(builder, view)
+    .append("device", device_.str())
+    .append("site", site)
+    .append("level", level_)
+    .append("start", m::Date_t(start_))
+//    .append("commit", BagOfTricks::git_sha1)
+    ;
+
+  if (view == ALL) {
+    timespec clk;
+    clock_gettime(CLOCK_REALTIME, &clk);
+    int64_t now = ((int64_t) clk.tv_sec) * 1000l;
+    builder.append("duration", (long long) duration_)
+           .append("labels", labels_)
+           .append("generated", m::Date_t(now));
+  }
+  return builder;
+}
+
+TrackPublisher::TrackPublisher()
+{
+  static bool init_done;
+  if (!init_done) {
+    init_done = true;
+    m::Status status = m::client::initialize(m::client::Options()
+        .setCallShutdownAtExit(true));
+    if (!status.isOK()) throw std::runtime_error(status.toString());
+  }
+  ROS_INFO("s3 client init");
+  s3_.reset(new s3::S3Client(AwsConfiguration()));
+  ROS_INFO("s3 client init done");
+}
+
+TrackPublisher::~TrackPublisher()
+{
+  ROS_INFO("TrackPublisher shutting down\n");
+  background_.lock(); // wait for background threads to finish
+  ROS_INFO("TrackPublisher shutdown complete\n");
+}
+
+std::string TrackPublisher::publishTrack(
+    const SensorId& sensor, Dataset::Ptr dataset, bool generateSnippet)
+{
+  ROS_INFO_STREAM("TP::publishTrack for " << sensor.str());
+  string key;
+  try {
+    if (generateSnippet && isSnippetsEnabled() && FLAGS_track_snippets) {
+      key = makeKey(sensor, frameTimeStamp(dataset->instances_[0])) + ".h264";
+      ROS_INFO_STREAM("TP::Preparing track snippet " << key);
+      auto snippet = std::make_shared<std::stringstream>();
+      std::set<std::string> labels = TrackProcessor::labelToStrings(dataset->label());
+      if (labels.count("alert") > 0) {
+        TrackEncoder::encodeTrackGreyBg(*dataset,
+                                        HaloColor(cv::Vec3b(0, 0, 255)),
+                                        *snippet);
+      }
+      publishSnippet(key, snippet);
+    }
+
+    MongoTrack track(sensor, dataset);
+    mongo()->update("snitch.tracks", track, track, true);
+    ROS_INFO_STREAM("TP::Track persisted " << track.device_.str());
+  } catch (std::exception &e) {
+    ROS_WARN_STREAM("TP::Failed to publish track: " << sensor.str() << " "
+                   << e.what());
+  }
+  return key;
+}
+
+void TrackPublisher::publishEvent(const SensorId& sensor, TrackDataset::Ptr tds, bool generateSnippet)
+{
+  MongoEvent event(sensor, tds);
+  try {
+    if (generateSnippet && isSnippetsEnabled() && FLAGS_event_snippets) {
+      string key = makeKey(sensor, event.start_) + "-event.h264";
+      ROS_INFO_STREAM("TP::Preparing event snippet " << key);
+      auto snippet = std::make_shared<std::stringstream>();
+      SmartTimelapse::computeTimelapse(tds, *snippet, true);
+      publishSnippet(key, snippet);
+    } else {
+    ROS_WARN_STREAM("TP::streamEvent: not creating Timelapse "
+		    << std::boolalpha << generateSnippet << " " <<  isSnippetsEnabled() << " " 
+		    << FLAGS_event_snippets);
+    }
+  } catch (std::exception &e) {
+    ROS_WARN_STREAM("Failed to publish event to S3: " << e.what());
+  }
+
+  try {
+    mongo()->update("snitch.events", event, event, true);
+    ROS_INFO_STREAM("TP::Event persisted: " << sensor.str() << " "
+                    << event.start_ << " "
+                    << event.duration_);
+  } catch (std::exception &e) {
+    ROS_WARN_STREAM("TP::Failed to update mongodb for event: " << sensor.str() << " "
+                    << event.start_ << " "
+                     << event.duration_ << " Reason: "
+                     << e.what());
+  }
+  ROS_INFO_STREAM("Calling TP::updateStoryRequest");
+  try {
+    if (generateSnippet && FLAGS_story_snippets) {
+      // Generate stories internally
+      set_current_thread_name(STRING("SY-" << (event.start_ / 1000)));
+      set_current_thread_priority(-19);
+      generateStories(sensor, event.start_);
+    } else {
+      // Send story requests to mongo for external generation
+      updateStoryRequest(event);
+    }
+  } catch (std::exception &e) {
+    ROS_WARN_STREAM("TP::Failed to generate stories: " << e.what());
+  }
+}
+
+uint64_t getDayStartInMS(uint64_t time)
+{
+  static std::locale locale = bl::generator().generate("C");
+ // TODO: use default server TZ for now, should be site TZ
+  bl::calendar calendar(locale);
+  bl::date_time nowdt = bl::date_time(time/1000, calendar);
+  bl::date_time day_start_dt(nowdt, blp::hour(0) + blp::minute(0) + blp::second(0));
+  return static_cast<int64_t>(day_start_dt.time()*1000);
+}
+
+void TrackPublisher::updateStoryRequest(const MongoEvent& event)
+{
+  // TODO: set status 
+  try {
+    uint64_t event_start = event.start_;
+    uint64_t day_start = getDayStartInMS(event_start);
+    
+  static const m::BSONObj FIELDS = BSON(
+    "_id" << 1 <<
+    "device" << 1 <<
+    "start" << 1 <<
+    "end" << 1 <<
+    "duration" << 1 <<
+    "level" << 1 <<
+    "priority" << 1 
+    );
+  
+  ROS_INFO_STREAM("TP::updateStoryRequest query " << event.device_.str()
+                  << " " << m::Date_t(day_start)
+                  << " " << m::Date_t(event.end_));
+
+  // ---
+  // auto cursor = mongo()->query("snitch.stories", MONGO_QUERY("device" << sensor.str()
+  //                                                            << "level" << 0
+  //                                                            << "start" << m::Date_t(day_start)
+  //                                )
+  //                              .sort("start", -1), 60, 0, &FIELDS);
+  // if (!cursor->more())
+  //   ROS_INFO_STREAM("TP::updateStoryRequest query returned no results");
+  // else
+  //   while (cursor->more()) {
+  //     m::BSONObj match = cursor->nextSafe();
+    
+  //     ROS_INFO_STREAM("TP::updateStoryRequest(a): "
+  //                     << match.getField("device") << " "
+  //                     << match.getField("start") << " "
+  //                     << match.getField("duration") << " "
+  //                     << match.getField("level") << " "
+  //                     << match.getField("priority"));
+  //   }
+  // ---
+
+  const bool upsert = true;
+  const bool returnNew = true;
+  const std::string priority = (event.labels_.find("alert")!=event.labels_.end())?"alert":"event";
+  
+  // Update priority (according to cases below).
+  // 1. event priority == alert -> mongo priority = alert
+  // 2. event priority == event, mongo priority is unset -> mongo priority = event priority
+  // 3. event priority == event, mongo priority is set -> mongo priority unchanged
+  // (nothing need be done
+  
+  if (priority == "alert")
+  {
+    // case 1
+    m::BSONObj story = mongo()->findAndModify("snitch.stories",
+                                              BSON("device" << event.device_.str() <<
+                                                   "start" << m::Date_t(day_start) <<
+                                                   "duration" << 86400000LL <<
+                                                   "level" << 0
+                                                ),
+                                              BSON("$set" << BSON("priority" << priority
+                                                                  << "site" << event.site_)),
+                                              upsert,
+                                              returnNew);
+    ROS_INFO_STREAM("TP::updateStoryRequest(c1): " << story);
+  } else {
+    // Only one of the following 2 queries should match There is a race condition here
+    // where the priority gets set between the two queries. 
+    // case 2, 
+    m::BSONObj story = mongo()->findAndModify("snitch.stories",
+                                              BSON("device" << event.device_.str() << 
+                                                   "start" << m::Date_t(day_start) <<
+                                                   "duration" << 86400000LL <<
+                                                   "level" << 0 <<
+                                                   "priority" << BSON("$exists" << "false")
+                                                ),
+                                              BSON("$set" << BSON("priority" << priority
+                                                                  << "site" << event.site_)),
+                                              upsert,
+                                              returnNew);
+    ROS_INFO_STREAM("TP::updateStoryRequest(c2): " << story);
+  }    
+  // ---
+  // cursor = mongo()->query("snitch.stories", MONGO_QUERY("device" << sensor.str()
+  //                                                       << "level" << 0
+  //                                                       << "start" << m::Date_t(day_start)
+  //                                )
+  //                              .sort("start", -1), 60, 0, &FIELDS);
+  // if (!cursor->more())
+  //   ROS_INFO_STREAM("TP::updateStoryRequest query returned no results");
+  // else
+  //   while (cursor->more()) {
+  //     m::BSONObj match = cursor->nextSafe();
+    
+  //     ROS_INFO_STREAM("TP::updateStoryRequest(b): "
+  //                     << match.getField("device") << " "
+  //                     << match.getField("start") << " "
+  //                     << match.getField("duration") << " "
+  //                     << match.getField("level") << " "
+  //                     << match.getField("priority"));
+  //   }
+  // ---
+  
+  } catch (std::exception &e) {
+    ROS_WARN_STREAM("TP::updateStoryRequest failed " << e.what());
+  }
+
+}
+
+bool TrackPublisher::isSnippetsEnabled() const
+{
+  return isS3SnippetsEnabled() || isDiskSnippetsEnabled();
+}
+
+bool TrackPublisher::isS3SnippetsEnabled() const
+{
+  return !FLAGS_s3_snippets.empty();
+}
+
+bool TrackPublisher::isDiskSnippetsEnabled() const
+{
+  return !FLAGS_disk_snippets.empty();
+}
+
+bool TrackPublisher::publishSnippet(const std::string& key,
+                                    std::shared_ptr<std::basic_iostream<char>> snippet)
+{
+  bool story_in_s3 = false;
+  
+  if (isS3SnippetsEnabled())
+  {
+    snippet->seekg(0);
+    story_in_s3 = publishSnippetToS3(key, snippet);
+  }
+  if (isDiskSnippetsEnabled())
+  {
+    snippet->seekg(0);
+    publishSnippetToDisk(key, snippet);
+  }
+  return story_in_s3;
+}
+
+bool TrackPublisher::publishSnippetToS3(const std::string& key,
+                                        std::shared_ptr<std::basic_iostream<char>> snippet)
+{
+  const int maxRetries=3;
+  ROS_INFO_STREAM("TP::Publishing snippet to s3: " << key << " in " << FLAGS_s3_snippets);
+  if (!isS3SnippetsEnabled())
+    return false;
+  try {
+    std::streambuf* pbuf = snippet->rdbuf();
+    std::streamsize size = pbuf->pubseekoff(0, std::ios_base::end);
+    pbuf->pubseekoff(0, std::ios_base::beg);       // rewind
+    if (size == 0)
+    {
+      ROS_WARN_STREAM("Not writing empty snippet to s3 " << key);
+      return false;
+    }
+
+    int retryCount=0;
+    while (retryCount < maxRetries)
+    {
+      s3::Model::PutObjectRequest request;
+      request.WithBucket(FLAGS_s3_snippets).WithKey(key);
+      request.SetBody(snippet);
+      auto response = s3_->PutObject(request);
+      if (!response.IsSuccess())
+      {
+        if (response.GetError().ShouldRetry() && retryCount < maxRetries) 
+        {
+          ROS_WARN_STREAM("s3 put failed, retrying: " <<  response.GetError().GetMessage());
+          retryCount++;
+        } else {
+          ROS_WARN_STREAM("s3 put failed, giving up: " <<  response.GetError().GetMessage());
+          return false;
+        }
+      } else {
+        break;
+      }
+    }
+    ROS_INFO_STREAM("TP::Snippet persisted: " << key);
+    return true;
+  } catch (std::exception& e) {
+    ROS_WARN_STREAM("s3 put failed: " <<  e.what());
+    return false;
+  }
+}
+
+bool TrackPublisher::publishSnippetToDisk(const std::string& key,
+                                          std::shared_ptr<std::basic_iostream<char>> snippet)
+{
+  if (!isDiskSnippetsEnabled())
+    return false;
+  std::string base_path = FLAGS_disk_snippets; 
+  std::string dir = base_path+"/"+key.substr(0, key.find_first_of('/'));
+  std::string fullpath = base_path+"/"+key;
+  timespec clk;
+  clock_gettime(CLOCK_REALTIME, &clk);
+  
+<<<<<<< HEAD
+=======
+  std::string replace = std::string("-0-") + boost::lexical_cast<string>(clk.tv_sec) + "-";
+  try {
+    fullpath.replace(pos, 3, replace);
+  } catch (std::exception& e) {
+    ROS_WARN_STREAM("Replace failed: " << e.what());
+    ROS_WARN_STREAM("Call: \"" << fullpath << "\".replace(" << pos << ", 3, " << replace << ")");
+  }
+
+>>>>>>> WIP: wrapping fullpath.replace() in a try/catch.
+  mkdir(dir.c_str(), 0755);
+  std::ofstream out(fullpath);
+  std::streambuf* pbuf = snippet->rdbuf();
+  std::streamsize size = pbuf->pubseekoff(0, std::ios_base::end);
+  pbuf->pubseekoff(0, std::ios_base::beg);       // rewind
+  if (size == 0)
+  {
+    ROS_WARN_STREAM("Not writing empty snippet to disk: " << fullpath);
+    return false;
+  }
+  
+  ROS_INFO_STREAM("TP::publishSnippetToDisk() Saving snippet " << fullpath << " " << size);
+  if (out.good())
+  {
+    char* contents = new char[size];
+    pbuf->sgetn(contents, size);
+    out.write(contents, size);
+    out.close();
+    if (out.good())
+      return true;
+  }
+  return false;
+}
+
+vector<DatasetReference> TrackPublisher::history(const SensorId& sensor)
+{
+  vector<DatasetReference> result;
+  try {
+    unique_ptr<m::DBClientBase> mc = mongo();
+    static const m::BSONObj FIELDS = BSON("_id" << 1);
+    auto cursor = mc->query("snitch.tracks", MONGO_QUERY("device" << sensor.str()).sort("start", -1), 60, 0, &FIELDS);
+
+    if (result.empty())
+      ROS_WARN_STREAM("TP::history() No tracks found: " << sensor.str());
+    m::BSONElement id;
+    while (cursor->more()) {
+      m::BSONObj match = cursor->nextSafe();
+      if (!match.getObjectID(id)) continue;
+      result.emplace_back(id.OID().toString(), 0);
+    }
+  } catch (std::exception& e) {
+    ROS_WARN_STREAM("Couldn't get history: " << e.what());
+  }
+  return result;
+}
+
+vector<TrackServer::SmartHistoryEvent> TrackPublisher::smartHistory(const SensorId& sensor, std::string parent, size_t limit)
+{
+  vector<TrackServer::SmartHistoryEvent> result;
+
+  try {
+  unique_ptr<m::DBClientBase> mc = mongo();
+  static const m::BSONObj FIELDS = BSON(
+      "_id" << 1 <<
+      "start" << 1 <<
+      "duration" << 1 <<
+      "level" << 1 <<
+      "labels" << 1);
+  
+  // Work out if we're returning stories or events, and what the search parameters are
+  string collection = "snitch.stories";
+  m::BSONObjBuilder qb;
+  qb.append("device", sensor.str());
+  int level = 0;
+  bool story = true;
+
+  if (!parent.empty()) {
+    auto root = mc->findOne(collection, MONGO_QUERY(
+        "_id" << m::OID(parent) << "device" << sensor.str()
+        ), &FIELDS);
+    if (root.isEmpty()) {
+      ROS_WARN_STREAM("TP::Story " << parent << " not found");
+      return result;
+    }
+    level = root.getField("level").Int() + 1;
+    int64_t start = root.getField("start").Date().millis;
+    int64_t end = start + root.getField("duration").Long();
+    qb.append("start", BSON("$gte" << m::Date_t(start) << "$lt" << m::Date_t(end)));
+  }
+
+  if (level < 2) {
+    qb.append("level", level);
+  } else {
+    story = false;
+    collection = "snitch.events";
+  }
+
+  // Perform the query
+  auto cursor = mc->query(collection, m::Query(qb.obj()).sort("start", -1), 60, 0, &FIELDS);
+  m::BSONElement id;
+  while (cursor->more()) {
+    m::BSONObj match = cursor->nextSafe();
+    if (!match.getObjectID(id)) continue;
+    auto start = match.getField("start").Date();
+
+    result.emplace_back();
+    auto& item = result.back();
+    item.id_ = id.OID().toString();
+    item.name_ = start.toString();
+
+    if (story) {
+      auto labels = match.getField("labels").Obj();
+      labels.getFieldNames(item.labels_);
+    } else {
+      auto labels = match.getField("labels").Array();
+      for (auto l : labels) item.labels_.insert(l.String());
+    }
+
+    // TODO: Provide a signed S3 URL on demand
+    item.url_ = string("https://s3-us-west-2.amazonaws.com/")
+        + FLAGS_s3_snippets + "/" + makeKey(sensor, start.millis) + "-" +
+        (story ? std::to_string(level) + "-story.h264" : "event.h264");
+  }
+  } catch (std::exception& e) {
+    ROS_WARN_STREAM("Couldn't fetch smart history: " << e.what());
+  }
+  ROS_INFO_STREAM("smarthistory(" << sensor.str() << ") -> " << result.size());
+  return result;
+}
+
+std::vector<TrackServer::SmartHistoryEvent> TrackPublisher::smartHistoryAndroidHack(const SensorId& sensor)
+{
+  vector<TrackServer::SmartHistoryEvent> result;
+
+  unique_ptr<m::DBClientBase> mc = mongo();
+  static const m::BSONObj FIELDS = BSON(
+      "_id" << 1 <<
+      "start" << 1 <<
+      "duration" << 1 <<
+      "level" << 1 <<
+      "labels" << 1);
+
+  // Work out if we're returning stories or events, and what the search parameters are
+  m::BSONObjBuilder qb;
+  qb.append("device", sensor.str());
+  // qb.append("level", 1);
+
+  // if (!parent.empty()) {
+  //   auto root = mc->findOne(collection, MONGO_QUERY(
+  //       "_id" << m::OID(parent) << "device" << sensor.str()
+  //       ), &FIELDS);
+  //   if (root.isEmpty()) {
+  //     ROS_WARN_STREAM("Story " << parent << " not found");
+  //     return result;
+  //   }
+  //   level = root.getField("level").Int() + 1;
+  //   int64_t start = root.getField("start").Date().millis;
+  //   int64_t end = start + root.getField("duration").Long();
+  //   qb.append("start", BSON("$gte" << m::Date_t(start) << "$lt" << m::Date_t(end)));
+  // }
+
+  // if (level < 2) {
+  //   qb.append("level", level);
+  // } else {
+  //   story = false;
+  // }
+
+  // Perform the query
+//  string collection = "snitch.stories"; bool story = true;
+  string collection = "snitch.events"; bool story = false;
+  
+  ROS_INFO_STREAM("SmartHistoryQuery: " << m::Query(qb.obj()).sort("start", -1).toString());
+  auto cursor = mc->query(collection, m::Query(qb.obj()).sort("start", -1), 60, 0, &FIELDS);
+  m::BSONElement id;
+  while (cursor->more()) {
+    m::BSONObj match = cursor->nextSafe();
+    if (!match.getObjectID(id)) continue;
+    auto start = match.getField("start").Date();
+
+    result.emplace_back();
+    auto& item = result.back();
+    item.id_ = id.OID().toString();
+    item.name_ = start.toString();
+
+    if (story) {
+      auto labels = match.getField("labels").Obj();
+      labels.getFieldNames(item.labels_);
+    } else {
+      auto labels = match.getField("labels").Array();
+      for (auto l : labels) item.labels_.insert(l.String());
+    }
+
+    // TODO: Provide a signed S3 URL on demand
+    item.url_ = string("https://s3-us-west-2.amazonaws.com/")
+        + FLAGS_s3_snippets + "/" + makeKey(sensor, start.millis) + "-" +
+        (story ? std::to_string(1) + "-story.h264" : "event.h264");
+  }
+
+  return result;
+}
+
+
+bool sortByStartTimeDesc(TrackDataset::ConstPtr event1, TrackDataset::ConstPtr event2)
+{
+  ROS_ASSERT(!event1->empty() && !event2->empty());
+  return (event1->tracks_[0]->instances_[0].rawRef().timestamp_ >
+      event2->tracks_[0]->instances_[0].rawRef().timestamp_);
+}
+
+
+std::vector<TrackDataset::Ptr> TrackPublisher::events(const SensorId& sensor, int64_t start, int64_t end, size_t limit)
+{
+  unique_ptr<m::DBClientBase> mc = mongo();
+  static const m::BSONObj FIELDS = BSON("_id" << 1 << "dataset" << 1);
+  auto cursor = mc->query("snitch.events", MONGO_QUERY(
+      "device" << sensor.str() <<
+      "start" <<  BSON("$gte" << m::Date_t(start) << "$lt" << m::Date_t(end)
+  )).sort("duration", -1), limit, 0, &FIELDS);
+
+  vector<TrackDataset::Ptr> result;
+  m::BSONElement id;
+  while (cursor->more()) {
+    m::BSONObj match = cursor->nextSafe();
+    if (!match.getObjectID(id)) continue;
+    int data_len;
+    const char *data = match.getField("dataset").binDataClean(data_len);
+
+    std::istringstream stream(std::string(data, data_len));
+    TrackDataset::Ptr tds = std::make_shared<TrackDataset>();
+    tds->deserialize(stream);
+    
+    ROS_INFO_STREAM("Loaded dataset with length " << data_len << " with " << tds->size() << " tracks");
+    result.push_back(tds);
+  }
+  if (result.empty())
+    ROS_WARN_STREAM("TP: events() no events found " << sensor.str() << " " << start << " - " << end);
+  std::sort(result.begin(), result.end(), sortByStartTimeDesc);
+  return result;
+}
+
+std::vector<int64_t> TrackPublisher::eventTimes(const SensorId& sensor)
+{
+  unique_ptr<m::DBClientBase> mc = mongo();
+  static const m::BSONObj FIELDS = BSON("_id" << 1 << "start" << 1);
+  auto cursor = mc->query("snitch.events", MONGO_QUERY(
+      "device" << sensor.str()
+  ).sort("start", 1), 0, 0, &FIELDS);
+
+  vector<int64_t> result;
+  m::BSONElement id;
+  while (cursor->more()) {
+    m::BSONObj match = cursor->nextSafe();
+    result.push_back(match.getField("start").Date().millis);
+  }
+  return result;
+}
+
+void TrackPublisher::generateStories(const SensorId& sensor, int64_t now, const GenerateOptions& options, uint64_t* end)
+{
+  static std::locale locale = bl::generator().generate("C");
+  bl::calendar calendar(locale); // TODO: use default server TZ for now, should be sensor TZ
+
+  bl::date_time nowdt = (now >= 0) ? bl::date_time(0.001 * now, calendar) : bl::date_time(calendar);
+
+  bl::date_time seg_start(nowdt, blp::minute(0) + blp::second(0));
+  seg_start.set(blp::hour(), seg_start.get(blp::hour()) / kSegmentHours * kSegmentHours);
+  bl::date_time seg_end = seg_start + blp::hour(kSegmentHours);
+  if (!FLAGS_day_timelapse_only)
+  {
+    auto res = publishStory(sensor, (int64_t)(1000*seg_start.time()), (int64_t)(1000*seg_end.time()), 1, options);
+    if (res == STORY_PENDING)
+    {
+      ROS_INFO_STREAM("Sory pending, skiping level 0 timelapse " << sensor.str() << " " << now);
+      return; // Whoever is handling this segment will handle the day as well
+    }
+  }
+
+  bl::date_time day_start(nowdt, blp::hour(0) + blp::minute(0) + blp::second(0));
+  bl::date_time day_end = day_start + blp::day(1);
+
+  publishStory(sensor, (int64_t)(1000*day_start.time()), (int64_t)(1000*day_end.time()), 0, options, end);
+
+}
+
+void TrackPublisher::printPendingStories()
+{
+  std::lock_guard<std::mutex> guard(stories_pending_mutex_);
+  ROS_INFO_STREAM("Pending Stories");
+  for (auto it : stories_pending_)
+  {
+    std::string state;
+    switch (it.second)
+    {
+      case TrackPublisher::JOB_PROCESSING: state = "Processing"; break;
+      case TrackPublisher::JOB_PENDING: state = "Pending"; break;
+      default: state = "Unknown"; break;
+    }
+    ROS_INFO_STREAM("PS:\t" << it.first << " " << state);
+  }
+}
+
+TrackPublisher::StoryJobResult TrackPublisher::publishStory(const SensorId& sensor, int64_t start, int64_t end, int level, const GenerateOptions& options, uint64_t* story_end)
+{
+  const string key = makeKey(sensor, start) + "-" + std::to_string(level) + "-story.h264";
+  printPendingStories();
+
+  ROS_INFO_STREAM("TP::publishStory() "
+                  << sensor.str() << " "
+                  << start << " - " << end << " "
+                  << level << " "
+                  << key);
+
+  auto generated = options.generated;
+  if (generated && generated->find(key) != generated->end()) return STORY_ALREADY_GENERATED;
+
+  // In batch mode the caller is responsible for handling any clever locking etc
+  if (options.batch) return publishStoryInternal(key, sensor, start, end, level, options, story_end);
+
+  {
+    std::lock_guard<std::mutex> guard(stories_pending_mutex_);
+    auto insert = stories_pending_.emplace(key, JOB_PENDING);
+    if (!insert.second) {
+      if (insert.first->second == JOB_PENDING) {
+        ROS_INFO_STREAM("Story " << key << " is already pending");
+      } else {
+        ROS_INFO_STREAM("Story " << key << " is being generated, marking is pending");
+        insert.first->second = JOB_PENDING;
+      }
+      return STORY_PENDING; // Another thread will handle the rest
+    } else {
+      ROS_INFO_STREAM("Story " << key << " start processing");
+    }
+    
+  }
+
+  while (!g_quitting) {
+    // We're going to do the work, but hold off a bit in case more events happen right away
+    {
+      ROS_INFO_STREAM("Story " << key << " will be generated soon");
+      struct sysinfo sys_info = {0};
+      sysinfo(&sys_info);
+      int sleep_time = 0;
+      while (sleep_time < FLAGS_timelapses_holdoff
+          || (sys_info.loads[0] / (float) (1 << SI_LOAD_SHIFT))
+              > (std::thread::hardware_concurrency()*3/4
+                  + sleep_time / FLAGS_timelapses_holdoff)) {
+        sleep(11);
+        sleep_time += 11;
+        if (sysinfo(&sys_info) != 0) {
+          ROS_WARN("sys_info failed");
+          sys_info.loads[0] = 0;
+        };
+      }
+    }
+
+    {
+      ROS_INFO_STREAM("TP::Story " << key << " is waiting for available thread");
+      std::mutex fake_mutex;  // when FLAGS_single_threaded_stories=false
+      static std::mutex single_threaded_generation_mutex;  // when FLAGS_single_threaded_stories=true
+
+      std::lock_guard<std::mutex> guard(
+          FLAGS_single_threaded_stories ?
+              single_threaded_generation_mutex : fake_mutex);
+      ROS_INFO_STREAM("TP::Starting story " << key);
+
+      {
+        std::lock_guard<std::mutex> guard(stories_pending_mutex_);
+        auto it = stories_pending_.find(key);
+        if (it == stories_pending_.end()) {
+          ROS_WARN_STREAM("Story " << key << " pending entry disappeared");
+          return STORY_PENDING; // assume somebody else handled it
+        }
+        it->second = JOB_PROCESSING;
+      }
+
+      try {
+        publishStoryInternal(key, sensor, start, end, level, options, story_end);
+        ROS_INFO_STREAM("@TP::published story "
+                         << sensor.str() << " " << start << " " << end);
+      } catch (std::exception &e) {
+        ROS_INFO_STREAM("@TP::Failed to publish story: "
+                         << sensor.str() << " " << start << " " << end << " "
+                         << e.what());
+      }
+
+      
+      {
+        std::lock_guard<std::mutex> guard(stories_pending_mutex_);
+        auto it = stories_pending_.find(key);
+        if (it == stories_pending_.end()) {
+          ROS_WARN_STREAM("Story " << key << " processing entry disappeared");
+          break;
+        } else if (it->second == JOB_PROCESSING) {
+          ROS_INFO_STREAM("TP::Story " << key << " done");
+          stories_pending_.erase(it);
+          break;
+        } else {
+          ROS_INFO_STREAM("Story " << key << " was scheduled for re-processing");
+        }
+      }
+    }
+  }
+  if (g_quitting) {
+    ROS_INFO("g_quitting: track_publisher thread ended\n");
+  }
+  return STORY_PROCESSED;
+}
+
+TrackPublisher::StoryJobResult TrackPublisher::publishStoryInternal(
+  const string& key, const SensorId& sensor, int64_t start, int64_t end,
+  int level, const GenerateOptions& options, uint64_t* story_end)
+{
+  try {
+  ROS_INFO_STREAM("TP::publishStoryInternal() Story " << key << " is starting to be published");
+
+  MongoStory story { sensor, level, start };
+  story.duration_ = end-start;
+
+  if (!options.update) {
+    unique_ptr<m::DBClientBase> mc = mongo();
+    static const m::BSONObj FIELDS = BSON("_id" << 1);
+    auto cursor = mc->query("snitch.stories", story, 1, 0, &FIELDS);
+    if (cursor->more()) {
+      ROS_INFO_STREAM("TP::publishStoryInternal() Story " << key
+                      << ", " << story.duration_ << " exists, not updating");
+      return STORY_NOT_UPDATED;
+    }
+  }
+
+  vector<TrackDataset::Ptr> events = this->events(sensor, start, end, 50);
+  
+  // Aggregate labels
+  for (auto ev : events) {
+    MongoEvent me(sensor, ev); // TODO: this is lame, events() should load MongoEvent directly :-(
+    for (string label : me.labels_) {
+      story.labels_.emplace(label, 0).first->second += 1;
+    }
+  }
+
+  bool story_in_s3 = false;
+  try {
+    if (isSnippetsEnabled()) {
+      ROS_INFO_STREAM("TP::publishStoryInternal() Preparing story snippet " << key);
+      auto snippet = std::make_shared<std::stringstream>();
+      SmartTimelapse::computeTimelapse(sensor, events, *snippet, true, .001f * start, .001f * end, story_end);
+      int length = snippet->tellp();
+      if (length > 0) {
+        story_in_s3 = publishSnippet(key, snippet);
+      } else {
+        ROS_WARN("Not publishing empty video snippet");
+      }
+      ROS_INFO_STREAM("TP::publishStoryInternal() Prepared story snippet " << key);
+    }
+  } catch (std::exception& e)
+  {
+    ROS_WARN_STREAM("TP::publishStoryInternal() Couldn't prepare story snippet "
+                     << story.device_.str() << " "
+                     << story.start_ << " "
+                     << story.duration_ << " "
+                     << e.what()); 
+  }
+
+  if (story_in_s3) {
+    try {
+      ROS_INFO_STREAM("TP::publishStoryInternal() Pushing story into mongo: " << key
+                      << story.device_.str() << " "
+                      << story.level_ << " "
+                      << story.start_ << " "
+                      << story.duration_);
+
+      mongo()->update("snitch.stories", story, story, true);
+      ROS_INFO_STREAM("TP::publishStoryInternal() Pushed story into mongo: " << key);
+    } catch (std::exception& e) {
+      ROS_WARN_STREAM("TP::publishStoryInternal() Couldn't persist story "
+                       << story.device_.str() << " "
+                       << story.start_ << " "
+                       << story.duration_ << " "
+                       << e.what());
+    }
+    auto generated = options.generated;
+    if (generated) generated->insert(key);
+  }
+
+  ROS_INFO_STREAM("TP::publishStoryInternal() Story persisted " << key);
+  return STORY_PROCESSED;
+  } catch (std::exception& e)
+  {
+    ROS_WARN_STREAM("@@@ TP::publishStoryInternal() caught exception "
+                     << sensor.str() << " "
+                     << start << " "
+                     << end << " "
+                     << e.what()); 
+  }
+  return STORY_NOT_UPDATED;
+}
+
+
+string TrackPublisher::makeKey(const SensorId& sensor, uint64_t millis) {
+  std::ostringstream buffer;
+  buffer << sensor.compact() << '/' << std::hex << std::setw(12) << std::setfill('0') << millis;
+  return buffer.str();
+}
+
+m::OID TrackPublisher::makeOid(const SensorId& sensor, uint64_t millis) {
+  struct {
+    uint8_t secs[4];
+    uint8_t msecs[2];
+    uint8_t device[6];
+  } id;
+  static_assert(sizeof(id.secs) == mongo::OID::kTimestampSize, "must match mongo::OID timestamp size");
+  static_assert(sizeof(id) == mongo::OID::kOIDSize, "must match mongo::OID size");
+
+  uint32_t secs = millis / 1000;
+  id.secs[0] = secs >> 24;
+  id.secs[1] = secs >> 16;
+  id.secs[2] = secs >> 8;
+  id.secs[3] = secs >> 0;
+
+  uint_fast16_t msecs = millis % 1000;
+  id.msecs[0] = msecs >> 8;
+  id.msecs[1] = msecs >> 0;
+
+  std::copy(sensor.packed().begin(), sensor.packed().end(), id.device);
+  return mongo::OID::from(&id);
+}
+
+unique_ptr<m::DBClientBase> TrackPublisher::mongo() {
+  string error;
+  m::ConnectionString mcs = m::ConnectionString::parse(FLAGS_mongo_uri, error);
+  if (!mcs.isValid())
+  {
+    ROS_WARN_STREAM("invalid mongo_uri: " + error);
+    throw std::invalid_argument("invalid mongo_uri: " + error);
+  }
+  unique_ptr<m::DBClientBase> mc(mcs.connect(error, FLAGS_mongo_socket_timeout));
+  if (!mc)
+  {
+    ROS_WARN_STREAM("mongo connect failed: " + error);
+    throw std::runtime_error("mongo connect failed: " + error);
+  }
+  return mc;
+}

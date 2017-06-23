@@ -1,0 +1,19 @@
+#pragma once
+
+private:
+  cv::Mat K_rgb_;
+  cv::Mat dist_params_rgb_;
+
+  cv::Mat K_depth_;
+  cv::Mat dist_params_depth_;
+
+  cv::Mat RT_;
+
+  cv::Mat rotation_matrix_;
+  cv::Mat rotation_vector_;
+  cv::Mat translation_vector_;
+
+  static const int radius_ = 5;
+};
+
+}

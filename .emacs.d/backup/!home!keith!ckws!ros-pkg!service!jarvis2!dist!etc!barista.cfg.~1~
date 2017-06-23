@@ -1,0 +1,11 @@
+--assert_action=throw
+--config=/opt/jarvis/jarvis2/etc/config/mosaic.yml
+--caffe_config_path=/opt/jarvis/jarvis2/etc/config
+--barista_host=deep4
+--barista_user=hendrik
+--barista_password=jarvis42
+--barista_threads=8
+--record_tds=/opt/jarvis/var/jarvis-cache/tds
+--record_archive=/opt/jarvis/var/jarvis-cache/archive
+--snippet_backup_dir=/opt/jarvis/var/jarvis-cache/snippets
+--alexandria_mode=true

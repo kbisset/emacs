@@ -1,0 +1,48 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch feature/jarvis2-alexandria
+# Your branch is up-to-date with 'origin/feature/jarvis2-alexandria'.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/jarvis/CMakeLists.txt
+#	modified:   ros-pkg/core/jarvis/src/lib/tracker.cpp
+#	new file:   ros-pkg/core/jarvis/src/test/test_calibration.cpp
+#	modified:   ros-pkg/core/video_archive/src/lib/rgbd_stream_decoder.cpp
+#	modified:   ros-pkg/service/jarvis2/src/prog/TaskReader.cpp
+#	modified:   ros-pkg/service/jarvis2/src/prog/jarvis2.cpp
+#	renamed:    ros-pkg/utility/sherlock/package.xml -> ros-pkg/utility/sherlock/package.xml-disable
+#
+# Untracked files:
+#	ros-pkg/buildtools/catkin_simple/cmake/catkin_simple-extras.cmake.em.orig
+#	ros-pkg/core/deep_depth_experiment/src/backend_scripts/aggregate_video.orig
+#	ros-pkg/core/jarvis/src/lib/jarvis.cpp.orig
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.BACKUP.3892.cpp
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.BASE.3892.cpp
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.LOCAL.3892.cpp
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.REMOTE.3892.cpp
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.orig
+#	ros-pkg/core/jarvis/src/lib/track_publisher.cpp.orig
+#	ros-pkg/core/jarvis/src/lib/track_streamer.cpp.orig
+#	ros-pkg/core/jarvis/src/lib/tracker.cpp.orig
+#	ros-pkg/core/jarvis_extra/CMakeLists.txt.orig
+#	ros-pkg/core/online_learning/CMakeLists.txt.orig
+#	ros-pkg/core/online_learning/src/lib/blob.cpp.orig
+#	ros-pkg/core/ubercam_msgs/CMakeLists.txt.orig
+#	ros-pkg/core/ubercam_msgs/src/lib/rgbd_frame.cpp.orig
+#	ros-pkg/core/video_archive/CMakeLists.txt.orig
+#	ros-pkg/core/video_archive/src/lib/rgbd_stream_decoder.cpp.orig
+#	ros-pkg/external/cpp-netlib/CMakeLists.txt.orig
+#	ros-pkg/service/doorman_client/CMakeLists.txt.orig
+#	ros-pkg/service/jarvis2/src/prog/TaskReader.cpp.orig
+#	ros-pkg/service/jarvis2/src/prog/jarvis2.cpp.orig
+#	ros-pkg/service/veneer/src/main/java/ai/snitch/veneer/WitQueryParser.java.orig
+#	ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTest.java.BACKUP.10681.java
+#	ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTest.java.BASE.10681.java
+#	ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTest.java.LOCAL.10681.java
+#	ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTest.java.REMOTE.10681.java
+#	ros-pkg/utility/bag_of_tricks/include/bag_of_tricks/image_indexer.h.orig
+#	ros-pkg/utility/pcl_flags/CMakeLists.txt.orig
+#	ros-pkg/utility/sherlock/CMakeLists.txt.orig
+#	ros-pkg/utility/sherlock/include/
+#

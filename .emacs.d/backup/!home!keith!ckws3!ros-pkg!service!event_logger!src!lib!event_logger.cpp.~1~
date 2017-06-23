@@ -1,0 +1,9 @@
+#include "event_logger/event_logger.h"
+ROS_INFO_STREAM("Task Started: " 
+                    << task.site_id() << "/"
+                    << SensorId(task.sensor_id()).str() << " "
+                    << task.segment_timestamp() << " " 
+                    << start_time << "."
+                    << std::setw(3) << std::setfill('0') << (task.segment_timestamp()%1000)); 
+
+  void recordTaskStart(uint64_t site, uint64_t timestamp);

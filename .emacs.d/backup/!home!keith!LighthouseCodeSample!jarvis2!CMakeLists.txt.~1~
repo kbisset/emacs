@@ -1,0 +1,57 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(jarvis2)
+find_package(catkin_simple REQUIRED)
+catkin_simple(ALL_DEPS_REQUIRED)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+
+# openssl for cpp-netlib
+find_package(OpenSSL REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NETWORK_ENABLE_HTTPS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ENABLE_ASSERT_HANDLER")
+
+FIND_PACKAGE ( Threads REQUIRED )
+
+find_package(Boost REQUIRED COMPONENTS  iostreams system locale date_time thread timer chrono)
+
+if(NOT Boost_FOUND)
+    message( FATAL_ERROR "boost must be installed")
+endif()
+include_directories(include ${Boost_INCLUDE_DIRS})
+
+cs_add_executable(jarvis2
+  src/prog/jarvis2.cpp
+  src/prog/ArchiveReader.cpp
+  src/prog/TaskReader.cpp
+  src/prog/dumpBuf.cpp
+  src/prog/frameQueue.cpp
+  src/prog/jarvis_main.cpp
+  )
+
+target_link_libraries(jarvis2
+  profiler
+  cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json
+  xmlrpc_util xmlrpc xmlrpc_client
+  avformat avcodec avutil
+  curl
+  gflags
+  ${OpenSSL_LIBRARIES}
+  ${Boost_LIBRARIES}
+  icuuc icui18n
+  opencv_highgui
+  tcmalloc
+ )
+
+# cs_add_executable(read_shard
+#   src/example/read_shard.cpp
+# )
+
+# target_link_libraries(read_shard
+#   gflags
+#   ${Boost_LIBRARIES}
+#   opencv_highgui
+# )
+
+cs_add_executable(generate_timelapse src/prog/generate_timelapse.cpp)
+target_link_libraries(generate_timelapse profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl gflags ${OpenSSL_LIBRARIES} ${Boost_LIBRARIES} icuuc icui18n opencv_highgui tcmalloc)
+
+cs_export()

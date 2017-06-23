@@ -1,0 +1,26 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <bag_of_tricks/sensor_site.h>
+#include <bag_of_tricks/sensorid.h>
+#include <video_archive/rgbd_stream_decoder.h>
+#include <video_archive/va_reader.h>
+#include <performance_statistics/performance_statistics.h>
+#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
+#include <online_learning/blob.h>
+#include <jarvis/sequence_track_processor.hpp>
+#include <jarvis/track.h>
+#include <online_learning/dataset.h>
+#include <opencv/cv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <timer/profile.h>
+#include <yaml-cpp/yaml.h>
+#include <omp.h>
+#include <gflags/gflags.h>
+#include <mutex>
+#include <chrono>
+
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include "mongo/client/dbclient.h"

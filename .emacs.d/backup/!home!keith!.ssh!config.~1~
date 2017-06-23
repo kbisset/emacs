@@ -1,0 +1,8 @@
+host github
+   hostname github.com
+   IdentityFile ~/.ssh/macbook-git
+   ControlPath ~/.ssh/master-%r@%h:%p
+   ControlMaster auto
+   GSSAPIAuthentication no
+   GSSAPIKeyExchange no
+   AddressFamily inet

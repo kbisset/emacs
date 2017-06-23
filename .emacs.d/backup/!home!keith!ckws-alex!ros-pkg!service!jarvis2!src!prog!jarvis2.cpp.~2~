@@ -1,0 +1,563 @@
+#include "jarvis2/jarvis2.h"
+#include "jarvis2/frameQueue.h"
+#include "doorman_client/convert.h"
+#include "doorman_client/amqp_utils.h"
+
+#include "jarvis/classic_track_processor.h"
+#include "jarvis/descriptor_pipeline.h"
+#include "jarvis/discrete_bayes_filter.h"
+#include "jarvis/jarvis_nucleus_pinger.h"
+#include "jarvis/motion.h"
+#include "jarvis/server.h"
+#include "jarvis/superimage_track_processor.hpp"
+#include "jarvis/track.h"
+#include "jarvis/tracker.h"
+#include "jarvis/track_processor.h"
+#include "jarvis/track_publisher.h"
+#include "jarvis/track_streamer.h"
+#include "name_mapping/name_mapping.h"
+
+#include <bag_of_tricks/connected_components.h>
+#include <bag_of_tricks/next_path.h>
+#include <bag_of_tricks/stringprintf.h>
+#include <bag_of_tricks/thread.h>
+#include <eigen_extensions/eigen_extensions.h>
+#include <functional>
+#include <future>
+#include <gflags/gflags.h>
+#include <iostream>
+#include <online_learning/grid_classifier.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <openni2_interface/openni_helpers.h>
+#include <snitch_protocols/alert.pb.h>
+#include <string>
+#include <sys/stat.h>
+#include <thread>
+#include <timer/profile.h>
+#include <ubercam_msgs/CompressedRGBD.h>
+#include <unistd.h>
+#include <vector>
+#include <video_archive/rgbd_stream_decoder.h>
+#include <video_archive/va_file.h>
+#include <video_archive/va_reader.h>
+#include <video_archive/va_writer.h>
+#include <video_codec/video_encoder.h>
+#include <video_codec/video_stream_wrapper.h>
+#include <video_codec/video_utils.h>
+#include <websocketpp/config/asio.hpp>
+#include <websocketpp/server.hpp>
+#include <yaml-cpp/yaml.h>
+
+extern "C" {
+#include <libavformat/avformat.h>
+}
+
+namespace bfs = boost::filesystem;
+using ubercam_msgs::CompressedRGBD;
+using ubercam_msgs::CompressedRGBDPtr;
+using ubercam_msgs::CompressedRGBDConstPtr;
+using snitch::sensor::SensorFrame;
+
+using namespace Eigen;
+using namespace Jarvis2;
+using namespace std;
+
+const int kMinTrackLength = 15;
+const int kMaxTrackLength = 600;
+const int kNumTCAs = 15;
+
+typedef websocketpp::lib::shared_ptr<boost::asio::ssl::context> context_ptr;
+DECLARE_int32(ws_port);
+DECLARE_bool(publish_tracks);
+DECLARE_string(dump_vis_frames);
+DECLARE_bool(register_with_nucleus);
+DECLARE_bool(skip_classification);
+DEFINE_string(fake_classification, "", "If defined, classify all objects as this");
+DECLARE_bool(publish_tracks);
+DECLARE_int32(vis_level);
+DECLARE_int32(track_min_length);
+DECLARE_int32(track_max_length);
+DEFINE_string(read_proto, "", "Read+process these .proto files instead of listening network");
+
+Jarvis::Jarvis(string td_directory,
+               string archive_directory,
+               bool server,
+               FrameQueue& q)
+  : Agent("Jarvis"),
+    record_(false),
+  min_predictions_(1),
+  min_confidence_(0),
+  tracker_(new Tracker(FLAGS_vis_level)),
+    archive_directory_(archive_directory),
+  queue_(q),
+  expected_buffer_size_(20),
+  prev_process_time_(ros::Time::now())
+{
+  if (FLAGS_publish_tracks) {
+    ROS_INFO_STREAM("Enabling track publisher");
+    track_publisher_.reset(new TrackPublisher());
+  }
+
+  if (!td_directory.empty())  {
+    ROS_INFO_STREAM("Jarvis: Saving TD files to \"" << td_directory << "\"");
+    streamer_ = TrackStreamer::Ptr(
+      new TrackStreamer(td_directory, false, track_publisher_));
+    NameMapping default_cmap;
+    default_cmap.addName("interesting");
+
+    if (server) {
+      track_server_.reset(new TrackServer(td_directory, this, track_publisher_));
+      track_server_->setTrackIdentifier(streamer_->track_identifier_);
+    }
+  }
+  ROS_INFO("Jarvis using vis_level %d", FLAGS_vis_level);
+//  if(FLAGS_vis_level > 0)
+    //    cv::namedWindow("tracks", cv::WINDOW_NORMAL | cv::WINDOW_OPENGL );
+//    cv::namedWindow("tracks", cv::WINDOW_NORMAL);
+}
+
+void Jarvis::flush()
+{
+  streamer_.reset();
+  track_publisher_.reset();
+}
+
+void Jarvis::setClassifier(const std::string &config_file,
+                           std::shared_ptr<GridClassifier> gc)
+{
+  std::lock_guard<std::mutex> guard(tcas_mutex_);
+  for(int i = 0; i < kNumTCAs; ++i) {
+    TrackProcessor::Ptr classifier;
+    if (gc) {
+      classifier.reset(new ClassicTrackProcessor(YAML::LoadFile(config_file), gc));
+    } else {
+      classifier.reset(new SuperImageTrackProcessor(config_file));
+    }
+    TrackProcessorAgent::Ptr tca(new TrackProcessorAgent(classifier));
+    inactive_tcas_.push_back(tca);
+    tca->launch();
+  }
+}
+
+TrackProcessorAgent::Ptr Jarvis::getTrackProcessorAgent(size_t track_id)
+{
+  std::lock_guard<std::mutex> guard(tcas_mutex_);
+
+  if(active_tcas_.count(track_id))
+    return active_tcas_[track_id];
+
+  if(inactive_tcas_.empty()) {
+    //This shouldn't happen much.  Because DP initialization is slow, this could result in mostly-unclassified tracks or slow user experience.");
+    ROS_INFO_STREAM("Cannot create new TCA on the fly (" << active_tcas_.size() << ", "
+                     << inactive_tcas_.size() << ")");
+    boost::assert_backtrace();
+    return nullptr;
+  }
+  active_tcas_[track_id] = inactive_tcas_.back();
+  inactive_tcas_.pop_back();
+  TrackProcessorAgent::Ptr tca = active_tcas_[track_id];
+
+  tca->reset(tracks_[track_id]);
+  tcas_mutex_.unlock();
+
+  return tca;
+}
+
+// -- Update tracks_ with tracked_blobs contents.
+void Jarvis::updateTracks(uint64_t frame_id,
+                          const std::map<size_t, TrackedObject> &tracker_tracks,
+                          std::string sensor_id)
+{
+  for (auto const& entry : tracker_tracks) {
+    // If we have a track with this id, add the blob to that track.
+    // Otherwise create a new track with this id and initialize it with just this blob.
+    size_t id = entry.first;
+    const Instance& frame = *(entry.second.instance_);
+
+    auto insert = tracks_.emplace(id, std::make_shared<Track>(sensor_id, id));
+    Track& track = *(insert.first->second);
+    if (insert.second) {
+      track.dataset_->applyNameMapping("cmap", NameMapping());  // real cmap will be set by TrackProcessor
+      track.dataset_->applyNameMapping("dmap", NameMapping());  // don't store descriptors
+    } else {
+      // Don't accept duplicate frames
+      auto blob = frame.raw<Blob::ConstPtr>();
+      auto prev_blob = track.dataset_->instances_.back().raw<Blob::ConstPtr>();
+      if (blob->wall_timestamp_.toSec() <= prev_blob->wall_timestamp_.toSec()) continue;
+    }
+
+    track.dataset_->instances_.push_back(frame);
+    Instance& added = track.dataset_->instances_.back();
+    added.deleteDescriptors();
+    added.descriptors_.clear();
+
+    track.latest_frame_id_ = frame_id;
+  }
+}
+
+void Jarvis::fakeDetect(std::string name)
+{
+  // Everything is a person!
+//  ROS_INFO_STREAM("fakeDetect " << name);
+  // This is incerdibally ugly. Just saying.
+  const NameMapping& cmap = !inactive_tcas_.empty()
+    ?(*inactive_tcas_.begin())->processor()->nameMapping("cmap")
+    :active_tcas_.begin()->second->processor()->nameMapping("cmap");
+
+  for(auto it = tracks_.begin(); it != tracks_.end(); ++it) {
+    // ROS_INFO_STREAM("Size: " << cmap.size());
+    // auto names = cmap.names();
+    // for (const auto& n : names)
+    //   ROS_INFO_STREAM("l: " << n);
+    Label person = Eigen::VectorXf::Zero(cmap.size());
+    auto idx = cmap.toId(name);
+    person[idx] = 1.0;
+    it->second->dataset_->applyNameMapping("cmap", NameMapping(cmap));
+    it->second->dataset_->applyNameMapping("dmap", NameMapping());
+    it->second->dataset_->setLabel(person);
+  }
+}
+
+void Jarvis::detect()
+{
+  PROFILE_FUNC;
+  vector<TrackProcessorAgent::Ptr> tcas;
+
+  // Make frame predictions for active tracks
+  for(auto it = tracks_.begin(); it != tracks_.end(); ++it) {
+    if(it->second->latest_frame_id_ == tracker_->frame_id_) {
+      // If the track has a new frame, classify
+      TrackProcessorAgent::Ptr tca = getTrackProcessorAgent(it->first);
+      if (!tca) continue;
+
+      ClassificationJob job = { it->first, (int)it->second->dataset_->size()-1,
+          (it->second->dataset_->size() == FLAGS_track_max_length ?
+          ClassificationJob::CLASSIFY_SEQUENCE :
+          ClassificationJob::CLASSIFY_FRAME) };
+      tca->push(job);
+      tcas.push_back(tca);
+    } else {
+      if (it->second->dataset_->size() > 1)
+        ROS_INFO("trackend size %zu ", it->second->dataset_->size());
+      // otherwise, the track is finished - classify all of it
+      if (it->second->dataset_->size() > FLAGS_track_min_length) {
+        TrackProcessorAgent::Ptr tca = getTrackProcessorAgent(it->first);
+        if (!tca) continue;
+
+        ClassificationJob job = { it->first, (int)it->second->dataset_->size()-1,
+            ClassificationJob::CLASSIFY_SEQUENCE };
+        tca->push(job);
+        tcas.push_back(tca);
+      } else {
+        inactive_tcas_.push_back(getTrackProcessorAgent(it->first));
+        std::lock_guard<std::mutex> guard(tcas_mutex_);
+        active_tcas_.erase(it->first);
+      }
+    }
+  }
+  
+  // Block on classification.
+  // TODO(hendrik): make this a cond variable
+  for (size_t i = 0; i < tcas.size(); ++i) {
+    ROS_ASSERT(tcas[i]->numResultsReady(true) > 0);
+
+    ClassificationJob job = tcas[i]->popNextResult();
+    if (job.type_ == ClassificationJob::CLASSIFY_SEQUENCE) {
+      ROS_INFO_STREAM( "Track " << job.track_id_ << " done. result "
+                       << tracks_[job.track_id_]->overall_label_->transpose()
+                       << " Moving TCA to inactive.");
+      std::lock_guard<std::mutex> guard(tcas_mutex_);
+      inactive_tcas_.push_back(tcas[i]);
+      active_tcas_.erase(job.track_id_);
+      // Clear cached information from that track.
+      // Note that there is a big difference here between .reset() and ->reset().
+      tcas[i]->reset(nullptr);
+    }
+  }
+
+// ROS_INFO_STREAM("TCA STATUS: "
+//      << tracks_.size() << " tracks, "
+//      << inactive_tcas_.size() << " inactive, "
+//      << active_tcas_.size() << " active.");
+}
+
+bool Jarvis::processArchive(const string &filename, bool *g_quitting, uint32_t offset)
+{
+  
+  ROS_INFO("reading archive file %s", filename.c_str());
+  VideoArchiveFile f;
+  f.open(filename, offset);
+  tracker_->reset();
+  
+  CompressedRGBDPtr msg(new CompressedRGBD());
+  int numFrames=0;
+  while (f.readNext(msg.get()) && !*g_quitting) {
+    std::time_t t = (time_t)msg->header.stamp.toSec();
+    std::tm tm = *std::localtime(&t);
+    char ts[200];
+    std::strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &tm);
+    ROS_INFO_THROTTLE(1, "processing CompressedRGBD for time %s, %d frames", ts, numFrames);
+    processMessage(msg);
+    numFrames++;
+    msg.reset(new CompressedRGBD());
+  }
+  ROS_INFO("Processed %d frames.", numFrames);
+  return true;
+}
+
+
+bool Jarvis::processQueue(uint64_t taskId, bool end)
+{
+  
+  ROS_INFO("processing queued frames");
+  int numFrames=0;
+  while (!queue_.empty())
+  {
+    SensorFrame sframe = queue_.popSensorFrame();
+    std::time_t t = (time_t)(sframe.timestamp()/1000);
+    std::tm tm = *std::localtime(&t);
+    char ts[200];
+    std::strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &tm);
+    SensorId sensorid(sframe.sensor_id());
+//    ROS_INFO_THROTTLE(1, "processing CompressedRGBD for time %s, sensor %s", ts, sensorid.str().c_str());
+    processFrame(taskId, sframe);
+    numFrames++;
+    VideoArchiveReader::instance()->clearOldCacheEntries(30, 1);
+  }
+  if (end) streamer_->flush();
+  ROS_INFO_STREAM("Task " << std::hex << taskId << std::dec << " processed " << numFrames << " frames, end=" << end);
+  return true;
+}
+
+void Jarvis::_run()
+{
+  JarvisNucleusPinger pinger(true);
+  if (FLAGS_register_with_nucleus)
+    pinger.launch();
+
+  while(!quitting_) {
+    CompressedRGBDConstPtr msg;
+    {
+      PROFILE_BLOCK("Jarvis::_run")
+      ROS_ASSERT(!msg);
+//       {
+//         std::unique_lock<std::mutex> lock(buffer_mutex_);
+//         if (buffer_.empty()) {
+//           buffer_cond_.wait_for(lock, std::chrono::milliseconds(2000),
+//                                     [&] { return !buffer_.empty(); });
+//         }
+      static ros::Time last_good_msg = ros::Time::now();
+
+      if (queue_.empty()) {
+          ROS_WARN_STREAM_THROTTLE(2, "Buffer underrun!");
+          if ((ros::Time::now() - last_good_msg).toSec() > 5) {
+            pinger.streaming = false;
+          }
+        } else {
+          last_good_msg = ros::Time::now();
+          pinger.streaming = true;
+        }
+
+// //        double period = expected_playback_period_ * ((double)expected_buffer_size_ / buffer_.size());
+//         //cout << "period: " << period << " " << buffer_.size() << " / " << expected_buffer_size_ << endl;
+//         if(buffer_.size() > expected_buffer_size_ * 2)
+//           ROS_WARN_STREAM_THROTTLE(1, "Jarvis is not keeping up with messages.  Buffer size: "
+//                                    << buffer_.size());
+//         if(!buffer_.empty()) { // && (ros::Time::now() - prev_process_time_).toSec() > period) {
+//           msg = buffer_.front();
+//           buffer_.pop();
+//         }
+//       }
+      msg = queue_.popCRGBDFrame();
+
+      if(msg)
+        processMessage(msg);
+      VideoArchiveReader::instance()->clearOldCacheEntries(30, 1);
+    }
+  }
+  if (FLAGS_register_with_nucleus) {
+    pinger.alive = false;
+    pinger.streaming = false;
+    pinger.stop();
+    jarvisNucleusLogin(false, false);
+  }
+}
+
+void Jarvis::processFrame(uint64_t taskId, SensorFrame& sframe)
+{
+  prev_process_time_ = ros::Time::now();
+  PROFILE_FUNC;
+  ubercam_msgs::CompressedRGBDPtr msg =  Doorman::SensorFrameToCompressedRGBD(sframe);
+
+  // Run the tracker.
+  bool track_result = tracker_->update(msg);
+
+  // Write compressed data to disk.
+//  ROS_INFO_STREAM("Archive Directory: '" << archive_directory_ << "'");
+ #if 0
+ if (archive_directory_ != "") {
+    if (!archive_writer_) {
+      archive_writer_ = std::make_shared<VideoArchiveWriter>(VideoArchiveReader::instance());
+      archive_writer_->open(archive_directory_);
+    }
+    archive_writer_->write(*msg.get());
+  }
+#endif
+
+<<<<<<< HEAD
+=======
+ // if (track_publisher_ && VideoUtils::isKeyFrame(VideoUtils::getFrameType(msg->compressed_color))) {
+ //    track_publisher_->onKeyframe(SensorId(msg->sensor_id), tracker_->rsd_->frame());
+//  }
+
+// ROS_INFO_STREAM("processFrame " << track_result << " " << streamer_);
+
+>>>>>>> J2A: Additional Alexandria changes
+  if (!track_result || !streamer_)
+    return;
+
+  updateTracks(tracker_->frame_id_, tracker_->tracks_, msg->sensor_id);
+
+  // -- Classify blobs, accumulate predictions for each track, and send Detection messages.
+  //    Assumes tracker_ has been updated.
+  if(!FLAGS_skip_classification)
+    detect();
+  if (!FLAGS_fake_classification.empty())
+    fakeDetect(FLAGS_fake_classification);
+  
+  Doorman::EnqueueAlert ea(sframe.site_id(), taskId);
+  streamer_->update(tracks_, tracker_->frame_id_,
+                    track_server_.get(), ea);
+
+  //#ifndef NO_GUI
+#if 0
+  if (FLAGS_vis_level > 0) {
+    PROFILE_BLOCK("visualize");
+    // -- Allocate memory if necessary.
+    if (color_vis_ == NULL
+        || color_vis_->rows != tracker_->color_.rows) {
+      cout << "Resizing color debug image to " << tracker_->color_.cols << "x"
+           << tracker_->color_.rows << endl;
+
+      color_vis_.reset(
+          new cv::Mat3b(
+              cv::Size(tracker_->color_.cols, tracker_->color_.rows)));
+    }
+    if (depth_vis_ == NULL
+        || depth_vis_->rows != tracker_->depth_.rows) {
+      cout << "Resizing depth debug image to " << tracker_->depth_.cols << "x"
+           << tracker_->depth_.rows << endl;
+
+      depth_vis_.reset(
+          new cv::Mat3b(
+              cv::Size(tracker_->depth_.cols, tracker_->depth_.rows)));
+    }
+    //color_vis_ = cv::Vec3b(127, 127, 127);
+    tracker_->color_.copyTo(*color_vis_);
+    depth_vis_->setTo(cv::Vec3b(0, 0, 0));
+
+    // -- Draw tracks.
+    draw(*color_vis_);
+
+
+    // Dump out vis frames if desired.
+    {
+      auto img = *color_vis_;
+      // TODO convert to readable time
+      time_t timeval = (time_t)(msg->frame_id/1000);
+      
+      struct tm* time = gmtime(&timeval);
+      stringstream text;
+      text << msg->sensor_id << " "
+           << time->tm_year-100 <<  "/"
+           << setw(2) << setfill('0') << time->tm_mon+1 << "/"
+           << setw(2) << setfill('0') << time->tm_mday << " "
+           << setw(2) << setfill('0') << time->tm_hour << ":"
+           << setw(2) << setfill('0') << time->tm_min << ":"
+           << setw(2) << setfill('0') << time->tm_sec << "."
+           << setw(3) << setfill('0') << msg->frame_id%1000 << "Z";
+      
+      int fontFace = cv::FONT_HERSHEY_PLAIN;
+      double fontScale = 1.8;
+      int thickness = 1.5;
+
+      int baseline=0;
+      cv::Size textSize = cv::getTextSize(text.str(), fontFace,
+                                          fontScale, thickness, &baseline);
+      baseline += thickness;
+
+      // center the text
+      cv::Point textOrg(0,30);
+
+      // draw the box
+      cv::rectangle(img, textOrg + cv::Point(0, baseline+10),
+                    textOrg + cv::Point(textSize.width, -(textSize.height+20)),
+                    cv::Scalar(0,0,0),
+                    -1);
+      // ... and the baseline first
+      // line(img, textOrg + Point(0, thickness),
+      //      textOrg + Point(textSize.width, thickness),
+      //      Scalar(0, 0, 255));
+
+      // then put the text itself
+      cv::putText(img, text.str(), textOrg, fontFace, fontScale,
+                  cv::Scalar(0, 255, 255), thickness, 8);
+      // int baseline = 0;
+      // auto size = cv::getTextSize(idstr, cv::FONT_HERSHEY_PLAIN, 2, 1, &baseline);  
+      // cv::rectangle(tmp, cv::Point(0,0), cv::Point(240, 20), cv::Scalar(0,0,0), -1);
+      // cv::putText(tmp, idstr, cv::Point(20, 30), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(255,255,255), 2,
+      //             0,            // LINE_8 
+      //             false);        // bott  om left origin
+      //      cv::imshow("tracks-"+boost::lexical_cast<string>(msg->sensor_id), img);
+      //      cv::imshow("tracks", img);
+      // cout << ".";
+      // cout.flush();
+    }
+
+    char key = cv::waitKey(2);
+
+    if(FLAGS_dump_vis_frames != "") {
+      if(!bfs::exists(FLAGS_dump_vis_frames))
+        bfs::create_directory(FLAGS_dump_vis_frames);
+      
+      static bool record = false;
+      if(key == ' ') {
+        record = !record;
+        cout << "Recording: " << record << endl;
+      }
+      if(record)
+        cv::imwrite(nextPath(FLAGS_dump_vis_frames, "vis-", ".jpg", 7), *color_vis_);
+    }
+    }
+#endif
+}
+
+
+void Jarvis::draw(cv::Mat3b img) const
+{
+  PROFILE_FUNC;
+  // -- Set up coloring.
+  cv::Vec3b grey(127,127,127);
+  cv::Vec3b green(109, 130, 64);
+  cv::Vec3b red(0, 0, 255);
+
+  ROS_ASSERT(img.rows % 4 == 0 && img.cols % 4 == 0);
+
+  // -- Draw the halos.
+  for (auto const& entry : tracks_) {
+    size_t track_id = entry.first;
+    const Track& track = *(entry.second);
+    if (track.moving_ <= 0) continue;
+
+    const Instance& frame = track.dataset_->instances_.back();
+    const Blob& blob = *frame.raw<Blob::ConstPtr>();
+
+    // Don't show old tracks.
+    if(blob.frame_id_ != track.latest_frame_id_)
+      continue;
+
+    cv::Vec3b color;
+    color = TrackProcessor::labelToColor(*track.overall_label_);
+    Blob::drawHalo(blob.indices_, color, &img);
+  }
+}

@@ -1,0 +1,33 @@
+#!/bin/bash
+# Starts jarvis2 instances that will restart when they die
+
+rundir=/disk/jarvis
+
+source /opt/ros/indigo/setup.bash
+source $HOME/ckws-alex/devel/setup.bash 
+export LD_LIBRARY_PATH=$HOME/jarvis2/devel/lib:$LD_LIBRARY_PATH
+export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
+
+# cmd="$HOME/ckws/devel/lib/jarvis2/jarvis2 \
+#          --config /opt/jarvis/lib/mosaic.yml  \
+#          --mongo_uri mongodb://deep3:27017 \
+#          --amqp_host deep3 \
+#          --classifier none \
+#          --doorman_host deep3 --doorman_port 38080 \
+#          --record_tds /opt/jarvis/var/jarvis-cache/tds \
+#          --record_archive /opt/jarvis/var/jarvis-cache/archive \
+#          --publish_tracks \
+#          --track_snippets \
+#          --s3_snippets=archive-test.snitch.ai \
+#          --assert_action throw \
+#          --ws_port 0"
+
+cmd="./jarvis2 --flagfile=$HOME/jarvis2/jarvis-tof.cfg"
+
+ulimit -c 0
+echo "Starting $1 jarvis2 instances: $cmd"
+
+
+logfile=jarvis2.log
+(while /bin/true ; do echo -n "*** Starting Jarvis2 ($num) at "; date --rfc-3339=seconds; nohup $cmd ; sleep 1; done ) >>$logfile 2>&1 &
+

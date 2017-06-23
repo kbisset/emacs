@@ -1,0 +1,9 @@
+#pragma once
+
+namespace {
+static bool shutdown;
+}
+
+namespace Jarvis {
+
+}

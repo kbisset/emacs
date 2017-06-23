@@ -1,0 +1,218 @@
+#!/bin/bash
+
+<<<<<<< HEAD
+if [ $# -lt 4 ]
+then
+    echo "Usage:"
+    echo "  aggregate_video HOST DEVICE_ID TIMESTAMP_BEGIN TIMESTAMP_END [OPT:LABEL] [OPT:>VALUE]"
+=======
+if [ $# -ne 4 ]
+then
+    echo "Usage:"
+    echo "  aggregate_video HOST DEVICE_ID TIMESTAMP_BEGIN TIMESTAMP_END"
+>>>>>>> J2-A: Add penguin compatibility - requires different cfg file
+    echo ""
+    echo "Output:"
+    echo "  a list of {DEV_ID}_{TIME_STAMP}.mp4 and {DEV_ID}_{TIME_STAMP}.json"
+    echo ""
+    echo "Example:"
+<<<<<<< HEAD
+    echo "  rosrun deep_depth_experiment aggregate_video deep3 00:e0:2d:81:0c:6e 2016-08-24T20:30:21Z 2016-08-24T20:30:50Z pet 0"
+=======
+    echo "  rosrun deep_depth_experiment aggregate_video deep3 00:e0:2d:81:0c:6e 2016-08-24T20:30:21Z 2016-08-24T20:30:50Z"
+>>>>>>> J2-A: Add penguin compatibility - requires different cfg file
+    echo ""
+    echo "  For a given pair of hostname, device ID (MAC addr) and a timestamp range,"
+    echo "  this script downloads all video clips that satisfy the condition."
+    echo "  The h264 video clips are converted to mp4 using ffmpeg after download."
+    echo "  With zero MAC address (00:00:00:00:00:00), it will search all devices in DB."
+    echo "  JSON file contains classification results stored in track database."
+    echo "  (MongoDB > 3.2 and ffmpeg are required)"
+    exit
+fi
+
+HOST=$1
+DEVICE=$2
+TIME_BEGIN=$3
+TIME_END=$4
+<<<<<<< HEAD
+PREDICTION_CLASS=$5
+GREATER_THAN=$6
+
+# for mongo database query
+MONGO_QUERY_LIMIT="300000"    # query up to the nb of documents
+MONGO_HOST="${HOST}.ubercam.net:27017"
+MONGO_DB="snitch"
+MONGO_COLL="events"
+MONGO_CMD="DBQuery.shellBatchSize = $MONGO_QUERY_LIMIT; \
+           db.$MONGO_COLL.find({\"start\":{\"\$gte\" : ISODate(\"$TIME_BEGIN\"),\
+                                            \"\$lt\" : ISODate(\"$TIME_END\")}"
+
+# do not condition on device if 00:00:00:00:00:00
+if [ "$DEVICE" == "00:00:00:00:00:00" ] || [ "$DEVICE" == "?" ]; then
+  MONGO_CMD="$MONGO_CMD"
+else
+  MONGO_CMD="$MONGO_CMD, device:\"$DEVICE\""
+fi
+
+# allow query only for the specified class
+if [ "$MONGO_COLL" == "tracks" ]; then
+  if [ ! -z $PREDICTION_CLASS ] && [ ! -z $GREATER_THAN ]; then
+    MONGO_CMD="$MONGO_CMD, \"prediction.${PREDICTION_CLASS}\":{\$gt:$GREATER_THAN}"
+  fi
+elif [ "$MONGO_COLL" == "events" ]; then
+  if [ ! -z $PREDICTION_CLASS ]; then
+    MONGO_CMD="$MONGO_CMD, labels:{\$in:[\"$PREDICTION_CLASS\"]}"
+  fi
+else
+  exit
+fi
+
+# do not want to let binary data fill out whole screen (disable print)
+MONGO_CMD="$MONGO_CMD},{dataset:0})"
+echo "==> MongoDB shell command used for the given criteria"
+echo "mongo --host $MONGO_HOST $MONGO_DB --eval '"$MONGO_CMD"'"
+=======
+
+# for mongo database query
+MONGO_QUERY_LIMIT="300"    # query up to the nb of documents
+MONGO_HOST="${HOST}.ubercam.net:27017"
+MONGO_DB="snitch"
+MONGO_COLL="tracks"
+MONGO_CMD="DBQuery.shellBatchSize = $MONGO_QUERY_LIMIT; \
+           db.tracks.find({\"start\":{\"\$gte\" : ISODate(\"$TIME_BEGIN\"),\
+                                       \"\$lt\" : ISODate(\"$TIME_END\")}"
+
+# do not condition on device if 00:00:00:00:00:00
+if [ "$DEVICE" == "00:00:00:00:00:00" ]; then
+  MONGO_CMD="$MONGO_CMD},{dataset:0})"
+else
+  MONGO_CMD="$MONGO_CMD, device:\"$DEVICE\"},{dataset:0})"
+fi
+
+>>>>>>> J2-A: Add penguin compatibility - requires different cfg file
+
+# extract a JSON value (https://gist.github.com/cjus/1047794)
+json_val () {
+  echo "$1" | sed 's/\\\\\//\//g' | sed 's/[{}]//g' \
+    | awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' \
+    | sed 's/\"\:\"/\|/g' | sed 's/[\,]/ /g' | sed 's/\"//g' | grep -w "$2" | awk '{ print $3}'
+}
+
+# extract a JSON ISO date value
+json_ISOdate () {
+<<<<<<< HEAD
+  echo $(json_val "$1" "$2" | sed 's/ISODate(//' | sed 's/)//' | awk '{print $1; exit;}')
+=======
+  echo $(json_val "$1" "$2" | sed 's/ISODate(//' | sed 's/)//')
+>>>>>>> J2-A: Add penguin compatibility - requires different cfg file
+}
+
+# download a video from S3 when an exact timestamp is given
+wget_video () {
+  # mac address in hex
+  MAC_RAW="$1"
+  MAC_HEX=$(echo "$MAC_RAW" | sed 's/://g')
+
+  # date in hex
+  DATE_RAW="$2"
+
+  if [ "$(uname)" == "Darwin" ]; then
+    DATE_ISO=$(echo "$DATE_RAW" | sed -e 's/\.[0-9]*Z$/+0000/;s/Z$/+0000/')
+    DATE_SEC=$(date -j -f '%FT%T%z' $DATE_ISO '+%s')
+  else
+    DATE_ISO=$(echo "$DATE_RAW" | sed -e 's/[0-9]Z$/+0000/;s/Z$/+0000/')
+    DATE_SEC=$(date -d $DATE_ISO '+%s')
+  fi
+
+  DATE_MSEC=$(echo "$DATE_RAW" | grep -o '\.[0-9][0-9][0-9]Z$' | tr -cd 0-9)
+  DATE_DEC=${DATE_SEC}${DATE_MSEC}
+  DATE_HEX=$(printf '%012x\n' "$DATE_DEC")
+
+  # concat full url
+  URL_COMMON="https://s3-us-west-2.amazonaws.com/archive-test.snitch.ai"
+  URL_FULL_TRACK="${URL_COMMON}/${MAC_HEX}/${DATE_HEX}.h264"
+  URL_FULL_EVENT="${URL_COMMON}/${MAC_HEX}/${DATE_HEX}-event.h264"
+
+  # check if ffmpeg exists
+  command -v ffmpeg >/dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "==> ffmpeg does not exist, try:"
+    if [ "$(uname)" == "Darwin" ]; then
+      echo "  $ brew install ffmpeg"
+    else
+      echo "  $ sudo add-apt-repository ppa:mc3man/trusty-media (ubuntu 14.04)"
+      echo "  $ sudo apt-get update"
+      echo "  $ sudo apt-get install ffmpeg"
+    fi
+    exit
+  fi
+
+  # download if event exists
+  wget -O ${DATE_HEX}.h264 $URL_FULL_EVENT &> /dev/null
+  if [ $? -ne 0 ]; then
+
+    # download if track exists
+    wget -O ${DATE_HEX}.h264 $URL_FULL_TRACK &> /dev/null
+    if [ $? -ne 0 ]; then
+      echo "==> Unable to download [$MAC_RAW] ($DATE_RAW) from $URL_FULL_TRACK"
+      rm -f ${DATE_HEX}.h264
+      return 1
+    fi
+  fi
+
+  # convert to mp4
+  ffmpeg -y -i ${DATE_HEX}.h264 -f mp4 ${DATE_HEX}.mp4 < /dev/null &> /dev/null
+  if [ $? -ne 0 ]; then
+    echo "==> Unable to convert "$MAC_RAW $DATE_RAW $URL_FULL_TRACK
+  else
+    mv ${DATE_HEX}.mp4 ${MAC_RAW}_${DATE_RAW}.mp4
+  fi
+  rm -f ${DATE_HEX}.*
+}
+
+
+# query documents
+TEMP_DOCS="output.json"
+mongo --host $MONGO_HOST $MONGO_DB --eval "$MONGO_CMD" | sed '1,2d' > $TEMP_DOCS
+
+# count nb of docs
+NB_DOCS=$(cat $TEMP_DOCS | wc -l)
+if [ $NB_DOCS -eq 0 ]; then
+  echo "==> No document from [$DEVICE] ($TIME_BEGIN - $TIME_END) on $MONGO_HOST"
+  exit
+else
+  echo "==> $NB_DOCS documents found [$DEVICE] ($TIME_BEGIN-$TIME_END) on $MONGO_HOST"
+fi
+
+# for each document from DB
+cat $TEMP_DOCS | while read line; do
+  # get device ID and timestamp
+  VIDEO_DEVICE_ID=$(json_val "$line" "device")
+  VIDEO_TIMESTAMP=$(json_ISOdate "$line" "start")
+  if [ -z "$VIDEO_DEVICE_ID" ] || [ -z "$VIDEO_TIMESTAMP" ]; then
+    echo "==> Illigal device ID [$VIDEO_DEVICE_ID] or timestamp ($VIDEO_TIMESTAMP)"
+  else
+    echo "==> Accessing to the video [$VIDEO_DEVICE_ID] ($VIDEO_TIMESTAMP)"
+  fi
+
+  # download video
+  wget_video "$VIDEO_DEVICE_ID" "$VIDEO_TIMESTAMP"
+
+  # save json values
+<<<<<<< HEAD
+  echo $line | sed 's/{\ \"start/\'$'\n{\ \"start/g' \
+             | sed 's/\"device/\'$'\n\"device/g' \
+             | sed 's/\"site/\'$'\n\"site/g' \
+             | sed 's/\"seed/\'$'\n\"seed/g' \
+             | sed 's/\"prediction/\'$'\n\"prediction/g' \
+             | sed 's/\"start/\'$'\n\"start/g' \
+             | sed 's/\"duration/\'$'\n\"duration/g' \
+             | sed 's/\"tracks/\'$'\n\"tracks/g' \
+             | sed 's/\"label\"/\'$'\n\"label\"/g' \
+             | sed 's/\"labels/\'$'\n\"labels/g' > "${VIDEO_DEVICE_ID}_${VIDEO_TIMESTAMP}.json"
+=======
+  echo $line > "${VIDEO_DEVICE_ID}_${VIDEO_TIMESTAMP}.json"
+>>>>>>> J2-A: Add penguin compatibility - requires different cfg file
+done
+rm -f $TEMP_DOCS

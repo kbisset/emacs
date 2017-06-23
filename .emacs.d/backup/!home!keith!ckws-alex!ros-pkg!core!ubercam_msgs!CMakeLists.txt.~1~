@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(ubercam_msgs)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+
+#find_package(Protobuf REQUIRED)
+# As of Ubuntu 14.04 protoc is no longer a part of libprotobuf-dev package and should be installed
+# separately as in: sudo apt-get install protobuf-compiler
+#if(PROTOBUF_PROTOC_EXECUTABLE)
+#    message(STATUS "Found PROTOBUF Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
+#else()
+#    message(FATAL_ERROR "Could not find PROTOBUF Compiler")
+#endif()
+
+find_package(OpenCV REQUIRED COMPONENTS core imgproc)
+
+cs_add_library(${PROJECT_NAME}
+  src/lib/rgbd_frame.cpp
+  /usr/lib/x86_64-linux-gnu/libopencv_imgproc.so
+  )
+
+<<<<<<< HEAD
+cs_export(LIBRARIES opencv_core opencv_imgproc opencv_highgui)
+=======
+cs_export(LIBRARIES opencv_core opencv_imgproc)
+>>>>>>> Merge master into feature/jarvis2-alexandria

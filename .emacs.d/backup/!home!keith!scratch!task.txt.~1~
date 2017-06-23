@@ -1,0 +1,6 @@
+Works
+
+[ INFO] [1497579838.311010666] [7f8fb79d2080]: Canary Task task { sensor_id: 228763732296194 segment_timestamp: 1497488977000 site_id: "d00f3500000000000000000000000000" } end_frame_timestamp: 1497489046498 begin_walltime: 1497489077000 end_walltime: 1497489098000
+
+Not work
+[ INFO] [1497579969.265971027] [7f132cd86080]: Canary Task task { sensor_id: 228763732296193 segment_timestamp: 1497578218000 site_id: "d00f3500000000000000000000000000" } end_frame_timestamp: 1497578227900 begin_walltime: 1497578418000 end_walltime: 1497578427000

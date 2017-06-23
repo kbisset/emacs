@@ -1,0 +1,638 @@
+#include "online_learning/blob.h"
+
+#include <bag_of_tricks/image_indexer.h>
+#include <eigen_extensions/eigen_extensions.h>
+#include <openni2_interface/openni_helpers.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <online_learning/common.h>
+#include <pcl/common/common.h>
+#include <pcl/common/centroid.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <ros/assert.h>
+#include <video_archive/va_reader.h>
+#include <video_archive/rgbd_stream_decoder.h>
+#include <video_archive/va_reader.h>
+#include <ubercam_msgs/CompressedRGBD.h>
+#include <timer/profile.h>
+
+using namespace std;
+using namespace Eigen;
+
+size_t Blob::num_blobs_constructed_ = 0;
+size_t Blob::num_blobs_destructed_ = 0;
+std::mutex Blob::num_blobs_lock_;
+
+Blob::Blob()
+  : depth_width_(-1),
+    depth_height_(-1),
+    color_width_(-1),
+    color_height_(-1)
+{
+  // num_blobs_lock_.lock();
+  // ++num_blobs_constructed_;
+  // cout << "Constructing Blob " << endl;
+  // cout << "Num constructed: " << num_blobs_constructed_
+  //      << " Num destructed: " << num_blobs_destructed_ << endl;
+  // cout << "Constructed.  Num blobs floating around: "
+  //      << (int64_t)num_blobs_constructed_ - (int64_t)num_blobs_destructed_ << endl;
+  // num_blobs_lock_.unlock();
+}
+
+Blob::~Blob()
+{
+  // num_blobs_lock_.lock();
+  // ++num_blobs_destructed_;
+  // cout << "Destructing Blob " << endl;
+  // cout << "Num constructed: " << num_blobs_constructed_
+  //      << " Num destructed: " << num_blobs_destructed_ << endl;
+  // cout << "Destructed.  Num blobs floating around: "
+  //      << (int64_t)num_blobs_constructed_ - (int64_t)num_blobs_destructed_ << endl;
+  // num_blobs_lock_.unlock();
+}
+
+void Blob::loadFrom(std::shared_ptr<RGBDFrame> frame, const ROIBitMask &rbm)
+{
+  clearProjected();
+  sensor_id_ = frame->sensor_id_;
+  frame_id_ = frame->frame_id_;
+  sensor_timestamp_ = frame->sensor_timestamp_;
+  wall_timestamp_ = frame->wall_timestamp_;
+  depth_width_ = frame->depth_width();
+  depth_height_ = frame->depth_height();
+  color_width_ = frame->color_width();
+  color_height_ = frame->color_height();
+
+  // for some old tracks that have no size information
+  if (depth_width_ == 0)  depth_width_  = 320;
+  if (depth_height_ == 0) depth_height_ = 240;
+  if (color_width_ == 0)  color_width_  = 640;
+  if (color_height_ == 0) color_height_ = 480;
+
+  rbm_ = rbm;
+  rbm_.unpack(frame, &indices_);
+  gravity_ = frame->accel_;
+
+  const cv::Mat1f &stream_depth = frame->depth();
+  const cv::Mat3b &stream_color = frame->color();
+  ImageIndexer ii(stream_depth.cols, stream_color.cols);
+
+  depth_.resize(indices_.size());
+  color_.resize(indices_.size() * 3 * ii.scale_factor_ * ii.scale_factor_);
+
+  int num_zero = 0;
+  for (size_t i = 0; i < indices_.size(); i++) {
+    depth_[i] = stream_depth(indices_[i]);
+    if (depth_[i] == 0) {
+      num_zero++;
+      ROS_INFO("depth[%zu]=0 of %zu index[i]=%d ", i, indices_.size(),
+               indices_[i]);
+    }
+    ii.packColorFromMatrix(stream_color, indices_[i], &color_[0], i);
+  }
+  ROS_ASSERT_MSG(num_zero == 0, "Found %d points in a Blob that have no corresponding depth data.  That's not right.", num_zero);
+}
+
+void Blob::project(bool compute_kdtree) const
+{
+  PROFILE_FUNC;
+//  ROS_ASSERT(hasRaw());
+
+  cloud_.reset(new Cloud);
+  cloud_->reserve(indices_.size());
+  cloud_->is_dense = true;
+  float f = 525 * ((float)depth_width_ / 640);
+  float cu = depth_width_ / 2;
+  float cv = depth_height_ / 2;
+
+  int color_scale_factor = color_width_ / depth_width_;
+  int color_bytes_per_index = 3 * color_scale_factor * color_scale_factor;
+
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    ROS_ASSERT(depth_[i] > 0);
+    int idx = indices_[i];
+    int v = idx / depth_width_;
+    int u = idx - v * depth_width_;
+    Point pt;
+    pt.z = depth_[i];
+    pt.x = pt.z * (u - cu) / f;
+    pt.y = pt.z * (v - cv) / f;
+    pt.r = color_[i*color_bytes_per_index+2];
+    pt.g = color_[i*color_bytes_per_index+1];
+    pt.b = color_[i*color_bytes_per_index+0];
+    cloud_->push_back(pt);
+  }
+
+  Eigen::Vector4f centroid;
+  pcl::compute3DCentroid(*cloud_, centroid);
+  centroid_ = eigen_extensions::eigToVec(Eigen::Vector3f(centroid.head(3)));
+
+  if(compute_kdtree) {
+    kdtree_.reset(new KdTree(false));  // Don't sort the points.
+    if (cloud_ != nullptr)
+      kdtree_->setInputCloud(cloud_);
+    else
+      ROS_WARN("cloud_ == nullptr");
+  }
+
+  Point minpt, maxpt;
+  pcl::getMinMax3D(*cloud_, minpt, maxpt);
+  minpt_ = minpt.getVector3fMap().array();
+  maxpt_ = maxpt.getVector3fMap().array();
+}
+
+void Blob::clearProjected() const
+{
+  cloud_.reset();
+  kdtree_.reset();
+}
+
+void Blob::serialize(std::ostream& out) const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+  
+  serializeString(sensor_id_, out);
+  eigen_extensions::serializeScalar(frame_id_, out);
+  eigen_extensions::serializeScalar(sensor_timestamp_, out);
+  eigen_extensions::serializeScalar((uint64_t)wall_timestamp_.toNSec(), out);
+  eigen_extensions::serializeScalar(depth_width_, out);
+  eigen_extensions::serializeScalar(depth_height_, out);
+  eigen_extensions::serializeScalar(color_width_, out);
+  eigen_extensions::serializeScalar(color_height_, out);
+  rbm_.serialize(out);
+  eigen_extensions::serialize(gravity_, out);
+}
+
+bool Blob::deserialize(std::istream& in)
+{
+  deserializeString(in, &sensor_id_);
+  eigen_extensions::deserializeScalar(in, &frame_id_);
+  eigen_extensions::deserializeScalar(in, &sensor_timestamp_);
+  uint64_t nsec;
+  eigen_extensions::deserializeScalar(in, &nsec);
+  wall_timestamp_.fromNSec(nsec);
+  eigen_extensions::deserializeScalar(in, &depth_width_);
+  eigen_extensions::deserializeScalar(in, &depth_height_);
+  eigen_extensions::deserializeScalar(in, &color_width_);
+  eigen_extensions::deserializeScalar(in, &color_height_);
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  if (!rbm_.deserialize(in))
+    return false;
+  eigen_extensions::deserialize(in, &gravity_);
+  return true;
+}
+
+void Blob::image(cv::Mat3b *vis) const {
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(vis != NULL);
+  ROS_ASSERT(vis->cols == color_width_);
+  ROS_ASSERT(vis->rows == color_height_);
+
+  ImageIndexer ii(depth_width_, color_width_);
+
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    ii.unpackColorIntoMatrix(&color_[0], i, *vis, indices_[i]);
+  }
+
+  int border = 1;
+  for(int y = 0; y < vis->rows; ++y) {
+    for(int x = 0; x < vis->cols; ++x) {
+      if(y < border || y > vis->rows - 1 - border ||
+         x < border || x > vis->cols - 1 - border)
+      {
+        (*vis)(y, x) = cv::Vec3b(0, 0, 0);
+      }
+    }
+  }
+}
+
+cv::Mat3b Blob::image() const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat3b vis(cv::Size(color_width_, color_height_), cv::Vec3b(127, 127, 127));
+  image(&vis);
+
+  return vis;
+}
+
+cv::Rect Blob::centeredRoiTight() const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+
+  cv::Rect roi(1e6, 1e6, 0, 0);
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    int x = indices_[i] % depth_width_;
+    int y = indices_[i] / depth_width_;
+
+    if (x < roi.x) {
+      if (roi.width > 0) roi.width += roi.x - x;
+      roi.x = x;
+    }
+    if (y < roi.y) {
+      if (roi.height > 0) roi.height += roi.y - y;
+      roi.y = y;
+    }
+    roi.width = max(roi.width, x - roi.x);
+    roi.height = max(roi.height, y - roi.y);
+  }
+  return roi;
+}
+
+cv::Rect Blob::centeredRoi(float margin, bool color_roi) const
+{
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Rect roi = centeredRoiTight();
+
+  // patch aspect ratio 5:4 (= 124x96 [px])
+  const int w_ratio = 4;
+  const int h_ratio = 5;
+
+  // include margin in ROI (negative index is allowed)
+  int margin_w = static_cast<int>(margin*static_cast<float>(roi.width));
+  int margin_h = static_cast<int>(margin*static_cast<float>(roi.height));
+  roi.x -= margin_w;
+  roi.y -= margin_h;
+  roi.width += 2*margin_w;
+  roi.height += 2*margin_h;
+
+  // short and wide box (increase height)
+  if (roi.width*h_ratio > roi.height*w_ratio) {
+    int height_new = (roi.width*h_ratio)/w_ratio;
+    roi.y -= (height_new - roi.height)/2;
+    roi.height = height_new;
+
+  // tall and slim box (increase width)
+  } else if (roi.width*h_ratio < roi.height*w_ratio) {
+    int width_new = (roi.height*w_ratio)/h_ratio;
+    roi.x -= (width_new - roi.width)/2;
+    roi.width = width_new;
+  }
+
+  if (color_roi) {
+    roi.x *= color_width_ / depth_width_;
+    roi.width *= color_width_ / depth_width_;
+    roi.y *= color_height_ / depth_height_;
+    roi.height *= color_height_ / depth_height_;
+  }
+  return roi;
+}
+
+cv::Mat3b Blob::centeredImage(bool include_background, float margin) const
+{
+  PROFILE_FUNC;
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Rect roi = centeredRoi(margin, true);
+  return centeredImageWithRoi(include_background, roi);
+}
+
+cv::Mat3b Blob::imagePatchWithAspectRatio(cv::Mat3b img, cv::Rect roi, int h, int w, int fill) const
+{
+  // region in negative index is considered during crop
+  cv::Mat3b patch(cv::Size(roi.width, roi.height), cv::Vec3b(fill,fill,fill));
+  int width = min(roi.width + min(roi.x,0), w - max(roi.x,0));
+  int height = min(roi.height + min(roi.y,0), h - max(roi.y,0));
+  img(cv::Rect(max(roi.x,0), max(roi.y,0), width, height))
+    .copyTo(patch(cv::Rect(max(-roi.x,0), max(-roi.y,0), width, height)));
+  return patch;
+}
+
+cv::Mat3b Blob::centeredImageWithRoi(bool include_background, cv::Rect roi) const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat3b vis(cv::Size(roi.width, roi.height));
+  if (include_background) {
+    RGBDFrame::Ptr frame = VideoArchiveReader::instance()->getFrame(
+        wall_timestamp_, sensor_id_);
+    // This should happen automatically now.
+    // if (!frame) {
+    //       RGBDFrame::Ptr frame = VideoArchiveReader::instance()->getFrameFromDoorman(
+    //         wall_timestamp_, sensor_id_);
+    // }
+    if (!frame) {
+      ROS_WARN("Blob::centeredImageWithRoi: unable to get frame from cache or doorman %s/%.4f",
+                sensor_id_.c_str(), wall_timestamp_.toSec());
+      return cv::Mat3b(cv::Size(color_width_, color_height_), cv::Vec3b(127, 127, 127));
+    }
+    return imagePatchWithAspectRatio(frame->color(), roi, color_height_, color_width_, 0);
+  } else {
+    cv::Mat3b vis(cv::Size(color_width_, color_height_), cv::Vec3b(127, 127, 127));
+    image(&vis);
+    return imagePatchWithAspectRatio(vis, roi, color_height_, color_width_, 127);
+  }
+}
+
+cv::Mat3b Blob::centeredDHA(bool include_background, float margin) const
+{
+  PROFILE_FUNC;
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(!include_background); // NOT IMPLEMENTED YET
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Rect roi = centeredRoi(margin, false);
+
+  cv::Mat3b vis(cv::Size(depth_width_, depth_height_));
+  vector<cv::Mat1b> planes;
+  cv::split(vis, planes);
+  planes[0] = monoDepthImage();
+  planes[1] = heightImage();
+  planes[2] = anglesImage();
+  cv::merge(planes, vis);
+  return imagePatchWithAspectRatio(vis, roi, depth_height_, depth_width_, 127);
+}
+
+cv::Mat1b Blob::monoDepthImage() const
+{
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat1b vis(cv::Size(depth_width_, depth_height_), 127);
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    uint32_t idx = indices_[i];
+    vis(idx) = std::min(255.0, (255.0 / 7.0) * depth_[i]);
+  }
+
+  int border = 1;
+  for(int y = 0; y < vis.rows; ++y) {
+    for(int x = 0; x < vis.cols; ++x) {
+      if(y < border || y > vis.rows - 1 - border ||
+         x < border || x > vis.cols - 1 - border)
+      {
+        vis(y, x) = 127;
+      }
+    }
+  }
+
+  return vis;
+}
+
+cv::Mat3b Blob::depthImage() const
+{
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat3b vis(cv::Size(depth_width_, depth_height_), cv::Vec3b(127, 127, 127));
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    uint32_t idx = indices_[i];
+    vis(idx) = colorize(depth_[i], 0, 6);
+  }
+
+  int border = 1;
+  for(int y = 0; y < vis.rows; ++y) {
+    for(int x = 0; x < vis.cols; ++x) {
+      if(y < border || y > vis.rows - 1 - border ||
+         x < border || x > vis.cols - 1 - border)
+      {
+        vis(y, x) = cv::Vec3b(0, 0, 0);
+      }
+    }
+  }
+
+  return vis;
+}
+
+cv::Mat3b Blob::visualize(cv::Vec3b color, bool draw_background) const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat3b img;
+  if(!draw_background)
+    img = image();
+  else {
+    // Get a background image to show
+    RGBDFrame::Ptr frame = VideoArchiveReader::instance()->getFrame(wall_timestamp_, sensor_id_);
+    ROS_ASSERT(frame);
+    img = frame->color().clone();
+  }
+
+  Blob::drawHalo(indices_, color, &img);
+  return img;
+}
+
+void Blob::drawHalo(const std::vector<uint32_t> &indices, cv::Vec3b color_bgr,
+                    cv::Mat *img)
+{
+//  ROS_ASSERT(!(color[0] == 127 && color[1] == 127 && color[2] == 127));
+<<<<<<< HEAD
+  const int color_width = img->cols;
+  const int color_height = img->rows;
+  const int depth_width = img->cols==640?320:480;
+=======
+  const int color_width = 1920;
+  const int color_height = 1080;
+  const int depth_width = 480;
+>>>>>>> Display halos on video
+  const int depth_height = 270;
+
+#if 1
+  cv::Mat1b mask_small_(cv::Size(depth_width/2, depth_height/2), 0);
+  cv::Mat1b blurred_mask_small_(mask_small_.size(), 0);
+  // Make mask for this object.
+  {
+    mask_small_ = 0;
+//    ROS_INFO_STREAM("IIa: " << depth_width << " " << mask_small_.cols);
+    ImageIndexer ii(depth_width, mask_small_.cols);
+//    ROS_INFO_STREAM("Loop: " << indices.size() << " " << (depth_width/2 * depth_height/2));
+    
+    for(size_t i = 0; i < indices.size(); ++i)
+    {
+//      if (!(indices[i] < depth_width * depth_height))
+//        ROS_WARN_STREAM("Src Index out of range " << ii.scale_factor_ << " " << i << " "
+//                        << indices[i] << " " << (depth_width * depth_height)); 
+      if ((ii.scale(indices[i]) < (mask_small_.cols * mask_small_.rows)))
+        mask_small_(ii.scale(indices[i])) = 255;
+      // else
+      //   ROS_WARN_STREAM("Dst Index out of range " << ii.scale_factor_ << " " << i << " "
+      //                   << indices[i] << " "
+      //                   << ii.scale(indices[i]) << " "
+      //                   << mask_small_.size());
+    }
+  }
+<<<<<<< HEAD
+//   cv::imshow("mask", mask_small_);
+//   cv::waitKey(1);
+=======
+  // cv::imshow("mask", mask_small_);
+  // cv::waitKey(1);
+>>>>>>> Display halos on video
+#endif
+  
+#if 1
+  // Get a blurred mask.
+  cv::GaussianBlur(mask_small_, blurred_mask_small_, cv::Size(9, 9), 5);
+  for(int i = 0; i < blurred_mask_small_.rows * blurred_mask_small_.cols; ++i)
+    if(mask_small_(i) == 255)
+      blurred_mask_small_(i) = 0;
+  cv::GaussianBlur(blurred_mask_small_, blurred_mask_small_, cv::Size(9, 9), 1);
+//  cv::imshow("bmask", blurred_mask_small_);
+//  cv::waitKey(1);
+#endif
+  
+#if 1
+  // Draw the halo.
+  {
+    cv::Vec3b scaled_color;
+//    ROS_INFO_STREAM("IIb: " << blurred_mask_small_.cols << " " << color_width);
+    ImageIndexer ii(blurred_mask_small_.cols, color_width);
+    for (int i = 0; i < depth_width*depth_height/4; ++i) {
+      if (blurred_mask_small_(i) != 0) {
+        float coef = min(1.0f, 2.5f * (blurred_mask_small_(i) / 255.0f));
+        float inv_coef = 1.0f - coef;
+        int start_index = ii.scale(i);
+        scaled_color = coef * color_bgr;
+        int channels = img->channels();
+
+        for (int dy = 0; dy < ii.scale_factor_; dy++) {
+          int tmp_idx = (start_index + dy * color_width) * channels;
+          for (int dx = 0; dx < channels * ii.scale_factor_; dx+=channels) {
+            int dst_idx = tmp_idx + dx;
+
+            for (int j = 0; j < 3; j++)
+              if (dst_idx + j < img->cols * img->rows * 3) 
+                img->data[dst_idx + j] = inv_coef * img->data[dst_idx + j] + scaled_color[j];
+          }
+        }
+      }
+    }
+  }
+  // cv::imshow("img", *img);
+  // cv::waitKey(1);
+#endif
+}
+
+cv::Mat1b Blob::heightImage() const
+{
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  project();
+  ROS_ASSERT(indices_.size() == cloud_->size());
+  float max_height = 2.0;  // meters
+
+  cv::Mat1b himg(cv::Size(depth_width_, depth_height_), 127);
+  if(cloud_->empty()) return himg;
+
+  // For each point, compute value on gravity axis relative to the bottom
+  // of the observed object.
+  Eigen::VectorXf hvals(cloud_->size());
+  float minval = std::numeric_limits<float>::max();
+  for(size_t i = 0; i < cloud_->size(); ++i) {
+    float hval = -gravity_.dot((*cloud_)[i].getVector3fMap());
+    hvals.coeffRef(i) = hval;
+    minval = std::min(minval, hval);
+  }
+  for(int i = 0; i < hvals.rows(); ++i)
+    hvals.coeffRef(i) -= minval;
+
+  // Fill the height image.
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    uint32_t idx = indices_[i];
+    himg(idx) = 255 * std::min<float>(max_height, hvals.coeffRef(i)) / max_height;
+  }
+
+  return himg;
+}
+
+cv::Mat1b Blob::anglesImage() const
+{
+  PROFILE_FUNC
+  ROS_ASSERT(hasRaw());
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  project(true);
+  ROS_ASSERT(indices_.size() == cloud_->size());
+  uchar min_intensity = 255 / 8;  // ... of a pixel that had a depth reading.
+
+  cv::Mat1b aimg(cv::Size(depth_width_, depth_height_), 127);
+  if(cloud_->empty()) return aimg;
+
+  // Compute the surface normals.
+  pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+
+  //boost::shared_ptr<const Cloud> cc = cloud_;
+  //pcl::PointCloudConstPtr cc = cloud_;
+  ne.setInputCloud(cloud_);
+  ne.setSearchMethod(kdtree_);
+  ne.setKSearch(30);
+//  ne.setRadiusSearch(0.15);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
+  ne.compute(*cloud_normals);
+  ROS_ASSERT(cloud_normals->size() == cloud_->size());
+
+  // For each point, compute the angle between surface normal and gravity
+  // and colorize the appropriate pixel.
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    Vector3f norm = (*cloud_normals)[i].getNormalVector3fMap().normalized();
+    float dp = -gravity_.dot(norm);
+    float theta = acos(dp) / M_PI * 180;
+    if(theta < 0 || theta > 180) {
+      ROS_WARN_STREAM("Strange theta in anglesImage: " << theta);
+      ROS_WARN_STREAM("  Gravity: " << gravity_.transpose());
+      ROS_WARN_STREAM("  Gravity norm: " << gravity_.norm());
+      ROS_WARN_STREAM("  Surface normal: " << norm.transpose());
+    }
+
+    // aimg(indices_[i]) = min_intensity + ((float)theta / 180.) * (255 - min_intensity);
+
+    theta = std::min(theta, 180 - theta);
+    aimg(indices_[i]) = min_intensity + (1.0 - (float)theta / 90.) * (255 - min_intensity);
+  }
+
+  return aimg;
+}
+
+
+cv::Mat1b Blob::mask() const
+{
+  ROS_ASSERT(depth_width_ > 0);
+  ROS_ASSERT(depth_height_ > 0);
+  ROS_ASSERT(color_width_ > 0);
+  ROS_ASSERT(color_height_ > 0);
+
+  cv::Mat1b mask(cv::Size(depth_width_, depth_height_), 0);
+  for(size_t i = 0; i < indices_.size(); ++i)
+    mask(indices_[i]) = 255;
+  return mask;
+}

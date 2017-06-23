@@ -1,0 +1,616 @@
+#include "bag_of_tricks/flags.h"
+#include "bag_of_tricks/sensorid.h"
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/string.h"
+#include "doorman_client/amqp_utils.h"
+#include "jarvis/track_publisher.h"
+#include "threadpool11/pool.hpp"
+#include "video_archive/va_reader.h"
+#include <SimpleAmqpClient/SimpleAmqpClient.h>
+#include <boost/locale/date_time.hpp>
+#include <boost/locale/format.hpp>
+#include <boost/locale/generator.hpp>
+#include <gflags/gflags.h>
+#include <mongo/bson/bson.h>
+#include <mongo/client/dbclient.h>
+#include <timer/profile_tl.h>
+
+#include <deque>
+#include <string>
+#include <malloc.h>
+#include <unistd.h>
+#include <tuple>
+#include <cctype>
+#include <ctime>
+
+DEFINE_string(video_archive, "", "Directory for video archive");
+//static const bool video_archive_validator = google::RegisterFlagValidator(&FLAGS_video_archive, validateDirectory);
+DEFINE_bool(update_stories, false, "Re-generate existing stories");
+DECLARE_bool(alexandria_mode);
+DEFINE_int32(timelapse_threads, 0, "Number of theads to use for timelapse generation (defaults to number of cores");
+DECLARE_int32(vis_level);  // necessary or cpp_netlib segfaults
+DECLARE_string(mongo_uri);
+DECLARE_double(mongo_socket_timeout);
+using ubercam_msgs::CompressedRGBDPtr;
+using ubercam_msgs::CompressedRGBD;
+using namespace std;
+
+namespace bl = boost::locale;
+namespace blp = boost::locale::period;
+namespace m = mongo;
+using namespace std;
+
+typedef std::tuple<bool, m::OID, uint64_t> ResultType;
+
+void monitorQueue();
+void monitorMongo();
+void handleResult(ResultType res);
+bool isAlexandria(const std::string& sensor);
+
+// TODO: Use just delivery tag
+//typedef std::pair<bool, AmqpClient::Envelope::ptr_t> ResultType;
+// <success, <_id of mongo entry>, <end of created timelapse>
+ResultType createTimelapse(SensorId sensorid, 
+                           uint64_t start,
+                           m::OID oid,
+                           TrackPublisher::Ptr publisher);
+
+// ResultType createTimelapse(const snitch::timelapse::GenerateTimelapseTask& task, AmqpClient::Envelope::ptr_t envelope, TrackPublisher::Ptr publisher);
+
+int main(int argc, char** argv)
+{
+  google::SetUsageMessage("Usage: generate_timelapse <sensor> <timestamp>\n"
+                          "sensor can be a specific one, \"all\" for all, or \"mongo\" to montior mongodb.\n"
+                          "timestamp can be a specific one, \"0\" for all, or \"week\" for the last week (ignored for queue).");
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  ros::Time::init();
+  FLAGS_vis_level = 0;  // necessary or cpp_netlib segfaults
+  if (!(argc == 3
+        || (argc == 2 && (std::string(argv[1]) == "queue" ||
+                          std::string(argv[1]) == "mongo")) 
+        || (argc >= 4 && argc%2 == 0 && std::string(argv[1]) == "list")
+        )) {
+    std::cout << "Args (" << argc << ") :";
+    for (int i=0; i < argc; ++i)
+      std::cout << " " << argv[i];
+    std::cout << "\n";
+      google::ShowUsageWithFlags(argv[0]);
+      return 0;
+    }
+
+  vector<string> sensors;
+  TrackPublisher publisher;
+  std::set<std::string> generated; // TODO: Not threadsafe!
+  TrackPublisher::GenerateOptions options;
+  options.generated = &generated;
+  options.batch = true;
+  options.update = FLAGS_update_stories;
+
+  if (std::string(argv[1]) == "queue") {
+    monitorQueue();
+    return 0;
+  } else if (std::string(argv[1]) == "mongo") {
+    monitorMongo();
+    return 0;
+  } else if (std::string(argv[1]) == "list") {
+    static const int poolSize=FLAGS_timelapse_threads==0?std::thread::hardware_concurrency():FLAGS_timelapse_threads;
+    ROS_INFO_STREAM("Poolsize " << poolSize);
+    threadpool11::Pool pool(poolSize);
+    std::list<std::future<ResultType>> results;
+    TrackPublisher::Ptr publisher(new TrackPublisher());
+
+    for (int idx=2; idx < argc; idx+=2)
+    {
+      SensorId sensor(argv[idx]);
+      int64_t ts = strtol(argv[idx+1], nullptr, 10);
+
+      bool isAlex = isAlexandria(sensor.str());
+      // Process only Penguin or Alexandria
+      if (isAlex == FLAGS_alexandria_mode) {
+        ROS_INFO_STREAM("Genertaing timelapse for " << sensor.str() << " " << ts);
+        m::OID oid;
+        // A  dd work to threadpool
+        auto func = std::bind(createTimelapse,
+                              sensor,
+                              ts,
+                              oid,
+                              publisher);
+        results.emplace_back(pool.postWork<ResultType>(func));
+        //    createTimelapse(sensor, ts, oid, publisher);
+      } else {
+        ROS_INFO_STREAM("Skipping timelapse for " << sensor.str() << " " << ts);
+      }
+    }
+    // Wait for threds to finish.
+    for (auto res = results.begin(); res != results.end(); res++)
+    {
+      res->wait();
+      ResultType result = res->get();
+      ROS_INFO_STREAM("Timelapse done");
+    }
+
+    return 0;
+  } else {
+    if (std::string(argv[1]) == "all") {
+      // find all the cameras for the last week
+      unique_ptr<m::DBClientBase> mc = publisher.mongo();
+      static const m::BSONObj FIELDS = BSON("wifi" << 1);
+      auto cursor = mc->query("snitch.devices", MONGO_QUERY("running" << true), 500, 0, &FIELDS);
+
+      while (cursor->more()) {
+        m::BSONObj match = cursor->nextSafe();
+        sensors.emplace_back(match.getField("wifi").String(), 0);
+      }
+      ROS_INFO("found %zu sensors", sensors.size());
+    } else {
+      sensors.emplace_back(std::string(argv[1]));
+    }
+
+    if (std::string(argv[2]) == "week" || std::string(argv[2]) == "today") {
+      static std::locale locale = bl::generator().generate("C");
+      bl::calendar calendar(locale); // TODO: use default server TZ for now, should be sensor TZ
+
+      timespec clk;
+      clock_gettime(CLOCK_REALTIME, &clk);
+      int64_t now = ((int64_t) clk.tv_sec) * 1000l;
+      
+        int num_days = (std::string(argv[2]) == "week") ? 7 : 1;
+
+#pragma omp parallel for
+      for (size_t i = 0; i < num_days * sensors.size(); i++) {
+        bl::date_time nowdt = bl::date_time(
+          0.001 * now - 86400 * ((i % num_days) + 1), calendar);
+        bl::date_time day_start(nowdt,
+                                blp::hour(0) + blp::minute(0) + blp::second(0));
+        bl::date_time day_end = day_start + blp::day(1);
+        publisher.publishStory(SensorId(sensors[i / num_days]),
+                               (int64_t) (1000 * day_start.time()),
+                               (int64_t) (1000 * day_end.time()), 0,
+                               options);
+        VideoArchiveReader::instance()->clearOldCacheEntries(0, 0);
+        print_timers();
+      }
+    } else {
+      int64_t ts = strtol(argv[2], nullptr, 10);
+#pragma omp parallel for
+      for (size_t i = 0; i < sensors.size(); i++) {
+        if (ts > 0) {
+          publisher.generateStories(SensorId(sensors[i]), ts, options);
+        } else {
+          std::vector<int64_t> et = publisher.eventTimes(SensorId(sensors[i]));
+          ROS_INFO("Generating %zu timelapses...", et.size());
+          for (size_t i = 0; i < et.size(); i++) {
+            publisher.generateStories(SensorId(sensors[i]), et[i], options);
+          }
+        }
+      }
+    }
+    print_timers();
+  }
+  return 0;
+}
+
+void monitorQueue()
+{
+#if 0
+  static const int poolSize=FLAGS_timelapse_threads==0?std::thread::hardware_concurrency():FLAGS_timelapse_threads;
+  threadpool11::Pool pool(poolSize);
+  std::list<std::future<ResultType>> results;
+  TrackPublisher::Ptr publisher(new TrackPublisher());
+  
+  // TODO: use templated function w/callback
+  ROS_INFO("Looking for tasks");
+  const std::string channelName("TimelapseTask");
+
+  AmqpClient::Channel::ptr_t channel = Doorman::AmqpUtils::createChannel(channelName);
+  // AmqpClient::Channel::ptr_t channel = AmqpClient::Channel::Create(FLAGS_amqp_host,
+  //                                                                  FLAGS_amqp_port,
+  //                                                                  FLAGS_amqp_user,
+  //                                                                  FLAGS_amqp_password,
+  //                                                                  FLAGS_amqp_vhost);
+  const bool no_local = true;
+  const bool no_ack = false;  // Too many negatives. If this is true, no need to ack.
+  const bool exclusive = false; // Other clients can connect to this queue
+  std::string tag = channel->BasicConsume(channelName,
+                                          "",
+                                          no_local,
+                                          no_ack,
+                                          exclusive);
+  // Set the number of unacknknowledged message
+  channel->BasicQos(tag, poolSize);
+
+  ROS_INFO_STREAM("AMQP tag: " << tag);
+  while (true)
+  {
+    try {
+      AmqpClient::Envelope::ptr_t envelope;
+      int timeout = 10*1000; // 60 seconds
+
+      // Handle completed requests
+      // TODO use condition var
+      for (auto res = results.begin(); res != results.end(); /* nop */ )
+      {
+        if (res->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        {
+          ResultType result = res->get();
+          ROS_INFO_STREAM("Task " << result.second->DeliveryTag() << " finished");
+          if (result.first)
+          {
+            channel->BasicAck(result.second);
+            ROS_INFO_STREAM("Task processing successful");
+          } else {
+            const bool requeue = true;
+            channel->BasicReject(result.second, requeue);
+            ROS_WARN_STREAM("Task processing failed");
+            break;
+          }
+          res = results.erase(res);
+        } else {
+          res++;
+        }
+      }
+      
+      // Limit tasks taken from RabbitMQ to the size of our thread pool
+      if (results.size() < poolSize)
+      { 
+        if (!channel->BasicConsumeMessage(tag, envelope, timeout))
+        {
+          ROS_INFO_STREAM("RabbitMQ consume timed out");
+        } else {
+          // TODO  - process in threads 
+          ROS_INFO_STREAM("Routing Key: " << envelope->RoutingKey());
+          ROS_INFO_STREAM("Starting work on task: " << envelope->DeliveryTag());
+          const std::string& message(envelope->Message()->Body());
+          snitch::timelapse::GenerateTimelapseTask task;
+          task.ParseFromString(message);
+
+          auto func = std::bind(createTimelapse, task, envelope, publisher);
+          results.emplace_back(pool.postWork<ResultType>(func));
+        }
+      } else {
+        // TODO: Do this more efficiently
+        sleep(10);
+      }
+    } catch (AmqpClient::ChannelException& e) {
+        // Recoverable error, channel still good
+        ROS_WARN_STREAM("Caught ChannelException: " << e.what());
+    } catch (AmqpClient::ConnectionException& e) {
+      // Unrecoverable error, channel must be restarted
+      ROS_ERROR_STREAM("Caught ConnectionException: " << e.what());
+    } catch (AmqpClient::AmqpResponseLibraryException& e) {
+      // Unrecoverable error, channel must be restarted
+      ROS_ERROR_STREAM("Caught AmqpResponseLibraryException: " << e.what());
+    } catch (std::exception& e) {
+      ROS_ERROR_STREAM("Caught std::exception: " << e.what());
+    } catch (...) {
+      ROS_ERROR_STREAM("Caught unknown exception");
+    }
+  }
+  ROS_INFO_STREAM("AU: finished event loop");
+#endif
+}
+
+std::unique_ptr<m::DBClientBase> Mongo() {
+  string error;
+  m::ConnectionString mcs = m::ConnectionString::parse(FLAGS_mongo_uri, error);
+  if (!mcs.isValid())
+  {
+    ROS_WARN_STREAM("invalid mongo_uri: " + error);
+    throw std::invalid_argument("invalid mongo_uri: " + error);
+  }
+  unique_ptr<m::DBClientBase> mc(mcs.connect(error, FLAGS_mongo_socket_timeout));
+  if (!mc)
+  {
+    ROS_WARN_STREAM("mongo connect failed: " + error);
+    throw std::runtime_error("mongo connect failed: " + error);
+  }
+  return mc;
+}
+
+const bool upsert_No __attribute__ ((unused)) =false;
+const bool upsert_Yes __attribute__ ((unused)) =true;
+
+const bool returnNew_No __attribute__ ((unused)) =false;
+const bool returnNew_Yes __attribute__ ((unused)) =true;
+
+const bool multi_No __attribute__ ((unused)) =false;
+const bool multi_Yes __attribute__ ((unused)) =true; 
+
+
+bool isAlexandria(const std::string& sensor)
+{
+  // Alexandria iff the sensor start with these prefixes
+  const std::string alex1("68:14:01");
+  const std::string alex2("00:0a:f5");
+      
+  return sensor.compare(0, alex1.length(), alex1) == 0
+    || sensor.compare(0, alex1.length(), alex2) == 0;
+}
+
+void monitorMongo()
+{
+  static const int poolSize=FLAGS_timelapse_threads==0?std::thread::hardware_concurrency():FLAGS_timelapse_threads;
+  
+  threadpool11::Pool pool(poolSize);
+  std::list<std::future<ResultType>> results;
+  TrackPublisher::Ptr publisher(new TrackPublisher());
+
+  // Reset progress in case we didn't shut down cleanly last time. There is a race in
+  // case more than one executable is running, but worst case is a slightly earlier
+  // timelapse gets saved.
+  Mongo()->update("snitch.stories",
+		  BSON("status" << "updating"),
+		  BSON("$set" << BSON("status" << "ready" << "priority" << "alert")),
+		  upsert_No,
+		  multi_Yes);
+
+  while (true)
+  {
+    for (auto res = results.begin(); res != results.end(); /* nop */ )
+    {
+      if (res->wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+      {
+        ResultType result = res->get();
+        handleResult(result);
+        res = results.erase(res);
+      } else {
+        res++;
+      }
+    }
+
+    // Limit tasks taken from RabbitMQ to the size of our thread pool
+    if (results.size() < poolSize)
+    { 
+      ROS_INFO_STREAM("ZZZ @@@ Start Loop " << std::boolalpha << FLAGS_alexandria_mode);    
+      m::BSONObj queryAlert;
+      m::BSONObj queryEvent;
+      if (FLAGS_alexandria_mode) {
+        queryAlert = BSON("duration" << 86400000LL 
+			  << "level" << 0
+			  << "priority" << "alert"
+			  << "device_type" << "alexandria"
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("status" << "ready")
+					<< BSON("status" << BSON("$exists" << false))
+					));
+        queryEvent = BSON("duration" << 86400000LL 
+			  << "level" << 0
+			  << "priority" << "event"
+			  << "device_type" << "alexandria"
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("status" << "ready")
+					<< BSON("status" << BSON("$exists" << false))
+					));
+      } else {		      
+	// Penguin or unlabeled
+        queryAlert = BSON("duration" << 86400000LL 
+			  << "level" << 0
+			  << "priority" << "alert"
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("device_type" << "penguin")
+					<< BSON("device_type" << BSON("$exists" << false))
+					)
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("status" << "ready")
+					<< BSON("status" << BSON("$exists" << false))
+					));
+        queryEvent = BSON("duration" << 86400000LL 
+			  << "level" << 0
+			  << "priority" << "event"
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("device_type" << "penguin")
+					<< BSON("device_type" << BSON("$exists" << false))
+					)
+			  << "$or"
+			  << BSON_ARRAY(
+					BSON("status" << "ready")
+					<< BSON("status" << BSON("$exists" << false))
+					));
+      }
+
+      m::BSONObj update = BSON("$unset" << BSON("priority" << "") <<
+                               "$set" << BSON("status" << "updating"));
+      
+      m::BSONObj sort = BSON("generated" << 1);
+    
+      ROS_INFO_STREAM("ZZZ trying alerts");
+//      ROS_INFO_STREAM("ZZZ Query: " << queryAlert);
+      // ROS_INFO_STREAM("ZZZ Update: " << update);
+      // ROS_INFO_STREAM("ZZZ Sort: " << sort);
+      m::BSONObj story = Mongo()->findAndModify("snitch.stories",
+                                                queryAlert,
+                                                update,
+                                                upsert_No,
+                                                returnNew_Yes,
+                                                sort);
+      if (story.nFields() == 0)
+      {
+        ROS_INFO_STREAM("ZZZ No alerts, trying events");
+//        ROS_INFO_STREAM("ZZZ Query: " << queryEvent);
+        // ROS_INFO_STREAM("ZZZ Update: " << update);
+        story = Mongo()->findAndModify("snitch.stories",
+                                       queryEvent,
+                                       update,
+                                       upsert_No,
+                                       returnNew_Yes,
+                                       sort);
+      }
+
+// TODO: For now, done create timelasped without corresponding events. We need to:
+//  1 Limit how often these are regeneratged (1/hr?)
+//  2 Adjust the timelapse code so that it adds more background at the end (maybe, check
+//  this)
+//  3 Set older stories to complete in mongodb so they aren't regenerated
+//  4 Add code here to set a days story to complete when we start on the next day
+//  5 Add a new story when current day is complete
+#if 0
+      if (story.nFields() == 0)
+      {
+        timespec clk;
+        clock_gettime(CLOCK_REALTIME, &clk);
+        int64_t now = ((int64_t) clk.tv_sec) * 1000l;
+        // Update entries more that an hour old
+        m::BSONObj queryAll = BSON("duration" << 86400000LL 
+                                   << "level" << 0
+                                   << "generated" << BSON("$lt" << m::Date_t(now-(3600*1000)))  
+                                   << "$or"
+                                   << BSON_ARRAY(BSON("status" << "ready")
+                                                 << BSON("status" << BSON("$exists" << false))
+                                     ));
+
+        ROS_INFO_STREAM("ZZZ No events, trying anything");
+        // ROS_INFO_STREAM("ZZZ Query: " << queryAll);
+        // ROS_INFO_STREAM("ZZZ Update: " << update);
+        story = Mongo()->findAndModify("snitch.stories",
+                                       queryAll,
+                                       update,
+                                       upsert_No,
+                                       returnNew_Yes,
+                                       sort);
+      }
+#endif
+      if (story.nFields() == 0)
+      {
+//        ROS_INFO_STREAM("ZZZ Nothing to process, wait 1");
+        sleep(1);
+        continue;
+      }
+    
+      ROS_INFO_STREAM("ZZZ Processing: " << story);
+      bool isAlex = isAlexandria(story.getField("device").String());
+
+      // Process only Penguin or Alexandria
+      if (isAlex == FLAGS_alexandria_mode) {
+        SensorId sensorid(story.getField("device").String());
+        if (story.hasElement("site"))
+          Utility::SensorSite::instance().recordSite(sensorid.numeric(), story.getField("site").String());
+#if 1
+        auto func = std::bind(createTimelapse,
+                              sensorid,
+                              story.getField("start").Date(),
+                              story.getField("_id").OID(),
+                              publisher);
+        results.emplace_back(pool.postWork<ResultType>(func));
+#else
+        // For debugging, skip actual timelapse generation
+        ROS_WARN_STREAM("ZZZ *** Skipping Timelapse Generation ***");
+        ResultType res = std::make_tuple(true,
+                                         story.getField("_id").OID(),
+                                         story.getField("start").Date()+(86400*1000));
+#endif
+//        ROS_INFO_STREAM("ZZZ @@@ End Loop");    
+        print_timers_tl();
+      } else {
+        ROS_INFO_STREAM("Skipping device " << story.getField("device").String());
+      }
+    } else {
+      // All threads are busy
+      // TODO: Do this more efficiently
+      //      ROS_INFO_STREAM("@@@ Sleeping - all threads busy");    
+      sleep(10);
+    }
+  }
+}
+
+void handleResult(ResultType res)
+{
+  m::OID id = std::get<1>(res);
+
+  if (std::get<0>(res))
+  {
+    ROS_INFO_STREAM("ZZZ Task processing successful " << id);
+    timespec clk;
+    clock_gettime(CLOCK_REALTIME, &clk);
+    int64_t now = ((int64_t) clk.tv_sec) * 1000l;
+
+    m::BSONObj query = BSON("_id" << id);
+    m::BSONObj update = BSON("$set" << BSON("status" << "ready"
+                                            << "end" << m::Date_t(std::get<2>(res))
+                                            << "generated" << m::Date_t(now)));
+    // ROS_INFO_STREAM("ZZZ Query: " << query);
+    // ROS_INFO_STREAM("ZZZ Update: " << update);
+    
+    // auto cursor = Mongo()->query("snitch.stories", query);
+    // if (!cursor->more())
+    //   ROS_WARN_STREAM("ZZZ Can't find object to update");
+    // else
+    //   while (cursor->more())
+    //   {
+    //     m::BSONObj story1 = cursor->nextSafe();
+    //     ROS_INFO_STREAM("ZZZ to update: " << story1);
+    //   }
+        
+    try {
+      Mongo()->update("snitch.stories",
+                      query,
+                      update,
+                      upsert_No);
+      // auto cursor = Mongo()->query("snitch.stories", query);
+      // if (!cursor->more())
+      //   ROS_WARN_STREAM("ZZZ Can't find object that was updated");
+      // else
+      //   while (cursor->more())
+      //   {
+      //     m::BSONObj story1 = cursor->nextSafe();
+      //     ROS_INFO_STREAM("ZZZ check: " << story1);
+      //   }
+    } catch (std::exception& e) {
+      ROS_WARN_STREAM("ZZZ Story update failed: " << e.what());
+    }
+  } else {
+    ROS_WARN_STREAM("ZZZ Task processing failed");
+    // Reset story so it can be processed again
+    Mongo()->update("snitch.stories",
+                    BSON("_id" << id),
+                    BSON("$set" << BSON("status" << "ready")));
+  }
+  print_timers_tl();
+}
+
+ResultType createTimelapse(SensorId sensorid, 
+                           uint64_t start,
+                           m::OID oid,
+                           TrackPublisher::Ptr publisher)
+{
+  PROFILE_FUNC_TL;
+  uint64_t tl_end;
+  try {
+    PROFILE_BLOCK_TL("createTimelapse");
+    set_current_thread_name(std::string("GT-")+sensorid.compact());
+    set_current_thread_priority(-5); 
+
+    ROS_INFO_STREAM("CreateTimelapse task " << sensorid.str() << " "
+                    << start);
+
+
+    TrackPublisher::GenerateOptions options;
+    std::set<std::string> generated;
+    options.generated = &generated;
+    options.batch = true;
+    options.update = FLAGS_update_stories;
+    publisher->generateStories(sensorid, start, options, &tl_end);
+  } catch (std::exception& e)
+  {
+    ROS_WARN_STREAM("CreateTimelapse task Failed" << e.what());
+    set_current_thread_name(STRING("SY-Idle"));
+    return std::make_tuple(false, oid, 0LL);
+  }
+  set_current_thread_name(STRING("SY-Idle"));
+  print_timers_tl();
+  return std::make_tuple(true, oid, tl_end);
+}
+
+// void startStoryThread(TrackPublisher& publisher,
+//                       const SensorId& sensor,
+//                       int64_t now,
+//                       const GenerateOptions& options)
+// {
+//   set_current_thread_name(STRING("SY-" << (now / 1000)));
+//   set_current_thread_priority(-19); 
+//   publisher.generateStories(sensorid, task.start(), options);
+// }

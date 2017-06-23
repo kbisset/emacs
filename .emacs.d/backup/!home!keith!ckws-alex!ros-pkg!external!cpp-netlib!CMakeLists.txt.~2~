@@ -1,0 +1,64 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(cpp_netlib)
+<<<<<<< HEAD
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+include(ExternalProject)
+
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+
+=======
+find_package(catkin REQUIRED)
+include(ExternalProject)
+
+>>>>>>> Reverse cpp-netlib boost pcl patch
+file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
+
+ExternalProject_Add(${PROJECT_NAME}-upstream
+  PREFIX upstream
+  GIT_REPOSITORY https://github.com/cpp-netlib/cpp-netlib.git
+  GIT_TAG cpp-netlib-0.11.2-final
+<<<<<<< HEAD
+  INSTALL_DIR ${CATKIN_DEVEL_PREFIX}
+
+  BUILD_IN_SOURCE 1
+  UPDATE_COMMAND "" # avoid recompile
+  PATCH_COMMAND patch -p0 -t -N <  ${PROJECT_SOURCE_DIR}/boost.patch
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
+             -DBOOST_ROOT=${BOOST_ROOT}
+             -DCPP-NETLIB_BUILD_SHARED_LIBS=ON
+             -DCPP-NETLIB_BUILD_EXPERIMENTS=OFF
+             -DCPP-NETLIB_BUILD_EXAMPLES=OFF
+             -DCPP-NETLIB_BUILD_TESTS=OFF
+             -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+             -DBUILD_SHARED_LIBS=ON
+             -DBoost_USE_STATIC_LIBS=OFF
+             -DBoost_NO_SYSTEM_PATHS=ON
+  BUILD_COMMAND /bin/bash -c "make -j $(/usr/bin/nproc)"
+  INSTALL_COMMAND make install
+)
+
+catkin_package(
+   LIBRARIES cppnetlib-uri cppnetlib-client-connections
+   INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include
+   )
+=======
+#  v 0.12 requires boost 1.57
+#  GIT_TAG cpp-netlib-0.12.0-rc2
+
+  CMAKE_ARGS -DCMAKE_CXX_FLAGS=-std=c++11
+             -DCPP-NETLIB_BUILD_SHARED_LIBS=ON
+             -DCPP-NETLIB_BUILD_TESTS=OFF
+             -DCPP-NETLIB_BUILD_EXPERIMENTS=OFF
+             -DCPP-NETLIB_BUILD_EXAMPLES=OFF
+             -DCMAKE_INSTALL_LIBDIR=${CATKIN_DEVEL_PREFIX}/lib
+             -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
+  INSTALL_DIR ${CATKIN_DEVEL_PREFIX}
+)
+
+catkin_package(
+  LIBRARIES cppnetlib-uri cppnetlib-client-connections
+  INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include
+)
+>>>>>>> Reverse cpp-netlib boost pcl patch
+

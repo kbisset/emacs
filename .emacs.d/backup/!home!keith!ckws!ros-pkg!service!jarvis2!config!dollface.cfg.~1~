@@ -1,0 +1,15 @@
+# Todo(keith) have separate read and write DM hosts
+--doorman_host=deep4
+--doorman_port=38080
+--doorman_timeout=120
+
+--dollface_site=d00f3500000000000000000000000000
+--dollface_sensor=d0:0f:35:00:42:01
+
+--lighthouse_sensor=04:71:4b:90:01:b5
+--lighthouse_site=ef21a0ef558649ba86e075a1ed16cd23
+#--lighthouse_timestamp=1496793232360
+#--lighthouse_end_timestamp=1496793262426
+
+--lighthouse_timestamp=1496797496421
+--lighthouse_end_timestamp=1496797506453

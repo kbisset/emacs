@@ -1,0 +1,44 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(doorman_client)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
+file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
+
+# openssl for cpp-netlib
+find_package(OpenSSL REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NETWORK_ENABLE_HTTPS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ENABLE_ASSERT_HANDLER")
+
+FIND_PACKAGE (Threads REQUIRED)
+
+<<<<<<< HEAD
+find_package(Boost REQUIRED COMPONENTS system locale date_time thread)
+message("doorman_client ${BOOST_ROOT} ${Boost_INCLUDE_DIR} ${Boost_LIBRARY_DIRS}")
+=======
+#set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost 1.54 REQUIRED COMPONENTS system locale date_time thread)
+>>>>>>> Reverse cpp-netlib boost pcl patch
+
+if(NOT Boost_FOUND)
+    message( FATAL_ERROR "boost must be installed")
+endif()
+
+include_directories(${Boost_INCLUDE_DIRS})
+
+cs_add_library(${PROJECT_NAME}
+  src/lib/convert.cpp
+  src/lib/doorman_utils.cpp
+  src/lib/amqp_utils.cpp
+  )
+
+target_link_libraries(${PROJECT_NAME}
+  gflags
+  ${OpenSSL_LIBRARIES}
+  ${Boost_LIBRARIES}
+)
+
+cs_export()

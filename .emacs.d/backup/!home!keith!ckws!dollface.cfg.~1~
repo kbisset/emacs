@@ -1,0 +1,16 @@
+--doorman_protocol      Specify which doorman instance to connect to. This doorman instance
+ *   --doorman_host          is used for both reading and sending data.
+ *   --doorman_port
+ *
+ *   --lighthouse_site              Specify data to select. By default, dollface stops sending data
+ *   --lighthouse_sensor            when there is not more activity.
+ *   --lighthouse_timestamp
+ *   --lighthouse_end_timstamp
+ *
+ *   --dollface_site            How dollface advertises itself
+ *   --dollface_sensor
+
+
+--doorman_host=deep4
+--doorman_port=38080
+--doorman_timeout=120

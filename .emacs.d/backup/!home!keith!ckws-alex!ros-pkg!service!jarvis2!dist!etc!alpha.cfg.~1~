@@ -1,0 +1,3 @@
+--mongo_uri=mongodb://stormtrooper:27017
+--amqp_host=stormtrooper
+--doorman_host=stormtrooper

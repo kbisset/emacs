@@ -1,0 +1,56 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch keith/BAC-193-trackmerge
+# Your branch and 'origin/keith/BAC-193' have diverged,
+# and have 135 and 125 different commits each, respectively.
+#   (use "git pull" to merge the remote branch into yours)
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/jarvis/src/lib/tracker.cpp
+#	modified:   ros-pkg/core/online_learning/src/lib/dataset.cpp
+#
+# Untracked files:
+#	debug/
+#	dollface.cfg
+#	env1.txt
+#	env2.txt
+#	jarvis-cache/
+#	jarvis-penguin.cfg
+#	jarvis2-alex.cfg
+#	jarvis2-alpha.cfg
+#	jarvis2-beta-alex.cfg
+#	jarvis2-canary.cfg
+#	jarvis2-canaryseg.cfg
+#	jarvis2-dev-alex.cfg
+#	jarvis2-penguin.cfg
+#	logs.valgrind.05.txt
+#	lt2-split.txt
+#	make.tgz
+#	memleak.cfg
+#	memory.gpl
+#	memstat.txt
+#	nopersonid_jarvis_flag.cfg
+#	personid/
+#	personid_jarvis_flag.cfg
+#	pid.sh
+#	ros-pkg/core/jarvis/config/personid/generated/
+#	ros-pkg/core/jarvis/src/lib/cscope.out
+#	ros-pkg/core/jarvis/src/lib/dataset
+#	ros-pkg/core/jarvis/src/lib/update
+#	ros-pkg/jarvis.tgz
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private-penguin.cfg
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private.cfg
+#	ros-pkg/service/jarvis2/config/tlgen-alex-alpha.cfg
+#	snippets/
+#	tasks-400.txt
+#	tasks-mf.txt
+#	tasks-nm.txt
+#	tasks-track.txt
+#	tasks.txt
+#	tasks2.txt
+#	tds/
+#	tim.sh
+#	time-demo.cfg
+#	tlgen-alpha.cfg
+#

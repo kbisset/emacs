@@ -1,0 +1,10 @@
+//#ifndef DISABLE_TESTS
+#if 1
+TEST(IssueTest, Issue39_ReadTrack) {
+  std::ifstream in("00:e0:2d:91:00:79-1472690930880.track");
+  std::stringstream sss;
+  sss << in.rdbuf();
+  TrackDataset::Ptr track_(new TrackDataset);
+  track_->deserialize(sss);
+}
+#endif

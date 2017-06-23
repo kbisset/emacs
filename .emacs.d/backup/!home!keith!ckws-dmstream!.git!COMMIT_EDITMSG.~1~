@@ -1,0 +1,16 @@
+Speedup decoding video stream from doorman
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# rebase in progress; onto f0cda5e
+# You are currently editing a commit while rebasing branch 'master' on 'f0cda5e'.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/online_learning/CMakeLists.txt
+#	new file:   ros-pkg/core/online_learning/src/test/test_vareader.cpp
+#	modified:   ros-pkg/core/video_archive/include/video_archive/va_doorman.h
+#	modified:   ros-pkg/core/video_archive/src/lib/va_reader.cpp
+#	modified:   ros-pkg/core/video_archive/src/test/test_Segment.cpp
+#	modified:   ros-pkg/core/video_archive/src/test/test_SiteId.cpp
+#	modified:   ros-pkg/utility/bag_of_tricks/include/bag_of_tricks/testEnv.h
+#

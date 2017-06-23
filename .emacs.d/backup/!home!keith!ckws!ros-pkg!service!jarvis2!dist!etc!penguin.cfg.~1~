@@ -1,0 +1,3 @@
+# config for alexandria devices
+# Not needed once penguin is EOL
+--alexandria_mode=true

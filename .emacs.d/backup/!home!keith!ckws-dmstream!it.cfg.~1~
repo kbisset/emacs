@@ -1,0 +1,11 @@
+ --sensors 68:14:01:cf:d9:71      
+  --exact 2017-03-14T22:13:27.574Z 
+  --type person,pet,child          
+  --doorman_host brutus            
+  --cache_dir .                    
+  --mongodb 10.1.37.4:27017        
+  --mongodb_user deep3:27017       
+  --chunk_size 60                  
+  --cache_only                     
+  --num_threads 1                  
+  --alexandria_mode       

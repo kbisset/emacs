@@ -1,0 +1,26 @@
+// Display classified video from each camera on a site.
+
+#include "bag_of_tricks/flags.h"
+#include "bag_of_tricks/sensorid.h"
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/string.h"
+#include "doorman_client/amqp_utils.h"
+#include "jarvis/track_publisher.h"
+#include "threadpool11/pool.hpp"
+#include "video_archive/va_reader.h"
+#include <SimpleAmqpClient/SimpleAmqpClient.h>
+#include <boost/locale/date_time.hpp>
+#include <boost/locale/format.hpp>
+#include <boost/locale/generator.hpp>
+#include <gflags/gflags.h>
+#include <mongo/bson/bson.h>
+#include <mongo/client/dbclient.h>
+#include <timer/profile.h>
+
+#include <deque>
+#include <string>
+#include <malloc.h>
+#include <unistd.h>
+#include <tuple>
+#include <cctype>
+#include <ctime>

@@ -1,0 +1,17 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch feature/jarvis2-alexandria
+# Your branch is ahead of 'origin/feature/jarvis2-alexandria' by 535 commits.
+#   (use "git push" to publish your local commits)
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/jarvis/CMakeLists.txt
+#	modified:   ros-pkg/core/jarvis/src/lib/track_processor.cpp
+#	modified:   ros-pkg/core/jarvis_extra/src/prog/visualize_cluster_grid.cpp
+#	modified:   ros-pkg/core/snitch-protocols/src/main/proto/sensor.proto
+#	modified:   ros-pkg/utility/annotations/CMakeLists.txt
+#	modified:   ros-pkg/utility/bag_of_tricks/include/bag_of_tricks/depth_calibration.h
+#	modified:   ros-pkg/utility/bag_of_tricks/src/lib/depth_calibration.cpp
+#	modified:   ros-pkg/utility/calibration-tests/src/calibration_sanctity_test.cpp
+#

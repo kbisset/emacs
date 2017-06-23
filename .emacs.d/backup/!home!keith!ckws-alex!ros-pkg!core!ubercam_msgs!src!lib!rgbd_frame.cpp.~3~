@@ -1,0 +1,191 @@
+#include "ubercam_msgs/rgbd_frame.h"
+
+#include <video_codec/depth_packing.h>
+#include <ros/assert.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include "gflags/gflags.h"
+
+DEFINE_int32(depth_hshift, 0, "Shift depth image");
+DEFINE_int32(depth_hstretch, 0, "Stretch depth image");
+
+namespace {
+static std::mutex count_mutex;
+int rgbd_frame_instances = 0;
+int rgbd_frame_instances_total = 0;
+int refcnt_null_count = 0;
+int refcnt_one_count = 0;
+int refcnt_other_count = 0;
+}
+
+RGBDFrame::RGBDFrame() {
+  std::lock_guard<std::mutex> lock(count_mutex);
+  rgbd_frame_instances++;
+  rgbd_frame_instances_total++;
+  ROS_ASSERT(color_.refcount == nullptr);
+}
+
+RGBDFrame::RGBDFrame(const RGBDFrame &other)
+{
+  {
+    sensor_id_ = other.sensor_id_;
+    frame_id_ = other.frame_id_;
+    sensor_timestamp_ = other.sensor_timestamp_;
+    wall_timestamp_ = other.wall_timestamp_;
+    lru_timestamp_ = other.lru_timestamp_;
+    accel_ = other.accel_;
+
+    color_ = other.color_;
+    packed_ = other.packed_;
+  }
+  std::lock_guard<std::mutex> lock2(count_mutex);
+  rgbd_frame_instances++;
+  rgbd_frame_instances_total++;
+}
+
+RGBDFrame::~RGBDFrame() {
+  std::lock_guard<std::mutex> lock(count_mutex);
+
+  if (color_.refcount == nullptr) {
+    refcnt_null_count++;
+//    ROS_INFO_THROTTLE(1, "Releasing color_ with refcount NULL: %d total", refcnt_null_count);
+  } else if (*color_.refcount == 1) {
+    refcnt_one_count++;
+//    ROS_INFO_THROTTLE(1, "Releasing color_ with refcount 1: %d total", refcnt_one_count);
+  } else {
+    refcnt_other_count++;
+    //    ROS_INFO("Releasing color_ with refcount %d total %d", *color_.refcount, refcnt_other_count);
+//    *color_.refcount = 1;
+  }
+
+  rgbd_frame_instances--;
+}
+
+void RGBDFrame::printInstanceCount() {
+  std::lock_guard<std::mutex> lock(count_mutex);
+  fprintf(stderr, "RGBDFrame Instances: %d (%d cummulative) refcnt 0:%d 1:%d other:%d\n",
+          rgbd_frame_instances, rgbd_frame_instances_total, refcnt_null_count,
+          refcnt_one_count, refcnt_other_count);
+}
+
+void RGBDFrame::makeShift() {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  if (shift_valid_) {  // check once more in case it finished meanwhile
+    return;
+  }
+  if (shift_.cols != packed_.cols || shift_.rows != packed_.rows) {
+    shift_.create(cv::Size(packed_.cols, packed_.rows));
+  }
+  int data_size = packed_.rows * packed_.cols;
+  for (int i = 0; i < data_size; i++) {
+    shift_(i) = DepthPacking::packedToShift(packed_(i));
+  }
+  shift_valid_ = true;
+}
+
+void RGBDFrame::makeDepth() {
+  // TODO: Make arbitrary depth sizes work
+  const int cols = 480;
+  const int rows = 270;
+
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  if (depth_valid_) {  // check once more in case it finished meanwhile
+    return;
+  }
+#if 0
+  if (depth_.cols != packed_.cols || depth_.rows != packed_.rows) {
+    depth_.create(cv::Size(packed_.cols, packed_.rows));
+  }
+  ROS_ASSERT(depth_.rows == packed_.rows);
+  ROS_ASSERT(depth_.cols == packed_.cols);
+  int data_size = packed_.rows * packed_.cols;
+  for (int i = 0; i < data_size; i++) {
+    depth_(i) = DepthPacking::packedToDepth(packed_(i));
+  }
+#else
+  cv::Mat1f depth;
+  int cols = packed_.cols;
+  int rows = packed_.rows;
+  // If we are on Alexandria, adjust depth image size
+  if (cols == 352 && rows == 240) {
+    cols = 480;
+    rows = 270;
+
+  cv::Size size(cols, rows);
+  depth.create(cv::Size(packed_.cols, packed_.rows));
+
+  int data_size = packed_.rows * packed_.cols;
+  for (int i = 0; i < data_size; i++) {
+    depth(i) = DepthPacking::packedToDepth(packed_(i));
+  }
+#if 1
+<<<<<<< HEAD
+//  ROS_INFO_STREAM("Resizing depth image from " << depth.cols << " x " << depth.rows << " to "
+//                  << size);
+=======
+  ROS_INFO_STREAM("Resizing depth image from " << depth.cols << " x " << depth.rows << " to "
+                  << size);
+>>>>>>> More Alexandira changes to Jarvis2
+  cv::resize(depth, depth_, size);//resize image
+#else
+  // ROS_INFO_STREAM("Resizing depth image from " << depth.cols << " x " << depth.rows << " to "
+  //                 << size);
+  if (depth_.cols != cols || depth_.rows != rows) {
+    depth_.create(cv::Size(cols, rows));
+    // ROS_INFO_STREAM("depth_ image " << depth_.cols << " x " << depth_.rows);
+    // ROS_INFO_STREAM("depth image " << depth.cols << " x " << depth.rows);
+  }
+  ROS_ASSERT(depth_.rows == rows);
+  ROS_ASSERT(depth_.cols == cols);
+  // for (int c = 0; c < depth_.cols; c++)
+  //   for (int r = 0; r < depth_.rows; r++)
+  //     depth_[c][r] = 0;
+
+  // Embed source depth image in center of depth frame
+//  cv::resize(depth, depth,   cv::Size(cols+pad, rows)); 
+  cv::Mat1f depth_stretch;
+  cv::resize(depth, depth_stretch, cv::Size(depth.cols+FLAGS_depth_hstretch, depth.rows));
+  
+  const int pad = (depth_.cols - depth_stretch.cols)/2 + FLAGS_depth_hshift;
+  depth_ = 0;
+  for (int c = 0; c < depth_stretch.cols; c++)
+    for (int r = 0; r < depth_stretch.rows; r++)
+    {
+      depth_(r*depth_.cols + c + pad) = depth_stretch(r*depth_stretch.cols + c);
+    }
+#endif
+#endif
+  } else {
+    // We are on a penguin, use depth image directly
+    if (depth_.cols != packed_.cols || depth_.rows != packed_.rows) {
+      depth_.create(cv::Size(packed_.cols, packed_.rows));
+    }
+    ROS_ASSERT(depth_.rows == packed_.rows);
+    ROS_ASSERT(depth_.cols == packed_.cols);
+    int data_size = packed_.rows * packed_.cols;
+    for (int i = 0; i < data_size; i++) {
+      depth_(i) = DepthPacking::packedToDepth(packed_(i));
+    }
+  }
+  depth_valid_ = true;
+}
+
+bool RGBDFrame::isDepthEmpty() const {
+  if (depth_known_empty_)
+    return true;
+
+  int n = packed_.cols * packed_.rows;
+  for (int i = 0; i < n; i++) {
+    if (packed_.data[i] != 0)
+      return false;
+  }
+  return true;
+}
+
+void RGBDFrame::clear() {
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  color_ = cv::Vec3b(127, 127, 127);
+  packed_ = (uchar)0;
+  shift_valid_ = false;
+  depth_valid_ = false;
+  depth_known_empty_ = true;
+}

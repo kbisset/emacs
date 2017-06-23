@@ -1,0 +1,74 @@
+commit cd37b15ac63ca0a4c71f7ea19c1a50e662716d56
+Merge: 0e6aae5 12460f3
+Author: Timothee Cour <timothee+github@light.house>
+Date:   Thu Feb 2 19:50:22 2017 -0800
+
+    Merge branch 'master' of github.com:hendrik42/snitch
+
+commit 0e6aae51b45a155506646d82c0c303fb1491b1b5
+Author: Timothee Cour <timothee+github@light.house>
+Date:   Thu Feb 2 19:50:13 2017 -0800
+
+    allow partial builds in lh_catkin_move/lh_catkin_restore
+
+commit 12460f3896af8a8379a88faa62e6b3160da4d33f
+Author: Jonghoon Jin <jonghoon@light.house>
+Date:   Thu Feb 2 19:43:13 2017 -0800
+
+    revert change after merge
+
+commit 33130ce05236b980abdc2e859cdff5057778bd8e
+Author: Jonghoon Jin <jonghoon@light.house>
+Date:   Thu Feb 2 16:32:07 2017 -0800
+
+    use linear scale in visualization tool
+    
+    overlaying raw value is a bonus
+
+commit d28b32e82122a8e77d849f359e0c1630a223a54e
+Author: Timothee Cour <timothee+github@light.house>
+Date:   Thu Feb 2 17:38:53 2017 -0800
+
+    formatting
+
+commit 0781c2d38799a1bda6a13c49eb70eed35bcffe2a
+Author: Timothee Cour <timothee+github@light.house>
+Date:   Thu Feb 2 17:34:30 2017 -0800
+
+    README: add missing required packages libflann-dev libgl2ps0 libpq-dev libnetcdf-c++4-dev libnetcdf-c++4 to make targets build on face1
+
+commit 7d2be6e4ab21c8a0f4935d1acd9ca68d9b788c07
+Author: Timothee Cour <timothee.cour2@gmail.com>
+Date:   Thu Feb 2 16:33:26 2017 -0800
+
+    README:lh_catkin_resetenv note
+
+commit f9c7fa71f67b8923bbffca97cf4efc8c87f7ebcf
+Author: Keith  Bisset <keith@snitch.co>
+Date:   Thu Feb 2 16:03:41 2017 -0800
+
+    Tweak build files for pcl
+
+commit 94f3dd1e97dd70b37a9683d721f65531b1804995
+Author: Timothee Cour <timothee.cour2@gmail.com>
+Date:   Thu Feb 2 15:37:13 2017 -0800
+
+    remove temporary hack section now that we have TCMALLOC_LIB
+
+commit 5c505d6939b6d231b83ef35c5d3a5f886a0ff081
+Merge: 7df07e2 5805fef
+Author: Keith <keith@light.house>
+Date:   Thu Feb 2 14:26:24 2017 -0800
+
+    Merge remote-tracking branch 'origin/master' into feature/jarvis2-alexandria
+    
+    Conflicts:
+    	ros-pkg/core/jarvis/CMakeLists.txt
+    	ros-pkg/core/online_learning/CMakeLists.txt
+
+commit 7df07e2db69cb0cc7b3f6462bfe2ae50cceb5f14
+Author: Keith <keith@light.house>
+Date:   Thu Feb 2 14:22:12 2017 -0800
+
+    Remove some debug messages. Fix config for tlgen
+

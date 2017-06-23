@@ -1,0 +1,205 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(jarvis_extra)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+
+find_package(OpenSSL REQUIRED)
+
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(cpp_netlib_LIBRARIES cppnetlib-uri cppnetlib-client-connections ${OPENSSL_LIBRARIES})
+find_package(Boost REQUIRED COMPONENTS locale)
+include_directories(${Boost_INCLUDE_DIRS})
+
+cs_add_library(jarvis_visualization
+  src/lib/blob_view.cpp
+  src/lib/texture.cpp
+  src/lib/cluster_gl_view.cpp
+  src/lib/cluster_list_view.cpp
+  src/lib/cluster_list_view_controller.cpp
+  src/lib/cluster_grid_view.cpp
+  src/lib/cluster_grid_view_controller.cpp
+  )
+target_link_libraries(jarvis_visualization glut pcl_visualization vtkRendering)
+
+cs_add_executable(mpegts_test src/prog/mpegts_test.cpp)
+target_link_libraries(mpegts_test avformat avcodec avutil gflags)
+set_target_properties(mpegts_test PROPERTIES COMPILE_FLAGS  "-Wno-deprecated-declarations")
+
+
+cs_add_executable(caffe_roc src/prog/caffe_roc.cpp)
+target_link_libraries(caffe_roc gflags)
+
+cs_add_executable(visualize_augmented_td src/prog/visualize_augmented_td.cpp)
+target_link_libraries(visualize_augmented_td jarvis_visualization)
+
+#cs_add_executable(inspect_classifications src/prog/inspect_classifications.cpp)
+#target_link_libraries(inspect_classifications jarvis_visualization)
+
+#cs_add_executable(find_similar_tracks src/prog/find_similar_tracks.cpp)
+#target_link_libraries(find_similar_tracks)
+
+cs_add_executable(update_descriptors src/prog/update_descriptors.cpp)
+target_link_libraries(update_descriptors gflags)
+
+cs_add_executable(check_raw_data src/prog/check_raw_data.cpp)
+target_link_libraries(check_raw_data gflags opencv_highgui)
+
+#cs_add_executable(update_fatness src/prog/update_fatness.cpp)
+#target_link_libraries(update_fatness)
+
+### TODO: make thsi work in jarius_extra
+# cs_add_executable(check_tds src/prog/check_tds.cpp)
+# target_link_libraries(check_tds gflags)
+
+cs_add_executable(induct src/prog/induct.cpp)
+target_link_libraries(induct gflags jarvis_visualization opencv_highgui)
+
+#cs_add_executable(evaluate src/prog/evaluate.cpp)
+#target_link_libraries(evaluate)
+
+#cs_add_executable(bias_variance src/prog/bias_variance.cpp)
+#target_link_libraries(bias_variance)
+
+#cs_add_executable(matched_baseline src/prog/matched_baseline.cpp)
+#target_link_libraries(matched_baseline)
+
+#cs_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
+#target_link_libraries(cross_evaluate)
+
+#cs_add_executable(cannon_reactor src/prog/cannon_reactor.cpp)
+#target_link_libraries(cannon_reactor)
+
+#cs_add_executable(twiddle src/prog/twiddle.cpp)
+#target_link_libraries(twiddle)
+
+#cs_add_executable(pcd_viewer src/prog/pcd_viewer.cpp)
+#target_link_libraries(pcd_viewer vtkCommon vtkIO vtkFiltering vtkHybrid vtkRendering)
+
+#cs_add_executable(request_detection_recording src/prog/request_detection_recording.cpp)
+#target_link_libraries(request_detection_recording)
+
+#cs_add_executable(select_up_vector src/prog/select_up_vector.cpp)
+
+#cs_add_executable(generate_collage src/prog/generate_collage.cpp)
+#target_link_libraries(generate_collage)
+
+#cs_add_executable(generate_detection_video src/prog/generate_detection_video.cpp)
+#target_link_libraries(generate_detection_video)
+
+#cs_add_executable(naive_supervised_baseline src/prog/naive_supervised_baseline.cpp)
+#target_link_libraries(naive_supervised_baseline)
+
+#cs_add_executable(email_on_detection src/prog/email_on_detection.cpp)
+#target_link_libraries(email_on_detection avcodec avformat avutil)
+
+#cs_add_executable(print_dmap src/prog/print_dmap.cpp)
+#target_link_libraries(print_dmap)
+
+#cs_add_executable(inspect_heat src/prog/inspect_heat.cpp)
+#target_link_libraries(inspect_heat)
+
+#cs_add_executable(track_times src/prog/track_times.cpp)
+#target_link_libraries(track_times)
+
+cs_add_executable(write_dp_graphviz src/prog/write_dp_graphviz.cpp)
+target_link_libraries(write_dp_graphviz gflags)
+
+cs_add_executable(filter_moving src/prog/filter_moving.cpp)
+target_link_libraries(filter_moving gflags)
+
+cs_add_executable(filter_moving_and_big src/prog/filter_moving_and_big.cpp)
+target_link_libraries(filter_moving_and_big gflags gflags)
+
+cs_add_executable(visualize_cluster_list src/prog/visualize_cluster_list.cpp)
+target_link_libraries(visualize_cluster_list jarvis_visualization)
+
+cs_add_executable(post_random_project src/prog/post_random_project.cpp)
+target_link_libraries(post_random_project gflags)
+
+cs_add_executable(visualize_cluster_grid src/prog/visualize_cluster_grid.cpp)
+target_link_libraries(visualize_cluster_grid jarvis_visualization)
+
+cs_add_executable(visualize_classifier src/prog/visualize_classifier.cpp)
+target_link_libraries(visualize_classifier gflags jarvis_visualization)
+
+cs_add_executable(visualize_cluster_grid_errors src/prog/visualize_cluster_grid_errors.cpp)
+target_link_libraries(visualize_cluster_grid_errors gflags  jarvis_visualization)
+
+cs_add_executable(track_connection_experiment src/prog/track_connection_experiment.cpp)
+target_link_libraries(track_connection_experiment gflags)
+
+cs_add_executable(rgb_experiment src/prog/rgb_experiment.cpp)
+target_link_libraries(rgb_experiment gflags gflags opencv_imgproc opencv_video opencv_highgui)
+
+cs_add_executable(shared_ptr_and_any src/prog/throwaway/shared_ptr_and_any.cpp)
+target_link_libraries(shared_ptr_and_any)
+
+cs_add_executable(dog_experiment_setbased src/prog/dog_experiment_setbased.cpp)
+target_link_libraries(dog_experiment_setbased gflags)
+
+cs_add_executable(adaptation_experiment src/prog/adaptation_experiment.cpp)
+target_link_libraries(adaptation_experiment gflags opencv_highgui)
+
+# cs_add_executable(glut_menu_experiment0 src/prog/throwaway/glut_menu_experiment0.cpp)
+# target_link_libraries(glut_menu_experiment0 glut GL)
+
+# cs_add_executable(glut_menu_experiment1 src/prog/throwaway/glut_menu_experiment1.cpp)
+# target_link_libraries(glut_menu_experiment1 glut GL GLU)
+
+cs_add_executable(export_jpgs src/prog/export_jpgs.cpp)
+target_link_libraries(export_jpgs gflags opencv_highgui)
+
+cs_add_executable(smart_timelapse_experiment src/prog/smart_timelapse_experiment.cpp)
+#target_link_libraries(smart_timelapse_experiment)
+target_link_libraries(smart_timelapse_experiment gflags profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl)
+
+cs_add_executable(crud_experiment src/prog/crud/crud_experiment.cpp)
+target_link_libraries(crud_experiment)
+
+cs_add_executable(print_centroid_stats src/prog/crud/print_centroid_stats.cpp)
+target_link_libraries(print_centroid_stats)
+#target_link_libraries(crud_experiment gflags profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl )
+
+### TODO: make this work in jarvis_extra
+#cs_add_executable(generate_timelapse src/prog/generate_timelapse.cpp src/lib/track_publisher.cpp src/lib/aws.cpp)
+<<<<<<< HEAD
+cs_add_executable(generate_timelapse src/prog/generate_timelapse.cpp)
+target_link_libraries(generate_timelapse profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl gflags ${OpenSSL_LIBRARIES} ${Boost_LIBRARIES} icuuc icui18n opencv_highgui ${TCMALLOC_LIB})
+=======
+# cs_add_executable(generate_timelapse src/prog/generate_timelapse.cpp)
+# target_link_libraries(generate_timelapse profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl gflags ${OpenSSL_LIBRARIES} ${Boost_LIBRARIES} icuuc icui18n opencv_highgui tcmalloc)
+>>>>>>> Move generate_timelapse from jarvis_extra to jarvis2
+
+### TODO: make thsi work in jarius_extra
+# cs_add_executable(rebuild_events src/prog/rebuild_events.cpp src/lib/track_publisher.cpp src/lib/aws.cpp)
+# target_link_libraries(rebuild_events profiler cxxtools-http cxxtools-xmlrpc cxxtools cxxtools-json xmlrpc_util xmlrpc xmlrpc_client avformat avcodec avutil curl ${Boost_LIBRARIES})
+
+### TODO: make thsi work in jarius_extra
+# cs_add_executable(get_event_source src/prog/get_event_source.cpp src/lib/track_publisher.cpp src/lib/aws.cpp)
+# target_link_libraries(get_event_source)
+
+
+# 14.04: usage of libav needs to be updated.
+# Just not compiling compression for now.
+
+# cs_add_executable(compression_experiment src/prog/compression_experiment.cpp)
+# target_link_libraries(compression_experiment)
+
+# cs_add_executable(background_compression_experiment src/prog/background_compression_experiment.cpp)
+# target_link_libraries(background_compression_experiment avcodec avformat avutil)
+
+# cs_add_executable(h264_encode_video src/prog/h264_encode_video.cpp)
+# target_link_libraries(h264_encode_video avcodec avformat avutil)
+
+# temporary hack to solve different behavior when linked with tcmalloc
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  exec_program(lsb_release ARGS "--release -s" OUTPUT_VARIABLE UBUNTU_RELEASE)
+endif()
+
+if (${UBUNTU_RELEASE} STREQUAL "16.04")
+  target_link_libraries(visualize_cluster_grid ${TCMALLOC_LIB})
+  target_link_libraries(check_raw_data ${TCMALLOC_LIB})
+endif()
+
+cs_export()
+

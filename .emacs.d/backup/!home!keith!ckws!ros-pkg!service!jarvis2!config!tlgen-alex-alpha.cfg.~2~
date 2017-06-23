@@ -1,0 +1,13 @@
+--mongo_uri=mongodb://deep4:27017
+--doorman_host=brutus
+--doorman_port=38080
+--doorman_timeout=120
+--disk_snippets=./snippets
+--update_stories
+--day_timelapse_only=1
+--timelapse_threads=4
+--segment_cache_size=1000
+--ws_port=0
+--assert_action=throw
+--timelapses_holdoff=0
+--alexandria_mode=true

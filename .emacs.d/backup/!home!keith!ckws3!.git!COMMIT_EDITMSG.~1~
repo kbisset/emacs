@@ -1,0 +1,23 @@
+Remove some debug messages. Fix config for tlgen
+
+Conflicts:
+	ros-pkg/service/jarvis2/config/tlgen-alex.cfg
+#
+# It looks like you may be committing a cherry-pick.
+# If this is not correct, please remove the file
+#	.git/CHERRY_PICK_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master-clean
+# You are currently cherry-picking commit 7df07e2.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/service/doorman_client/src/lib/doorman_utils.cpp
+#	new file:   ros-pkg/service/jarvis2/config/tlgen-alex.cfg
+#
+# Untracked files:
+#	ros-pkg/service/event_logger/
+#

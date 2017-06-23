@@ -1,0 +1,170 @@
+#include "jarvis/depth_calibration.h"
+#include "gflags/gflags.h"
+
+#include <ros/assert.h>
+#include <fstream>
+#include <exception>
+
+namespace Jarvis {
+
+DepthCalibration::DepthCalibration(int color_cols, int color_rows, int depth_cols, int depth_rows)
+  :
+  color_cols_(color_cols),
+  color_rows_(color_rows),
+  depth_cols_(depth_cols),
+  depth_rows_(depth_rows)
+{
+  const std::string dir("/home/keith/alex_params/");
+  readIntrinsicParameters(dir+"rgb_intrinsics_1178.txt", K_rgb_);
+  readDistortionParameters(dir+"rgb_distortion_1178.txt", dist_params_rgb_);
+
+  readIntrinsicParameters(dir+"tof_intrinsics_1178.txt", K_depth_);
+  readDistortionParameters(dir+"tof_distortion_1178.txt", dist_params_depth_);
+
+  readExtrinsicParameters(dir+"rgb_tof_extrinsics.txt", RT_);
+
+  rotation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  rotation_vector_.at<float>(0, 0) = RT_.at<float>(0, 0) * 0.001; // m to mm
+  rotation_vector_.at<float>(1, 0) = RT_.at<float>(1, 0) * 0.001; // m to mm
+  rotation_vector_.at<float>(2, 0) = RT_.at<float>(2, 0) * 0.001; // m to mm
+  
+  translation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  translation_vector_.at<float>(0, 0) = RT_.at<float>(3, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(1, 0) = RT_.at<float>(4, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(2, 0) = RT_.at<float>(5, 0) * 0.001; // m to mm
+
+  // The extrinsics are RGB to TOF
+  // what we need is TOF to RGB
+  getInverseTransformation(rotation_vector_, translation_vector_);
+
+}
+
+void DepthCalibration::readIntrinsicParameters(const std::string& filename, cv::Mat& K)
+{
+  float fx, fy, cx, cy;
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Intrinsic Parameter file: ") + filename);
+  }
+
+  ifile >> fx >> fy >> cx >> cy;
+
+  K = cv::Mat::eye(3, 3, CV_32FC1);
+  K.at<float> (0, 0) = fx;
+  K.at<float> (1, 1) = fy;
+  K.at<float> (0, 2) = cx;
+  K.at<float> (1, 2) = cy;
+}
+
+void DepthCalibration::readExtrinsicParameters(const std::string& filename, cv::Mat& RT)
+{
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Extrinsic Parameter file: ") + filename);
+  }
+
+  float rx = 0.0;
+  float ry = 0.0;
+  float rz = 0.0;
+  float tx = 0.0;
+  float ty = 0.0;
+  float tz = 0.0;
+
+  ifile >> rx >> ry >> rz >> tx >> ty >> tz;
+
+  RT = cv::Mat(6, 1, CV_32FC1);
+  
+  RT.at<float> (0, 0) = rx;
+  RT.at<float> (1, 0) = ry;
+  RT.at<float> (2, 0) = rz;
+
+  RT.at<float> (3, 0) = tx;
+  RT.at<float> (4, 0) = ty;
+  RT.at<float> (5, 0) = tz;
+}
+
+void DepthCalibration::readDistortionParameters(const std::string& filename,
+                                                cv::Mat& distortion_params)
+{
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Distortion Parameter file: ") + filename);
+  }
+
+  float k1, k2, k3, k4, k5, k6; // radial distortion
+  float p1, p2;  // tangential distortion
+
+  ifile >> k1 >> k2 >> k3 >> k4 >> k5 >> k6;
+  ifile >> p1 >> p2;
+
+  distortion_params = cv::Mat::zeros(8, 1, CV_32FC1);
+  distortion_params.at<float>(0, 0) = k1;
+  distortion_params.at<float>(1, 0) = k2;
+
+  distortion_params.at<float>(2, 0) = p1;
+  distortion_params.at<float>(3, 0) = p2;
+
+  distortion_params.at<float>(4, 0) = k3;
+  distortion_params.at<float>(5, 0) = k4;
+  distortion_params.at<float>(6, 0) = k5;
+  distortion_params.at<float>(7, 0) = k6;
+}
+
+float DepthCalibration::decodeDepth(const float val) {
+  return (10.0 * val) / 255;
+}
+
+void DepthCalibration::getInverseTransformation(cv::Mat& rotation_vector, 
+                              cv::Mat& translation_vector)
+{
+  cv::Mat rotation_matrix;
+  cv::Rodrigues(rotation_vector, rotation_matrix);
+
+  cv::Mat rotation_matrix_transpose;
+  cv::transpose(rotation_matrix, rotation_matrix_transpose);
+
+  cv::Rodrigues(rotation_vector, rotation_matrix_transpose);
+
+  std::cout << "Initial rotation " << rotation_matrix << std::endl;
+  std::cout << "Inverse rotation " << rotation_matrix_transpose << std::endl;
+
+  std::cout << "Intital translation " << translation_vector << std::endl;
+  translation_vector = - rotation_matrix_transpose * translation_vector;
+  std::cout << "Inverse translation " << translation_vector << std::endl;
+}
+
+void DepthCalibration::getRGBPoint(const cv::Mat& depth, int x, int y, int* rgb_x, int* rgb_y)  
+{
+  float f = K_depth_.at<float>(0, 0);
+  float cx = K_depth_.at<float>(0, 2);
+  float cy = K_depth_.at<float>(1, 2);
+  std::cout << "f = " << f << " cx = " << cx << " cy = " << cy << std::endl;
+
+  float D = sqrt(f*f + (y-cy)*(y-cy));
+  float val = depth.at<cv::Vec3b>(y, x)[0];
+  std::cout << val  << std::endl;
+
+  float R = decodeDepth(val);
+  std::cout << "Radial distance " << R << std::endl;
+
+  cv::Point3f pt3d;
+  pt3d.z = R * f / D;
+  pt3d.x = pt3d.z * (x-cx) / f;
+  pt3d.y = pt3d.z * (y-cy) / f;
+
+  std::cout << "Point in TOF frame " << pt3d  << std::endl;
+  std::vector<cv::Point3f> pt3d_vec;
+  std::vector<cv::Point2f> pt2d_vec;
+  pt3d_vec.push_back(pt3d);
+  cv::projectPoints(pt3d_vec, rotation_vector_, translation_vector_, 
+                    K_rgb_, dist_params_rgb_, pt2d_vec);
+
+  *rgb_x = pt2d_vec[0].x;
+  *rgb_y = pt2d_vec[0].y;
+  std::cout << "Depth point " << x << " " << y << std::endl;
+  std::cout << "Corresponding RGB point " << *rgb_x << " " << *rgb_y << std::endl;
+}
+
+} // namespace
+
+

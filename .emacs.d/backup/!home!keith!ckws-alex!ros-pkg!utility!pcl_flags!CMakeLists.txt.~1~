@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(pcl_flags)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+
+<<<<<<< HEAD
+find_package(Boost REQUIRED) 
+=======
+find_package(Boost 1.54 REQUIRED) 
+>>>>>>> Use seperatly compiled, non-system versions of boost, cpp-netlib, and pcl. See README-branch.txt
+find_package(PCL REQUIRED)
+
+#${PCL_LIBRARIES}
+cs_export(LIBRARIES pcl_common pcl_io
+          CFG_EXTRAS pcl_flags-extras.cmake)

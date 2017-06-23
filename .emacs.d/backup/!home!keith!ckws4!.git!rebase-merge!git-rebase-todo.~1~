@@ -1,0 +1,67 @@
+pick b2ce7f5 Fresh branch with Jarvis2 changes for Alexandria
+pick c239221 allow import_track scrap user feedback data
+pick adf9e8f fix replacePathPrefix issue
+pick c883436 clang-format
+pick 31f464e Unapcking and disambiguation in a single pass - first implementation
+pick bdbb4ee 1)Code optimizations (single pass) 2) Reset call count in timer reset
+pick f3fca23 Removing dead code
+pick 4fab2fa Removing dead code
+pick 4f2fe66 return_type trait; toSTringIfNonVoid; run_mainAux; temp_dir; temp_file
+pick f570c8b make encodedImageString more robust
+pick 7fb3021 personid data_access: fix getDeviceType for old versions of mongo
+pick e223736 Adding OpenMP directive
+pick c392707 Adding comments
+pick 44ea245 Cleaning up dead code in background model
+pick 15d3f87 Removing unused code
+pick b251e5c Bug fix
+pick 9fdf6e9 Minor change
+pick 595b449 FaceEmbeddingProcessor class
+pick 3dedc47 shell function update
+pick 9a3c772 profile update: __PRETTY_FUNCTION__ to avoid name clashes(side issue in https://github.com/hendrik42/snitch/issues/33); test_PROFILE_FUNC to show example output
+pick 12a1e1c doc/typo fix
+pick e160b0c J2A: Turn off lazy decoding for now
+pick a01f441 add a paramter to deep_depth testing script
+pick 5f812a1 Get wire plugin to execute in Eclipse
+pick 9c8afd7 Wit: Add some 'known to be broken in wit.ai' tests
+pick b655036 Revert "Get wire plugin to execute in Eclipse" Seems to cause Eclipse to hang frequently.
+pick 2e56747 Veneer: Factor out some of the plumbing for testing invites
+pick 2820858 Veneer: Chagne handling of exceptions wrt/ transaction commit/rollback to fix issue when registration during invite hits a duplicate email/phone
+pick 768ca21 Removing uint->int conversion for legibility.
+pick 0befbb0 Enabling OMP "guided" schedule for depth image computation.
+pick 4008a25 Simplify RaytraceBackgroundImage::update
+pick 1781a2f Simplify depth image computation.
+pick 9103774 Avoid writing unused range_ phase_ and amp_ arrays.
+pick 8217626 cleanups
+pick 8e8e050 cmanip refactoring
+pick 5b6d5c4 refactored dep
+pick ff664e0 annotations: bug fix + cleanup
+pick d372693 clang-format
+pick e42d43d add archive option to deep depth exp
+pick 8401c9e add archive timestamp
+pick 646a89c Get wire plugin to execute in Eclipse (but only at configuration time)
+pick fbf7b4a Veneer: Use Thymeleaf templates for generating password reset email
+pick 78cc67a computePersonIDTrackOutput
+pick 054d8ec Bug fix and API change
+pick 0c997ca Re-enable TEMPORARY_FIX (slightly faster).
+pick 580a26b Pre-apply fppn looparound. (Minor optimization).
+pick fdaf5c9 Removing dead code and ffpn array offset
+pick ca7f98d FPPN offset bug fix
+pick 9502b2d Add method fior determining if a certain sensor id is for a pengiun or alexandria device
+
+# Rebase 6fd76ee..ced94d4 onto 6fd76ee
+#
+# Commands:
+#  p, pick = use commit
+#  r, reword = use commit, but edit the commit message
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
+#  f, fixup = like "squash", but discard this commit's log message
+#  x, exec = run command (the rest of the line) using shell
+#
+# These lines can be re-ordered; they are executed from top to bottom.
+#
+# If you remove a line here THAT COMMIT WILL BE LOST.
+#
+# However, if you remove everything, the rebase will be aborted.
+#
+# Note that empty commits are commented out

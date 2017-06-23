@@ -1,0 +1,67 @@
+#include "snitch_protocols/sensor.pb.h"
+#include <gflags/gflags.h>
+#include <gflags/gflags_completions.h>
+#include <ros/assert.h>
+
+
+namespace pb = ::google::protobuf;
+
+int main(int argc, char** argv)
+{
+  setlinebuf(stdout);
+  // If this is instantiated, protobuf won't log to stdout
+//  ::google::protobuf::LogSilencer shutup_google;
+  // Make protobuf use our own logger
+  pb::SetLogHandler(&LogHandler);
+
+// Turn off caffe logging
+// TODO: Make this a flag
+  google::InitGoogleLogging("jarvis2");
+  google::SetCommandLineOption("GLOG_minloglevel", FLAGS_caffe_minloglevel.c_str());
+  
+  google::SetUsageMessage("");
+  if(argc == 1) {
+//  ROS_INFO_STREAM("Git commit: " << BagOfTricks::git_sha1);
+    google::ShowUsageWithFlags(argv[0]);
+    return 0;
+  }
+#if ENABLE_RECORD
+  google::RegisterFlagValidator(&FLAGS_record_tds,
+                                validateDirectoryMkdirIfNotThereYetEmptyOk);
+#endif
+  google::RegisterFlagValidator(&FLAGS_config, validateFilenameEmptyOk);
+  google::RegisterFlagValidator(&FLAGS_classifier, validateFilenameEmptyOk);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  FLAGS_caffe_batch_size = 1;
+  
+  signal(SIGINT, sigint);
+  signal(SIGTERM, sigint);
+  signal(SIGHUP, sighup);
+
+  // Complain about the deprecated the alexandria_only flag, and use alexandria_mode instead
+  google::CommandLineFlagInfo flag;
+  if (google::GetCommandLineFlagInfo("alexandria_only", &flag) && !flag.is_default) {
+    
+    ROS_WARN_STREAM("Flag alexandria_only is deprecated, use alexandria_mode instead");
+    FLAGS_alexandria_mode = FLAGS_alexandria_only;
+  }
+
+  if (FLAGS_serial_jarvis) {
+    ROS_WARN_STREAM("Using serialized Jarvis");
+  }
+
+  ros::Time::init();
+  // Create shared instance before we start any threads, and set cache size
+  VideoArchiveReader::instance()->segmentCache()->setCapacity(FLAGS_segment_cache_size);
+
+#if ENABLE_RECORD
+  if (!FLAGS_read_archive.empty()) {
+    // Reading an archive (ROS ComptressedRGBD)
+    ROS_ASSERT_MSG(FLAGS_record_archive.empty(), "Can't record an archive while reading an archive!");
+    if (FLAGS_read_archive.find('/') == string::npos)
+      VideoArchiveReader::instance()->open(".");
+    else
+      VideoArchiveReader::instance()->open(
+          FLAGS_read_archive.substr(0, FLAGS_read_archive.rfind("/")));
+  } else if (!FLAGS_read_proto.empty()) {
+    // Reading a proto (Protobuf SegmentSegment

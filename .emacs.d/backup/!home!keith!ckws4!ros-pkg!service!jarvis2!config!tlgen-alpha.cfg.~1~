@@ -1,0 +1,36 @@
+--config=/home/keith/data/config-alex/mosaic.yml
+--caffe_config_path=/home/keith/data/config-alex
+--mongo_uri=mongodb://deep3:27017
+--amqp_host=deep3
+--amqp_queue=alexandria-analysis-work
+--classifier=none
+--doorman_host=deep3
+--doorman_port=38080
+--doorman_timeout=120
+--record_archive=/home/keith/data-alex/archive
+--record_tds=/home/keith/data-alex/tds
+--publish_tracks
+--track_snippets=true
+--story_snippets=false
+--s3_snippets=
+--disk_snippets=/home/keith/data-alex/snippets
+--assert_action=throw
+--ws_port=0
+--day_timelapse_only=1
+--single_threaded_stories
+--snippet_backup_dir=/home/keith/data-alex/snippets
+--segment_cache_size=100
+--alert_warn_latency=120
+--slack_alert_channel=slacktest
+--skip_classification=false
+#--fake_classification=alert
+--vis_level=0
+--vis_singlestep=false
+--vis_fullsizehalos=false
+--alexandria_mode=true
+# 2/13 9:56 droped TOF
+#--lighthouse_timestamp=1487003040000
+# 2/12 14:57 missing cat
+#--lighthouse_timestamp=1486940220000
+--lighthouse_timestamp=1487125652655
+--lighthouse_sensor=68:14:01:cf:d9:0f

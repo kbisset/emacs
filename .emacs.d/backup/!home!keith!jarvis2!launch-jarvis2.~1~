@@ -1,0 +1,56 @@
+#!/bin/bash
+# Starts jarvis2 instances that will restart when they die
+
+rundir=/disk/jarvis
+
+if [ $# -lt 1 ] || [ $# -gt 2 ]; then
+    echo "Usage: $0 n [start]"
+    echo "	n is number of instances"
+    echo "	start is starting id, defaults to 0"
+    exit
+fi
+
+source /opt/ros/indigo/setup.bash
+source /opt/jarvis/ckws/devel/setup.bash 
+export LD_LIBRARY_PATH=/opt/jarvis/lib:$LD_LIBRARY_PATH
+export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
+
+# cmd="$HOME/ckws/devel/lib/jarvis2/jarvis2 \
+#          --config /opt/jarvis/lib/mosaic.yml  \
+#          --mongo_uri mongodb://deep3:27017 \
+#          --amqp_host deep3 \
+#          --classifier none \
+#          --doorman_host deep3 --doorman_port 38080 \
+#          --record_tds /opt/jarvis/var/jarvis-cache/tds \
+#          --record_archive /opt/jarvis/var/jarvis-cache/archive \
+#          --publish_tracks \
+#          --track_snippets \
+#          --s3_snippets=archive-test.snitch.ai \
+#          --assert_action throw \
+#          --ws_port 0"
+
+cmd="/opt/jarvis/bin/jarvis2 --flagfile=/opt/jarvis/etc/deep1-notl.cfg"
+cd $rundir
+ulimit -c 0
+echo "Starting $1 jarvis2 instances"
+if [ "X$2" = "X" ] ; then
+    start=0
+else
+    start=$2
+fi
+
+len=$1
+num=$start
+end=$((start + len))
+
+while [ $num -lt $end ]; do
+    mkdir -p $rundir/$num
+    pushd $rundir/$num > /dev/null
+    logfile=$rundir/$num/jarvis2.log
+    date
+    echo "Starting jarvis2 in" `pwd` 
+    (while : ; do echo -n "*** Starting Jarvis2 ($num) at "; date --rfc-3339=seconds; nohup $cmd ; sleep 1; done ) >>$logfile 2>&1 &
+    num=$((num+1))
+    popd > /dev/null
+done
+

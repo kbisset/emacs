@@ -1,0 +1,9 @@
+ /home/timothee_local/demo_jarvis//jarvis2//bin/jarvis2 --flagfile=/home/timothee_local/demo_jarvis//jarvis2//etc/config/personid/personid_jarvis_flag.cfg --snitch_config_pid_dir=/home/timothee_local/demo_jarvis//jarvis2//etc/config/personid/ --personid_config='
+    #already done upstream: libcppinterface2_f:""
+    snitch_track{
+      dist_labels_thres:2.1
+      #force_is_moving:true
+    }
+    #foo3
+  ' --record_tds=/home/timothee_local/demo_jarvis//var2/jarvis-cache//tds --record_archive=/home/timothee_local/demo_jarvis//var2/jarvis-cache//archive --amqp_user=hendrik --amqp_password=jarvis42 --amqp_private_queue=true
+ 

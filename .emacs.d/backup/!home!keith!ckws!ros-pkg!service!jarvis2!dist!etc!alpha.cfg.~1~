@@ -1,0 +1,13 @@
+--amqp_host=deep4
+--amqp_password=jarvis42
+--amqp_queue=alexandria-analysis-work
+--amqp_user=hendrik
+
+--barista_enable=true
+--barista_host=deep4
+--barista_password=jarvis42
+--barista_user=hendrik
+
+--doorman_host=deep4
+--doorman_port=38080
+--doorman_timeout=120

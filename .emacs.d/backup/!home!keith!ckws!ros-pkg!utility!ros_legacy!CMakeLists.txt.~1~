@@ -1,0 +1,92 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(bag_of_tricks)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+
+# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/")
+# include(GetGitRevisionDescription)
+# get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+
+find_package(Boost REQUIRED COMPONENTS thread filesystem system program_options chrono timer)
+include_directories(${Boost_INCLUDE_DIRS})
+
+# openssl for cpp-netlib
+find_package(OpenSSL REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NETWORK_ENABLE_HTTPS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_ENABLE_ASSERT_HANDLER")
+
+FIND_PACKAGE (Threads REQUIRED)
+
+find_package(OpenCV REQUIRED COMPONENTS core)
+include_directories(${OpenCV_INCLUDE_DIRS})
+
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/lib/GitSHA1.cpp.in" "${CATKIN_DEVEL_PREFIX}/GitSHA1.cpp" @ONLY)
+
+cs_add_library(${PROJECT_NAME}
+  src/lib/image_region_iterator.cpp
+  src/lib/connected_components.cpp
+  src/lib/glob.cpp
+  src/lib/flags.cpp
+  src/lib/next_path.cpp
+  src/lib/recursive_find.cpp
+  src/lib/tokenize.cpp
+  src/lib/stringprintf.cpp
+  src/lib/url.cpp
+  src/lib/sensorid.cpp
+  src/lib/sensor_site.cpp
+  src/lib/thread.cpp
+  src/lib/names.cpp
+  src/lib/assert.cpp
+  src/lib/slack_utils.cpp
+#  ${CATKIN_DEVEL_PREFIX}/GitSHA1.cpp
+  )
+
+target_link_libraries(${PROJECT_NAME}
+  ${OpenSSL_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  curl
+  gflags
+  )
+
+# catkin_add_gtest(test_next_path src/test/test_next_path.cpp)
+# target_link_libraries(test_next_path ${PROJECT_NAME})
+
+# catkin_add_gtest(test_image_indexer src/test/test_image_indexer.cpp)
+# target_link_libraries(test_image_indexer ${PROJECT_NAME})
+
+# catkin_add_gtest(test_url src/test/test_url.cpp)
+# target_link_libraries(test_url ${PROJECT_NAME})
+
+# catkin_add_gtest(test_names src/test/test_names.cpp)
+# target_link_libraries(test_names ${PROJECT_NAME})
+
+catkin_add_gtest(test_sensorid src/test/test_sensorid.cpp)
+target_link_libraries(test_sensorid ${PROJECT_NAME} gtest_main)
+
+# cs_add_executable(sendslack
+#   src/prog/sendslack.cpp
+# )
+
+# target_link_libraries(sendslack
+#   ${PROJECT_NAME}
+#   gflags
+#   ${OpenSSL_LIBRARIES}
+#   ${Boost_LIBRARIES}
+# )
+
+# cs_add_executable(printsha
+#   src/prog/printsha.cpp
+# )
+
+# target_link_libraries(printsha
+#   ${PROJECT_NAME}
+# )
+
+#cs_add_executable(print_relative_paths src/program/throwaway/print_relative_paths.cpp)
+#target_link_libraries(print_relative_paths ${PROJECT_NAME} ${Boost_LIBRARIES} )
+
+cs_export(INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS}
+  LIBRARIES ${Boost_LIBRARIES} ${OpenCV_LIBRARIES})

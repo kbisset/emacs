@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(video_archive)
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME OFF) 
+find_package(Boost REQUIRED COMPONENTS system locale date_time thread iostreams)
+
+cs_add_library(${PROJECT_NAME}
+  src/lib/va_repo.cpp
+  src/lib/va_reader.cpp
+  src/lib/va_stream.cpp
+  src/lib/va_file.cpp
+  src/lib/va_doorman.cpp
+  src/lib/va_writer.cpp
+  src/lib/rgbd_stream_decoder.cpp
+  src/lib/video_stream.cpp
+  src/lib/cached_shard.cpp
+  src/lib/video_cache.cpp
+  )
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${TCMALLOC_LIB})
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+
+# cs_add_executable(video_archive_fixer src/prog/video_archive_fixer.cpp)
+# target_link_libraries(video_archive_fixer ${PROJECT_NAME} gflags  /usr/lib/x86_64-linux-gnu/libopencv_imgproc.a ${amqp_client_LIBRARIES})
+
+# cs_add_executable(video_archive_info src/prog/video_archive_info.cpp)
+# target_link_libraries(video_archive_info ${PROJECT_NAME} opencv_highgui gflags /usr/lib/x86_64-linux-gnu/libopencv_imgproc.a ${amqp_client_LIBRARIES})
+
+# cs_add_executable(compressed_rgbd_view src/prog/compressed_rgbd_view.cpp)
+# target_link_libraries(compressed_rgbd_view ${PROJECT_NAME} gflags ${OpenCV_LIBS} /usr/lib/x86_64-linux-gnu/libopencv_imgproc.a ${amqp_client_LIBRARIES})
+
+# cs_add_executable(reindex src/prog/reindex.cpp)
+# target_link_libraries(reindex ${PROJECT_NAME} gflags ${OpenCV_LIBS}   ${amqp_client_LIBRARIES})
+
+# cs_add_executable(doorman_client_test src/prog/doorman_client_test.cpp)
+<<<<<<< HEAD
+# target_link_libraries(doorman_client_test video_archive gflags ${OpenCV_LIBS} /usr/lib/x86_64-linux-gnu/libopencv_imgproc.a ${TCMALLOC_LIB})
+=======
+# target_link_libraries(doorman_client_test video_archive gflags ${OpenCV_LIBS} /usr/lib/x86_64-linux-gnu/libopencv_imgproc.a tcmalloc)
+>>>>>>> Merge master into feature/jarvis2-alexandria
+
+cs_add_executable(issue10 src/test/issue10.cpp)
+target_link_libraries(issue10 video_archive gflags ${TCMALLOC_LIB})
+
+catkin_add_gtest(test_va
+#  src/test/test_video_cache.cpp
+  src/test/test_Segment.cpp
+  src/test/test_SiteId.cpp)
+target_link_libraries(test_va ${PROJECT_NAME} gtest_main gflags ${TCMALLOC_LIB})
+
+cs_export()

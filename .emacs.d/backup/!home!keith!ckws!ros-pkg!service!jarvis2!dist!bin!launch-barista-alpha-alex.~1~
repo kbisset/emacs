@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# Controls barista instances, one instance per each GPU
+
+source /opt/ros/kinetic/setup.bash
+source /opt/jarvis/ckws/devel/setup.bash 
+export LD_LIBRARY_PATH=/opt/jarvis/lib:/usr/local/cuda-8.0/lib64/:$LD_LIBRARY_PATH
+export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
+
+set -e 
+set -o pipefail
+
+piddir='/opt/jarvis/var'
+logdir='/opt/jarvis/var/logs'
+cfgfile='/opt/jarvis/etc/barista.cfg'
+function IsRunning() {
+  local pidfile="$1"
+  if [ -f ${pidfile} ] && [ -e "/proc/$(cat ${pidfile})" ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function EnsureStarted() {
+  for i in $(nvidia-smi -L | awk -F ' |:' '{print $2}'); do
+    local dpidfile=${piddir}/barista-daemon-${i}.pid
+    local wpidfile=${piddir}/barista-wrapper-${i}.pid
+    local logfile=${logdir}/barista-${i}.log
+
+    if IsRunning ${wpidfile}; then
+      echo "Barista instance ${i} is already running"
+      continue
+    fi
+
+    if IsRunning ${dpidfile}; then
+      echo "Barista daemon ${i} is still running while its wrapper is not. Killing (-9)"
+      kill -9 $(cat ${dpidfile} 2>/dev/null)
+    fi
+
+    echo "Starting barista instance ${i} ..."
+    (while true; do 
+      begin=$(date +%s)
+      echo "*** [$(date --rfc-3339=seconds)] Restarting barista instance $i at $(hostname -s)"
+      CAFFE_DEVICE_NUMBER=$i nohup /opt/jarvis/jarvis2/bin/barista --flagfile=$cfgfile &
+      echo $! > ${dpidfile}
+      trap "kill -9 $(cat ${dpidfile}); rm -f ${dpidfile}; exit" SIGINT SIGTERM SIGHUP
+      wait
+      trap - SIGINT SIGTERM SIGHUP
+      end=$(date +%s)
+      if ((end - begin < 10)); then
+      	sleep 10
+      fi
+    done) >> ${logfile} 2>&1 &
+    echo $! > ${wpidfile}
+    sleep 1
+  done
+}
+
+function EnsureStopped() {
+  for i in $(nvidia-smi -L | awk -F ' |:' '{print $2}'); do
+    local dpidfile=${piddir}/barista-daemon-${i}.pid
+    local wpidfile=${piddir}/barista-wrapper-${i}.pid
+    local logfile=${logdir}/barista-${i}.log
+
+    if IsRunning ${wpidfile}; then
+      for attempt in $(seq 1 5); do
+        echo "Stopping barista instance ${i} ..."
+        kill $(cat ${wpidfile} 2>/dev/null)
+        sleep 1
+        if ! IsRunning ${wpidfile}; then
+          rm -f ${wpidfile}
+          break
+        fi
+      done
+      if IsRunning ${wpidfile}; then
+        echo "Failed to stop barista instance ${i}. Killing (-9)"
+        kill -9 $(cat ${wpidfile} 2>/dev/null)
+      fi
+    else
+      echo "Barista instance ${i} is not running"
+    fi
+
+    if IsRunning ${dpidfile}; then
+      echo "Barista daemon ${i} is still running while its wrapper is not. Killing (-9)"
+      kill -9 $(cat ${dpidfile} 2>/dev/null)
+    fi
+  done
+}
+
+function Reload() {
+  for i in $(nvidia-smi -L | awk -F ' |:' '{print $2}'); do
+    local dpidfile=${piddir}/barista-daemon-${i}.pid
+    local wpidfile=${piddir}/barista-wrapper-${i}.pid
+
+    if IsRunning ${dpidfile}; then
+      echo "Killing barista daemon ${i}"
+      kill -9 $(cat ${dpidfile} 2>/dev/null)
+    else
+      echo "Barista daemon ${i} is not running"
+    fi
+  done
+}
+
+function PidStatus() {
+  local pidfile="$1"
+  if IsRunning ${pidfile}; then
+    local pid=$(cat ${pidfile} 2>/dev/null)
+    local started=$(stat --printf="%Z" /proc/${pid})
+    printf "%5s (%s)" "${pid}" "$(date -d @${started} '+%b%d %H:%M:%S')"
+  else
+    echo "NOT RUNNING"
+  fi
+}
+
+function DisplayStatus() {
+  printf "%s | %-22s | %-22s | %s\n" '#' 'WRAPPER' 'DAEMON' 'LOG'
+  for i in $(seq 1 80); do echo -n '-'; done; echo
+  for i in $(nvidia-smi -L | awk -F ' |:' '{print $2}'); do
+    local dpidfile=${piddir}/barista-daemon-${i}.pid
+    local wpidfile=${piddir}/barista-wrapper-${i}.pid
+    local logfile=${logdir}/barista-${i}.log
+
+    printf "%s | %-22s | %-22s | %s\n" "${i}" "$(PidStatus ${wpidfile})" "$(PidStatus ${dpidfile})" "${logfile}"
+  done
+}
+
+function CheckUser() {
+  if [ $(id -u jarvis) -ne $(id -u) ]; then
+    echo "You must be jarvis to control barista"
+    exit 1
+  fi
+}
+
+case "$1" in
+  start)
+    CheckUser
+    EnsureStarted
+    ;;  
+  stop)
+    CheckUser
+    EnsureStopped
+    ;;  
+  restart)
+    CheckUser
+    EnsureStopped
+    EnsureStarted
+    ;;
+  reload)
+    CheckUser
+    EnsureStarted
+    Reload
+    ;;
+  status)
+    DisplayStatus
+    ;;
+  *)  
+    echo "Usage: $0 {start|stop|restart|reload|status}"
+    exit 1
+    ;;  
+esac
+

@@ -1,0 +1,84 @@
+#pragma once
+
+#include <snitch_protocols/sensor.pb.h>
+#include "ubercam_msgs/CompressedRGBD.h"
+#include "bag_of_tricks/lru_cache.h"
+
+#include <queue>
+#include <deque>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+
+namespace VideoArchive {
+
+// cache is indexed by sensorId, start_timestamp, end_timestamp
+// To compare with a frame, set both start_timestamp and end_timestamp to the frame timestamp
+typedef std::tuple<uint64_t, uint64_t, uint64_t> SegmentKey;
+
+// Comparison for the map used to store the cache.
+struct SegmentCompare {
+  static const int sensorP{0};
+  static const int startP{1};
+  static const int endP{2};
+  bool operator()(const SegmentKey& lhs, const SegmentKey& rhs) const;
+};
+
+typedef std::shared_ptr<snitch::sensor::SensorSegment> SensorSegmentPtr;
+
+typedef  BagOfTricks::lru_cache<SegmentKey, SensorSegmentPtr, SegmentCompare> SegmentCache;
+// TODO: const correctness
+class VideoCache
+{
+public:
+typedef std::shared_ptr<VideoCache> Ptr;
+typedef std::shared_ptr<snitch::sensor::SensorSegment> SensorSegmentPtr;
+typedef std::shared_ptr<snitch::sensor::SensorFrame> SensorFramePtr;
+
+  VideoCache();
+  ~VideoCache();
+
+  // Add a segment to the cache
+  void addSegment(SensorSegmentPtr seg);
+
+  // Remove all cached segments and reset stats
+  void clear();
+
+  // Number of segments in the cache
+  size_t size() {return cache_.size();}
+  
+  SensorSegmentPtr getSegment(uint64_t sensor, uint64_t timestamp);
+  SensorSegmentPtr findSegment(uint64_t sensor, uint64_t timestamp);
+
+  // index is set to the frame index within the segment. The segment contains metatdata
+  // needed to convert to a CompressedRGBD
+  SensorSegmentPtr getFrameInSegment(uint64_t sensor, uint64_t timestamp, int* index);
+  SensorSegmentPtr findFrameInSegment(uint64_t sensor, uint64_t timestamp, int* index);
+
+  ubercam_msgs::CompressedRGBDPtr SensorFrameToCompressedRGBD(SensorSegmentPtr segment, int index);
+  
+  // next_timestamp is set to timestamp of the frame after the one returned
+  ubercam_msgs::CompressedRGBDPtr getCompressedRGBD(uint64_t sensor,
+                                                    uint64_t timestamp,
+                                                    uint64_t* next_timestamp);
+  ubercam_msgs::CompressedRGBDPtr findCompressedRGBD(uint64_t sensor, uint64_t timestamp);
+
+  void dumpStats() const;
+
+protected:
+private:
+  // TODO [hd]: Why use a deque, whouldn't a map be more efficient?
+  //      [kb]: Why yes, yes it would.
+  SensorSegmentPtr getSegmentFromDoorman(uint64_t sensor, uint64_t timestamp);
+  
+  std::mutex cacheMutex_;
+  SegmentCache cache_;
+
+  int cacheHits_;
+  int doormanHits_;
+  int cacheFailures_;
+};
+
+} // namespace
+

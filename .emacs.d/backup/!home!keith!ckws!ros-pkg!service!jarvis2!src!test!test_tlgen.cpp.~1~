@@ -1,0 +1,14 @@
+//#define ENABLE_TEST_LOGGING 1
+#include "bag_of_tricks/testEnv.h"
+
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/sensorid.h"
+#include "video_archive/va_reader.h"
+
+#include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <ros/console.h>
+
+TEST(testTLGen, loadSpeed) {
+
+}

@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 2.8)
+project(cpp_netlib)
+find_package(catkin REQUIRED)
+include(ExternalProject)
+
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+
+file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
+
+ExternalProject_Add(${PROJECT_NAME}-upstream
+  PREFIX upstream
+  GIT_REPOSITORY https://github.com/cpp-netlib/cpp-netlib.git
+  GIT_TAG cpp-netlib-0.11.2-final
+  INSTALL_DIR ${CATKIN_DEVEL_PREFIX}
+
+  # The CMake build doesn't seem to install headers and shared libraries,
+  # but the vanilla Makefile works fine for an in-tree build and install.
+  BUILD_IN_SOURCE 1
+#  CONFIGURE_COMMAND ""
+#  BUILD_COMMAND make release
+#  INSTALL_COMMAND make install PREFIX=<INSTALL_DIR>
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
+             -DBOOST_ROOT=${BOOST_ROOT}
+             -DCPP-NETLIB_BUILD_SHARED_LIBS=ON
+             -DCPP-NETLIB_BUILD_EXPERIMENTS=OFF
+             -DCPP-NETLIB_BUILD_EXAMPLES=OFF
+)
+
+catkin_package(
+   LIBRARIES cppnetlib-uri cppnetlib-client-connections
+   INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include
+   )
+
+# cs_export(
+#    LIBRARIES cppnetlib-uri cppnetlib-client-connections
+#  )
+
+
+# file(MAKE_DIRECTORY ${CATKIN_DEVEL_PREFIX}/include)
+
+# file(COPY /home/keith/cpp-netlib.tbz
+#   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.
+# #  EXPECTED_MD5 a91d3807faf17d02e17ae8c8cde70698
+# )
+
+# # ExternalProject_Add(${PROJECT_NAME}
+# #   PREFIX upstream
+# #   INSTALL_DIR ${CATKIN_DEVEL_PREFIX}
+
+# #   CMAKE_COMMAND ""
+# # )
+
+# add_custom_command(
+#   TARGET cppnetlib-uri INSTALL
+#   COMMAND cp cpp-netlib-stage/lib/x86_64-linux-gnu/libcppnetlib-uri.a  ${CATKIN_DEVEL_PREFIX}/lib/.
+#   COMMAND cp cpp-netlib-stage/lib/x86_64-linux-gnu/libcppnetlib-client-connections.a ${CATKIN_DEVEL_PREFIX}/lib/.
+#   COMMAND cp -r cpp-netlib-stage/include/boost ${CATKIN_DEVEL_PREFIX}/include/.
+# )
+
+

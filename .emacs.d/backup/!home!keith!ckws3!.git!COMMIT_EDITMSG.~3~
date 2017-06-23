@@ -1,0 +1,29 @@
+Tweak build files for pcl
+
+Conflicts:
+	ros-pkg/core/deep_depth_experiment/CMakeLists.txt
+	ros-pkg/core/online_learning/CMakeLists.txt
+#
+# It looks like you may be committing a cherry-pick.
+# If this is not correct, please remove the file
+#	.git/CHERRY_PICK_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    Keith  Bisset <keith@snitch.co>
+#
+# On branch master-clean
+# You are currently cherry-picking commit f9c7fa7.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/deep_depth_experiment/CMakeLists.txt
+#	modified:   ros-pkg/core/online_learning/CMakeLists.txt
+#	modified:   ros-pkg/core/online_learning/package.xml
+#	modified:   ros-pkg/external/pcl/CMakeLists.txt
+#
+# Untracked files:
+#	ros-pkg/service/event_logger/
+#

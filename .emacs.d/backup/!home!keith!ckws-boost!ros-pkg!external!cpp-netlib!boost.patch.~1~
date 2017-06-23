@@ -1,0 +1,11 @@
+--- CMakeLists.txt	2016-10-18 15:37:15.089048808 -0700
++++ CMakeLists.txt.orig	2016-10-18 15:37:09.117073736 -0700
+@@ -41,7 +41,7 @@
+ endif()
+ 
+ set(Boost_USE_MULTI_THREADED ON)
+-find_package( Boost 
++find_package( Boost 1.54.0
+     REQUIRED unit_test_framework system regex date_time thread filesystem
+     program_options chrono atomic )
+ 

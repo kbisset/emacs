@@ -1,0 +1,30 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch keith/jarvis-performance
+# Your branch is ahead of 'origin/keith/jarvis-performance' by 2 commits.
+#   (use "git push" to publish your local commits)
+#
+# Changes to be committed:
+#	modified:   ros-pkg/service/jarvis2/include/jarvis2/TaskReader.h
+#	modified:   ros-pkg/service/jarvis2/src/prog/TaskReader.cpp
+#	modified:   ros-pkg/utility/bag_of_tricks/CMakeLists.txt
+#
+# Untracked files:
+#	debug/
+#	dm.out
+#	jarvis-cache/
+#	project/monitoring/.gitignore
+#	project/monitoring/monitor/stats-alpha-2017-06-07.txt
+#	ros-pkg/core/jarvis/config/personid/generated/
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private-penguin.cfg
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private.cfg
+#	ros-pkg/service/jarvis2/config/jarvis2-canary-monitor.cfg
+#	ros-pkg/service/jarvis2/config/tlgen-alex-alpha.cfg
+#	ros-pkg/service/jarvis2/include/jarvis2/quit.h
+#	ros-pkg/service/jarvis2/include/jarvis2/shutdown.h
+#	ros-pkg/utility/bag_of_tricks/src/lib/timestamp.cpp
+#	ros-pkg/utility/bag_of_tricks/src/test/test_timestamp.cpp
+#	snippets/
+#	tds/
+#

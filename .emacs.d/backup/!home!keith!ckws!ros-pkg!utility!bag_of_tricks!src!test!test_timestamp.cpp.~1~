@@ -1,0 +1,6 @@
+#undef ENABLE_TEST_LOGGING
+#include "bag_of_tricks/testEnv.h"
+#include "bag_of_tricks/timestamp.h"
+
+TEST(Assert, throw)
+

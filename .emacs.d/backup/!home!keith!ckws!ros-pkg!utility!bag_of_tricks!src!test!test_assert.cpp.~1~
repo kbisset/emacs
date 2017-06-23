@@ -1,0 +1,291 @@
+#include "bag_of_tricks/sensorid.h"
+#include "bag_of_tricks/testenv.h"
+
+#include <gflags/gflags.h>
+#include <gtest/gtest.h>
+#include <log4cxx/logger.h>
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <stdexcept>
+
+// TODO: define this in a single place
+class LighthouseEnvironment : public ::testing::Environment {
+  virtual ~LighthouseEnvironment() {}
+  
+  virtual void SetUp() {
+    ROSCONSOLE_AUTOINIT;
+
+    
+    ros::Time::init();
+
+    log4cxx::LoggerPtr ros_logger = log4cxx::Logger::getLogger(ROSCONSOLE_ROOT_LOGGER_NAME);
+    ros_logger->setLevel(ros::console::g_level_lookup[ros::console::levels::Error]);
+    ros::console::notifyLoggerLevelsChanged();
+  }
+
+virtual void TearDown() {}
+};
+
+::testing::Environment* lighthouseEnvironment = ::testing::AddGlobalTestEnvironment(new LighthouseEnvironment());
+
+
+void testEQ(const SensorId::Packed& p1, const uint8_t p2[6]) 
+{
+  EXPECT_EQ(p1.size(), 6);
+  for (unsigned i = 0; i < p1.size(); ++i)
+  {
+    EXPECT_EQ(p1[i], p2[i]);
+  }
+}
+
+void testEQ(const SensorId::Packed& p1, const SensorId::Packed& p2) 
+{
+  EXPECT_EQ(p1.size(), 6);
+  for (unsigned i = 0; i < p1.size(); ++i)
+  {
+    EXPECT_EQ(p1[i], p2[i]);
+  }
+}
+
+void assign(SensorId::Packed* p1, const unsigned char data[6])
+{
+  for (unsigned i = 0; i < 6; ++i)
+  {
+    (*p1)[i] = data[i];
+  }
+}
+
+TEST(SensorId, testInit)
+{
+  std::string full("12:34:56:78:90:ab");
+  std::string compact("1234567890ab");
+  uint8_t data[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xab};
+  uint64_t numeric = 0x1234567890ab;
+  SensorId::Packed packed;
+  assign(&packed, data);
+  
+  SensorId s1(full);
+  EXPECT_EQ(s1.str(), full);
+  EXPECT_EQ(s1.compact(), compact);
+  testEQ(s1.packed(), packed);
+  EXPECT_EQ(s1.numeric(), numeric);
+  EXPECT_EQ(s1.site(), SensorId::DEFAULT_SITE_ID);
+
+  SensorId s2(compact);
+  EXPECT_EQ(s2.str(), full);
+  EXPECT_EQ(s2.compact(), compact);
+  testEQ(s2.packed(), packed);
+  EXPECT_EQ(s2.numeric(), numeric);
+  EXPECT_EQ(s2.site(), SensorId::DEFAULT_SITE_ID);
+  
+  SensorId s3(data);
+  EXPECT_EQ(s3.str(), full);
+  EXPECT_EQ(s3.compact(), compact);
+  testEQ(s3.packed(), packed);
+  EXPECT_EQ(s3.numeric(), numeric);
+  EXPECT_EQ(s3.site(), SensorId::DEFAULT_SITE_ID);
+
+  SensorId s4(packed);
+  EXPECT_EQ(s4.str(), full);
+  EXPECT_EQ(s4.compact(), compact);
+  testEQ(s4.packed(), packed);
+  EXPECT_EQ(s4.numeric(), numeric);
+  EXPECT_EQ(s4.site(), SensorId::DEFAULT_SITE_ID);
+
+  SensorId s5(numeric);
+  EXPECT_EQ(s5.str(), full);
+  EXPECT_EQ(s5.compact(), compact);
+  testEQ(s4.packed(), packed);
+  EXPECT_EQ(s5.numeric(), numeric);
+  EXPECT_EQ(s5.site(), SensorId::DEFAULT_SITE_ID);
+}
+
+TEST(SensorId, testInitSite)
+{
+  std::string full("12:34:56:78:90:ab");
+  std::string compact("1234567890ab");
+  std::string site("1234567890abcdef1234567890abcdef");
+  uint8_t data[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xab};
+  uint64_t numeric = 0x1234567890ab;
+  std::string fullSI = site+"/"+full;
+  std::string compactSI = site+"/"+compact;
+  SensorId::Packed packed;
+  assign(&packed, data);
+  
+  SensorId s1(full, site);
+  EXPECT_EQ(s1.str(), fullSI);
+  EXPECT_EQ(s1.compact(), compactSI);
+  testEQ(s1.packed(), packed);
+  EXPECT_EQ(s1.numeric(), numeric);
+  EXPECT_EQ(s1.site(), site);
+  
+  SensorId s2(compact, site);
+  EXPECT_EQ(s2.str(), fullSI);
+  EXPECT_EQ(s2.compact(), compactSI);
+  testEQ(s2.packed(), packed);
+  EXPECT_EQ(s2.numeric(), numeric);
+  EXPECT_EQ(s2.site(), site);
+  
+  SensorId s3(data, site);
+  EXPECT_EQ(s3.str(), fullSI);
+  EXPECT_EQ(s3.compact(), compactSI);
+  testEQ(s3.packed(), packed);
+  EXPECT_EQ(s3.numeric(), numeric);
+  EXPECT_EQ(s3.site(), site);
+
+  SensorId s5(packed, site);
+  EXPECT_EQ(s5.str(), fullSI);
+  EXPECT_EQ(s5.compact(), compactSI);
+  testEQ(s5.packed(), packed);
+  EXPECT_EQ(s5.numeric(), numeric);
+  EXPECT_EQ(s5.site(), site);
+
+  SensorId s4(numeric, site);
+  EXPECT_EQ(s4.str(), fullSI);
+  EXPECT_EQ(s4.compact(), compactSI);
+  testEQ(s4.packed(), packed);
+  EXPECT_EQ(s4.numeric(), numeric);
+  EXPECT_EQ(s4.site(), site);
+}
+
+TEST(SensorId, testSite)
+{
+  std::string full("12:34:56:78:90:ab");
+  std::string compact("1234567890ab");
+  std::string siteid("1234567890abcdef1234567890abcdef");
+  std::string fullSI = siteid+"/"+full;
+  std::string compactSI = siteid+"/"+compact;
+  
+  uint8_t packed[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xab};
+  uint64_t numeric = 0x1234567890ab;
+  
+  SensorId s1(full);
+  EXPECT_EQ(s1.str(), full);
+  EXPECT_EQ(s1.compact(), compact);
+  testEQ(s1.packed(), packed);
+  EXPECT_EQ(s1.numeric(), numeric);
+  EXPECT_EQ(s1.site(), SensorId::DEFAULT_SITE_ID);
+
+  SensorId s2(compact);
+  EXPECT_EQ(s2.str(), full);
+  EXPECT_EQ(s2.compact(), compact);
+  testEQ(s2.packed(), packed);
+  EXPECT_EQ(s2.numeric(), numeric);
+  EXPECT_EQ(s2.site(), SensorId::DEFAULT_SITE_ID);
+
+  SensorId s3(fullSI);
+  EXPECT_EQ(s3.str(), fullSI);
+  EXPECT_EQ(s3.compact(), compactSI);
+  testEQ(s3.packed(), packed);
+  EXPECT_EQ(s3.numeric(), numeric);
+  EXPECT_EQ(s3.site(), siteid);
+
+  SensorId s4(compactSI);
+  EXPECT_EQ(s4.str(), fullSI);
+  EXPECT_EQ(s4.compact(), compactSI);
+  testEQ(s4.packed(), packed);
+  EXPECT_EQ(s4.numeric(), numeric);
+  EXPECT_EQ(s4.site(), siteid);
+
+}
+
+TEST(SensorId, testInitBoth)
+{
+  // TODO, figure out what we should really do here
+  std::string full("12:34:56:78:90:ab");
+  std::string compact("1234567890ab");
+  std::string siteid1("1234567890abcdef1234567890abcdef");
+  std::string siteid2("fedcba0987654321fedcba0987654321");
+  std::string fullSI = siteid1+"/"+full;
+  std::string compactSI = siteid1+"/"+compact;
+  
+  uint8_t packed[] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xab};
+  uint64_t numeric = 0x1234567890ab;
+  
+  // site ids same
+  SensorId s3(fullSI, siteid1);
+  EXPECT_EQ(s3.str(), fullSI);
+  EXPECT_EQ(s3.compact(), compactSI);
+  testEQ(s3.packed(), packed);
+  EXPECT_EQ(s3.numeric(), numeric);
+  EXPECT_EQ(s3.site(), siteid1);
+
+  // site ids same
+  SensorId s4(compactSI, siteid1);
+  EXPECT_EQ(s4.str(), fullSI);
+  EXPECT_EQ(s4.compact(), compactSI);
+  testEQ(s4.packed(), packed);
+  EXPECT_EQ(s4.numeric(), numeric);
+  EXPECT_EQ(s4.site(), siteid1);
+
+  // site ids different
+  EXPECT_THROW(SensorId s5(fullSI, siteid2), std::invalid_argument);
+
+  // site ids different
+  EXPECT_THROW(SensorId s6(compactSI, siteid2), std::invalid_argument);
+}
+
+TEST(SensorId, testSeperateSiteId)
+{
+  std::string id1("12:34:56:78:90:ab");
+  std::string id2("1234567890ab");
+  std::string siteid("1234567890abcdef1234567890abcdef");
+  std::string c1 = siteid+"/"+id1;
+  std::string c2 = siteid+"/"+id2;  
+
+  std::string site;
+  std::string sensor;
+
+  SensorId::extractSiteId(id1, &site, &sensor);
+  EXPECT_EQ(site, "");
+  EXPECT_EQ(sensor, id1);
+
+  SensorId::extractSiteId(id2, &site, &sensor);
+  EXPECT_EQ(site, "");
+  EXPECT_EQ(sensor, id2);
+
+  SensorId::extractSiteId(c1, &site, &sensor);
+  EXPECT_EQ(site, siteid);
+  EXPECT_EQ(sensor, id1);
+
+  SensorId::extractSiteId(c2, &site, &sensor);
+  EXPECT_EQ(site, siteid);
+  EXPECT_EQ(sensor, id2);
+
+}
+
+TEST(SensorId, testIsAlexandria)
+{
+  // Alexandria iff the sensor start with these prefixes
+    // static const std::string alex1("68:14:01");
+    // static const std::string alex2("00:0a:f5");
+    // static const std::string alex3("04:71:4b:9");
+
+  EXPECT_FALSE(SensorId::isAlexandria("01:23:45:67:89:ab"));
+  EXPECT_FALSE(SensorId::isAlexandria("00:0e:2d:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isAlexandria("68:14:01:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isAlexandria("00:0a:f5:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isAlexandria("04:71:4b:91:ab:cd"));
+  EXPECT_FALSE(SensorId::isAlexandria("42:14:01:01:ab:cd"));
+  EXPECT_FALSE(SensorId::isAlexandria("68:42:01:01:ab:cd"));
+  EXPECT_FALSE(SensorId::isAlexandria("68:14:42:01:ab:cd"));
+  EXPECT_FALSE(SensorId::isAlexandria("01:ab:cd:68:14:01"));
+  EXPECT_FALSE(SensorId::isAlexandria("01:68:14:01:ab:cd"));
+
+}
+
+TEST(SensorId, testIsPenguin)
+{
+  // Alexandria iff the sensor start with these prefixes
+  // static const std::string penguin1("00:e0:2d");
+  // static const std::string penguin2("7c:dd:90");
+  // static const std::string penguin3("00:e0:4c");
+
+  EXPECT_FALSE(SensorId::isPenguin("01:23:45:67:89:ab"));
+  EXPECT_FALSE(SensorId::isPenguin("68:14:01:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isPenguin("00:e0:2d:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isPenguin("7c:dd:90:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isPenguin("00:e0:4c:01:ab:cd"));
+  EXPECT_TRUE( SensorId::isPenguin("00:e0:2d:68:14:01"));
+  EXPECT_TRUE( SensorId::isPenguin("00:e0:2d:01:ab:cd"));
+}

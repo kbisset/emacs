@@ -1,0 +1,63 @@
+# This is a combination of 3 commits.
+# The first commit's message is:
+Log alert latency to graphite
+
+# This is the 2nd commit message:
+
+More graphite logging
+
+# This is the 3rd commit message:
+
+Rebase from master
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Wed Apr 19 16:17:42 2017 -0700
+#
+# interactive rebase in progress; onto 9fc0bbb
+# Last commands done (3 commands done):
+#    squash b71f788 More graphite logging
+#    squash b8adf9e Rebase from master
+# No commands remaining.
+# You are currently editing a commit while rebasing branch 'master' on '9fc0bbb'.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/jarvis/include/jarvis/amqp_utils.h
+#	modified:   ros-pkg/core/jarvis/include/jarvis/track_processor.h
+#	modified:   ros-pkg/core/jarvis/src/lib/amqp_utils.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/track_processor.cpp
+#	modified:   ros-pkg/service/jarvis2/config/jarvis2-alpha-private.cfg
+#	modified:   ros-pkg/service/jarvis2/include/jarvis2/TaskReader.h
+#	modified:   ros-pkg/service/jarvis2/src/prog/TaskReader.cpp
+#
+# Untracked files:
+#	0001-Fix-person-labeling.patch
+#	debug/
+#	env1.txt
+#	env2.txt
+#	j2c.log
+#	j3.log
+#	jarvis-cache/
+#	jarvis-penguin.cfg
+#	jarvis2-alex.cfg
+#	jarvis2-canary.cfg
+#	jarvis2-penguin.cfg
+#	lt2-split.txt
+#	personid_jarvis_flag.cfg
+#	pid.log
+#	pid.sh
+#	ros-pkg/core/jarvis/src/lib/dataset
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.orig
+#	ros-pkg/core/jarvis/src/lib/track_processor.cpp.rej
+#	ros-pkg/core/jarvis/src/lib/update
+#	snippets/
+#	t2.log
+#	tasks.txt
+#	tasks2.txt
+#	tds/
+#	tl.log
+#	tl2.log
+#	valgrind.log
+#	vg.log
+#

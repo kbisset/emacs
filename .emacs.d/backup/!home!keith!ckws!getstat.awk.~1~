@@ -1,0 +1,1 @@
+$1 == "sensor_id:" {sensor_id=$2}

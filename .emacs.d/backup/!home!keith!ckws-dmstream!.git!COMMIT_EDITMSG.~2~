@@ -1,0 +1,42 @@
+Fix crash when segment is missing
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Your branch is ahead of 'origin/master' by 1 commit.
+#   (use "git push" to publish your local commits)
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/video_archive/src/lib/va_doorman.cpp
+#
+# Untracked files:
+#	00:e0:2d:91:00:26test/
+#	1488409159314_1487391561547_feedback.td
+#	1488409159314_1487391561547_feedback.td.action_errors_running
+#	1488409159314_1487391561547_feedback.td.alert_errors_adult_child
+#	1488409159314_1487391561547_feedback.td.alert_errors_adult_other
+#	1488409159314_1487391561547_feedback.td.alert_errors_adult_pet
+#	1488409159314_1487391561547_feedback.td.alert_errors_pet_other
+#	1488409159314_1487391561547_feedback.td.alert_stats
+#	1488409159314_1487391561547_feedback.td.browsing_errors_adult_child
+#	1488409159314_1487391561547_feedback.td.browsing_errors_adult_other
+#	1488409159314_1487391561547_feedback.td.browsing_errors_adult_pet
+#	1488409159314_1487391561547_feedback.td.browsing_errors_pet_other
+#	1488409159314_1487391561547_feedback.td.browsing_stats
+#	1488409159314_1487391561547_feedback.td.running_stats
+#	1488409159314_1487391561547_feedback.td.waving_stats
+#	55dbbda080b840000b0e7448bfe3d0f6/
+#	Tracks-1472852783221.tds
+#	emacs/
+#	etp.log
+#	event.log
+#	face.log
+#	install/
+#	it.cfg
+#	mosaic.yml
+#	ros-pkg/core/jarvis/src/test/test_vaspeed.cpp
+#	ros-pkg/service/jarvis2/config/jarvis2-timv-penguin.cfg
+#	run.log
+#	tlgen-alex.cfg
+#	track40-0.tds
+#

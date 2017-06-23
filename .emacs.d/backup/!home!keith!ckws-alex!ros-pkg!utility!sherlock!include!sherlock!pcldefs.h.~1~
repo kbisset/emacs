@@ -1,0 +1,23 @@
+#pragma once
+
+#include <pcl/common/common_headers.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+
+typedef pcl::PointCloud <pcl::PointXYZ> PointCloud;
+typedef pcl::PointCloud <pcl::PointXYZ>::Ptr PointCloudPtr;
+
+typedef pcl::PointCloud <pcl::PointXYZRGB> PointCloudRGB;
+typedef pcl::PointCloud <pcl::PointXYZRGB>::Ptr PointCloudRGBPtr;
+
+typedef pcl::PointCloud <pcl::PointNormal> PointCloudNormal;
+typedef pcl::PointCloud <pcl::PointNormal>::Ptr PointCloudNormalPtr;
+
+typedef pcl::PointCloud <pcl::PointXYZI> PointCloudI;
+typedef pcl::PointCloud <pcl::PointXYZI>::Ptr PointCloudIPtr;
+
+typedef pcl::PointCloud <pcl::PointXYZRGBNormal> PointCloudRGBNormal;
+typedef pcl::PointCloud <pcl::PointXYZRGBNormal>::Ptr PointCloudRGBNormalPtr;
+
+typedef pcl::visualization::PCLVisualizer PCLVisualizer;
+typedef pcl::visualization::PCLVisualizer::Ptr PCLVisualizerPtr;

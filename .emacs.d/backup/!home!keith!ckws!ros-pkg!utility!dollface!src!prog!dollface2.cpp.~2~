@@ -1,0 +1,41 @@
+#include <bag_of_tricks/application.h>
+#include <bag_of_tricks/timestamp.h>
+#include <doorman_client/doorman_client.h>
+#include <ros/console.h>
+#include <ros/assert.h>
+#include <boost/format.hpp>
+#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/client.hpp>
+#include <thread>
+#include <chrono>
+#include <gflags/gflags.h>
+
+DECLARE_bool(alexandria_mode);
+DEFINE_string(lighthouse_site, "", "Site ID of the first segment to retrieve");
+DEFINE_string(lighthouse_sensor, "", "MAC address of the first segment stream to retrieve");
+DEFINE_string(lighthouse_timestamp, "now", "Timestamp to start streaming (milliseconds or 'now')");
+DEFINE_string(lighthouse_end_timestamp, "0", "Timestamp to stop streaming (mils; 0=whenever activity stops)");
+
+DECLARE_string(dollface_sensor);
+DEFINE_string(dollface_site, "000000000000000000000000d011face", "Dollface camera site id");
+
+int main(int argc, char* argv[]) {
+  FLAGS_alexandria_mode = true;
+  DoormanSettings settings = DoormanSettings::fromFlags();
+
+  DoormanClientPtr client = DoormanClient::create(settings);
+  SensorId sensor(FLAGS_lighthouse_sensor, FLAGS_lighthouse_site);
+
+  Timestamp startTimestamp = atoll(FLAGS_lighthouse_timestamp.c_str());
+  Timestamp endTimestamp = atoll(FLAGS_lighthouse_end_timestamp.c_str());
+//  IFrameStreamPtr stream = client->openTaskStream(sensor, timestamp, endTimestamp);
+
+  DoormanFrameStream stream(client, "get", sensor, startTimestamp);
+  ROS_ASSERT(stream != nullptr);
+
+  SensorSegmentPtr seg = stream->segment();
+
+  ROS_INFO_STREAM("Load segment " << seg->site() << " " << seg->sensor() << " "
+                  << seg->timestamp() << " " << seg->end_timestamp()); 
+
+}

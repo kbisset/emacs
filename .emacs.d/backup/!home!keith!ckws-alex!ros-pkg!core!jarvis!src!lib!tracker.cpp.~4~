@@ -1,0 +1,506 @@
+#include "jarvis/tracker.h"
+#include "jarvis/cluster_gl_view.h"
+#include "jarvis/discrete_bayes_filter.h"
+#include "jarvis/motion.h"
+
+#include <pcl/common/common.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <bag_of_tricks/connected_components.h>
+#include <bag_of_tricks/image_indexer.h>
+#include <boost/date_time.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <gflags/gflags.h>
+#include <libavcodec/avcodec.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core_c.h>
+#include <openni2_interface/openni_helpers.h>
+#include <online_learning/dataset.h>
+//#include <sentinel/background_model.h>
+#include <ubercam_msgs/CompressedRGBD.h>
+#include <timer/timer.h>
+#include <timer/profile.h>
+#include <video_codec/video_decoder.h>
+#include <video_codec/depth_packing.h>
+#include <video_archive/va_reader.h>
+#include <video_archive/rgbd_stream_decoder.h>
+
+//DEFINE_int32(cc_kernel, 5, "How much to smooth out the connected components search.");
+
+using namespace std;
+namespace bpt = boost::posix_time;
+using namespace Eigen;
+using ubercam_msgs::CompressedRGBD;
+using ubercam_msgs::CompressedRGBDPtr;
+using ubercam_msgs::CompressedRGBDConstPtr;
+
+
+Tracker::Tracker(int vis_level) :
+  rsd_(vis_level > 0 ? (new RGBDStreamDecoder) : (new LazyRGBDStreamDecoder)),
+  next_track_id_(0), vis_level_(vis_level)
+{
+}
+
+void Tracker::reset() {
+  rsd_->reset();
+}
+
+bool Tracker::update(CompressedRGBDConstPtr msg)
+{
+  PROFILE_BLOCK("Tracker::update");
+
+  {
+    PROFILE_BLOCK("Tracker::update::nextFrame");
+    rsd_->nextFrame();
+    bool new_data = rsd_->update(msg);
+    if(!new_data || msg->header.stamp.sec == 0)
+      return false;
+  }
+  if (color_.rows == 0 || color_.rows != rsd_->frame()->color().rows) {
+    color_ = cv::Mat3b(rsd_->frame()->color().size());
+    depth_ = cv::Mat1f(rsd_->frame()->depth().size());
+    ROS_INFO_STREAM("Frame size " << color_.cols << " x " << color_.rows << ", "
+                    << depth_.cols << " x " << depth_.rows);
+  }
+  
+  if (rsd_->frame()->frame_id_ == 600)
+    reset_timers();
+
+//  ROS_INFO_STREAM("Frame " << std::fixed << msg->sensor_timestamp); 
+  frame_id_ = msg->frame_id;
+  sensor_timestamp_ = msg->sensor_timestamp;
+  wall_timestamp_ = msg->header.stamp;
+
+  if (!rsd_->frame()->isDepthEmpty()) {
+    VideoArchiveReader::instance()->addCacheEntry(rsd_->frame());
+  }
+
+  vector<Blob::ConstPtr> current_blobs;
+
+  if (vis_level_ > 0 || !rsd_->frame()->isDepthEmpty()) {
+    PROFILE_BLOCK("Tracker::update::vis");
+    // fast-track processing for empty frames
+    color_ = rsd_->frame()->color();
+    depth_ = rsd_->frame()->depth();
+
+    if (vis_level_ >= 2) {
+#if 1
+      cv::Size size(color_.cols/4, (int)(color_.rows/4));//the dst image size,e.g.100x100
+      cv::Mat small;//dst image
+      resize(color_, small, size);//resize image      
+      cv::imshow("color", small);
+#else
+      cv::imshow("color", color_);
+      cv::moveWindow("color", 100, 0);
+#endif
+      cv::Scalar avgPixelIntensity = cv::mean(depth_);
+      ROS_INFO_STREAM("Depth image intensity " << avgPixelIntensity.val[0]);
+      if (avgPixelIntensity.val[0] < .58)
+        return true;
+      cv::imshow("depth", colorize(depth_, 0.5, 6));
+//      cv::imshow("depth", depth_);
+<<<<<<< HEAD
+      cv::moveWindow("depth", 700, 0);
+=======
+      cv::moveWindow("depth", 580, 00);
+>>>>>>> Display halos on video
+      cv::waitKey(1);
+    }
+    
+    {
+      PROFILE_BLOCK("Tracker::update::clustering");
+    // Floodfill clustering.
+    cluster(depth_, kClusterThreshold, kClusterMinPoints, kCCDefaultKernelSize,
+            &assignments_, &indices_);
+
+    // The foreground should only contain points in large-enough clusters.
+    for (int y = 0; y < assignments_.rows; ++y)
+      for (int x = 0; x < assignments_.cols; ++x)
+        if (assignments_(y, x) < 0)
+          depth_(y, x) = 0;
+
+    if (vis_level_ >= 10)
+    {
+      cv::imshow("Clustering", colorAssignments(assignments_));
+      static bool initial_clustering = true;
+      if (initial_clustering) {
+        cv::moveWindow("Clustering", depth_.cols+175, color_.rows+25);
+        initial_clustering = false;
+      }
+    }
+    }
+<<<<<<< HEAD
+
+=======
+    // TODO: Remove before flight
+//        return true;
+>>>>>>> Display halos on video
+    // ROS_INFO_STREAM("Frame sizes: " << depth_.cols << " x " << depth_.rows << ", "
+    //                 << color_.cols << " x " << color_.rows);
+    ImageIndexer ii(depth_.cols, color_.cols);
+
+    for (size_t i = 0; i < indices_.size(); ++i) {
+      Blob::Ptr blob(new Blob);
+      blob->sensor_id_ = msg->sensor_id;
+      blob->frame_id_ = frame_id_;
+      blob->sensor_timestamp_ = sensor_timestamp_;
+      blob->wall_timestamp_ = wall_timestamp_;
+      blob->depth_height_ = depth_.rows;
+      blob->depth_width_ = depth_.cols;
+      blob->color_height_ = color_.rows;
+      blob->color_width_ = color_.cols;
+      blob->rbm_.pack(depth_.size(), indices_[i]);
+      blob->gravity_ = Vector3f(msg->accel_x, msg->accel_y, msg->accel_z);
+
+      int color_bytes_per_index = 3 * color_.cols / depth_.cols * color_.cols
+          / depth_.cols;
+      blob->indices_.resize(indices_[i].size());
+      blob->color_.resize(indices_[i].size() * color_bytes_per_index);
+      blob->depth_.resize(indices_[i].size());
+      // ROS_INFO_STREAM("blob: " << blob->depth_.size() << " " << blob->color_.size() << " "
+      //                 << i << " " << indices_.size() << " " << indices_[i].size() << " "
+      //                 << color_bytes_per_index);
+      for (size_t j = 0; j < indices_[i].size(); ++j) {
+        size_t idx = indices_[i][j];
+        ROS_ASSERT((int )idx < depth_.rows * depth_.cols);
+
+        // ROS_INFO_STREAM("pcfm: " << color_.cols << " x " << color_.rows << "  "
+        //                 << idx << " " << blob->color_.size() << " " << j);
+//        ii.packColorFromMatrix(color_, idx, &blob->color_[0], j);
+        ii.packColorFromMatrix(color_, idx, blob->color_, j);
+        blob->indices_[j] = idx;
+        blob->depth_[j] = depth_(idx);
+        ROS_ASSERT(depth_(idx) > 0);
+        ROS_ASSERT(blob->depth_[j] > 0);
+      }
+
+      blob->project();
+      current_blobs.push_back(blob);
+      ROS_ASSERT(blob->indices_.size() > 10);
+    }
+  }
+
+//  {
+//  PROFILE_BLOCK("Correspondence");
+
+  vector<bool> matched_blobs(current_blobs.size(), false);
+  vector<bool> matched_tracks(tracks_.size(), false);
+  vector<size_t> track_indices(tracks_.size());
+  if(!tracks_.empty() && !current_blobs.empty()) {
+    // Compute pairwise distances.
+    MatrixXd distances = MatrixXd::Zero(tracks_.size(), current_blobs.size());
+    size_t r = 0;
+    for(auto it = tracks_.begin(); it != tracks_.end(); ++it, ++r) {
+      track_indices[r] = it->first;
+      const Instance& frame = *it->second.instance_;
+      Blob::ConstPtr blob = frame.raw<Blob::ConstPtr>();
+      
+      for(size_t c = 0; c < current_blobs.size(); ++c)
+        distances(r, c) = (distance(*blob, *current_blobs[c])
+                           + distance(*current_blobs[c], *blob)) / 2.0;
+    }
+
+    // cout << endl;
+    // cout << "Distances: " << endl;
+    // cout << distances << endl;
+    
+    // Greedy assignment.
+    while(distances.minCoeff() < numeric_limits<double>::max()) {
+      int r, c;
+      double dist = distances.minCoeff(&r, &c);
+      if(dist < 0.25) {
+        ROS_ASSERT(tracks_.find(track_indices[r]) != tracks_.end());
+
+        //cout << "Setting new Instance for track " << track_indices[r] << endl;
+        tracks_[track_indices[r]].instance_ = std::shared_ptr<Instance>(new Instance());
+        tracks_[track_indices[r]].instance_->setRaw(current_blobs[c]);
+        current_blobs[c].reset();        
+        matched_blobs[c] = true;
+        matched_tracks[r] = true;
+      }
+      distances.row(r).setConstant(numeric_limits<double>::max());
+      distances.col(c).setConstant(numeric_limits<double>::max());
+    }
+  }
+
+  // If we haven't seen anything new recently, wipe out any tracks still hanging around.
+  if (current_blobs.empty())
+    for (auto it = tracks_.begin(); it != tracks_.end(); ++it)
+      if (msg->header.stamp.toSec() - it->second.instance_->raw<Blob::ConstPtr>()->wall_timestamp_.toSec() > 1.0) {
+        tracks_.erase(it);
+      }
+
+  // Delete any unmatched tracks.
+  for (size_t i = 0; i < matched_tracks.size(); ++i)
+    if (!matched_tracks[i]) {
+      tracks_.erase(track_indices[i]);
+    }
+
+  // Generate tracks for each unmatched blob.
+  for (size_t i = 0; i < current_blobs.size(); ++i) {
+    if (!matched_blobs[i]) {
+      ROS_INFO_STREAM("Generate track " << next_track_id_);
+      auto insert = tracks_.emplace(next_track_id_++, TrackedObject());
+      ROS_ASSERT(insert.second);
+      TrackedObject& track = insert.first->second;
+      track.instance_ = std::make_shared<Instance>();
+      track.instance_->setRaw(current_blobs[i]);
+      track.last_bbox_ = std::make_shared<BBox>(*current_blobs[i]);
+    }
+  }
+  if (vis_level_ >= 2)
+  {
+    auto halo = draw();
+<<<<<<< HEAD
+    cv::Mat small;//dst image
+    cv::Mat *himg = &halo;
+    if (halo.cols == 0 || halo.rows == 0)
+      himg = &color_;
+
+    if (himg->cols == 1920) {                          // Alexandria
+        cv::Size size(color_.cols/2, (int)(color_.rows/2));
+        resize(*himg, small, size);
+        himg = &small;
+    }
+    
+    cv::imshow("halos", *himg);
+    static bool initial_halos = true;
+    if (initial_halos) {
+      cv::moveWindow("halos", color_.cols+175, 0);
+      initial_halos = false;
+    }
+    cv::waitKey(1);
+  }
+
+=======
+    cv::Size size(halo.cols/4, (int)(halo.rows/4));//the dst image size,e.g.100x100
+    cv::Mat small;//dst image
+    resize(halo, small, size);//resize image      
+    cv::imshow("halos", small);
+    cv::moveWindow("halos", 1180, 0);
+    cv::waitKey(1);
+  }
+>>>>>>> Display halos on video
+  return true;
+}
+
+float sqr(float f) { return f * f; }
+
+double Tracker::approximateMinDistance(const Blob& prev, const Blob& curr) const
+{
+  if(!prev.cloud_ || !prev.kdtree_)
+    prev.project();
+  if(!curr.cloud_ || !curr.kdtree_)
+    curr.project();
+
+  // -- If the timestamps are too far apart, this isn't a match.
+  if(curr.wall_timestamp_.toSec() - prev.wall_timestamp_.toSec() > 1.0)
+    return numeric_limits<double>::max();
+
+  vector<int> indices;
+  vector<float> squared_distances;
+
+  // pt0 is the centroid of the previous Blob.
+  Point pt0;
+  pt0.x = prev.centroid_[0];
+  pt0.y = prev.centroid_[1];
+  pt0.z = prev.centroid_[2];
+
+  // pt1 is the point on the current Blob nearest to pt0.
+  curr.kdtree_->nearestKSearch(pt0, 1, indices, squared_distances);
+  ROS_ASSERT(indices.size() == 1);
+  Point pt1 = curr.cloud_->at(indices[0]);
+
+  // pt2 is the point on the previous Blob nearest to pt1.
+  indices.clear();
+  squared_distances.clear();
+  prev.kdtree_->nearestKSearch(pt1, 1, indices, squared_distances);
+  ROS_ASSERT(indices.size() == 1);
+  Point pt2 = prev.cloud_->at(indices[0]);
+
+  // Add a term for size change of the blob.
+  Array3f curr_extents = curr.maxpt_ - curr.minpt_;
+  Array3f prev_extents = prev.maxpt_ - prev.minpt_;
+  float dextent = (curr_extents - prev_extents).abs().sum();
+  
+  return (pt1.getVector3fMap() - pt2.getVector3fMap()).norm() + dextent / 10.0;
+}
+
+double Tracker::distance(const Blob& prev, const Blob& curr) const
+{
+  return approximateMinDistance(prev, curr);
+  //return meanDistance(prev, curr);
+}
+
+double Tracker::meanDistance(const Blob& prev, const Blob& curr) const
+{
+  if(!prev.cloud_ || !prev.kdtree_)
+    prev.project();
+  if(!curr.cloud_ || !curr.kdtree_)
+    curr.project();
+
+  // -- If the timestamps are too far apart, this isn't a match.
+  if(curr.wall_timestamp_.toSec() - prev.wall_timestamp_.toSec() > 1.0)
+    return numeric_limits<double>::max();
+  
+  // -- If the centroids are quite far apart, don't bother doing anything else.
+  if((sqr(prev.centroid_[0] - curr.centroid_[0]) +
+      sqr(prev.centroid_[1] - curr.centroid_[1]) +
+      sqr(prev.centroid_[2] - curr.centroid_[2])) > 2*2)
+    return numeric_limits<double>::max();
+
+  // -- Choose some random points in one object and compute distance to the other.
+  int num_samples = 100;
+  vector<int> indices;
+  vector<float> squared_distances;
+  double mean_distance = 0;
+  for(int i = 0; i < num_samples; ++i) {
+    Point pt = (*prev.cloud_)[rand() % prev.cloud_->size()];
+    indices.clear();
+    squared_distances.clear();
+    curr.kdtree_->nearestKSearch(pt, 1, indices, squared_distances);
+    ROS_ASSERT(squared_distances.size() == 1);
+    mean_distance += sqrt(squared_distances[0]);
+  }
+  mean_distance /= num_samples;
+
+  return mean_distance;
+}
+
+cv::Mat3b Tracker::draw() const
+{
+  if(tracks_.empty())
+    return cv::Mat3b();
+
+  int width = tracks_.begin()->second.instance_->raw<Blob::ConstPtr>()->color_width_;
+  int height = tracks_.begin()->second.instance_->raw<Blob::ConstPtr>()->color_height_;
+
+//  cv::Mat3b img(cv::Size(width, height));
+  cv::Mat3b img = color_.clone();
+  draw(img, false, std::map<size_t, DiscreteBayesFilter>());
+  return img;
+}
+
+void Tracker::draw(cv::Mat3b img, bool track_classification_colors,
+                   const std::map<size_t, DiscreteBayesFilter>& filters) const
+{
+  PROFILE_FUNC;
+
+  // // Zero out any point that has no depth data.
+  // for(int y = 0; y < rsd_->depth_.rows; ++y) {
+  //   for(int x = 0; x < rsd_->depth_.cols; ++x) {
+  //     if(rsd_->depth_(y, x) == 0) {
+  //       img(2*y+0, 2*x+0) = cv::Vec3b(127, 127, 127);
+  //       img(2*y+1, 2*x+0) = cv::Vec3b(127, 127, 127);
+  //       img(2*y+0, 2*x+1) = cv::Vec3b(127, 127, 127);
+  //       img(2*y+1, 2*x+1) = cv::Vec3b(127, 127, 127);
+  //     }
+  //   }
+  // }
+  
+  // -- Draw the points.
+  for(auto it = tracks_.begin(); it != tracks_.end(); ++it) {
+    size_t track_id = it->first;
+    const Instance& frame = *it->second.instance_;
+    const Blob& blob = *frame.raw<Blob::ConstPtr>();
+    ROS_ASSERT(blob.color_width_ == img.cols);
+    ROS_ASSERT(blob.color_height_ == img.rows);
+    // Don't show old tracks.
+    if(blob.frame_id_ != frame_id_)
+      continue;
+
+//    ROS_INFO_STREAM("II: " << blob.depth_width_ << " " << blob.color_width_);
+    ImageIndexer ii(blob.depth_width_, blob.color_width_);
+
+    for(size_t i = 0; i < blob.indices_.size(); ++i) {
+      int idx = blob.indices_[i];
+      ROS_ASSERT(idx < blob.depth_width_ * blob.depth_height_);
+      ii.unpackColorIntoMatrix(&blob.color_[0], i, img, idx);
+    }
+  }
+
+  // cv::imshow("test", img);
+  // cv::waitKey(1);
+
+  // -- Set up coloring.
+  cv::Vec3b color0(255, 0, 0);
+  cv::Vec3b color1(0, 255, 0);
+  cv::Vec3b color2(0, 0, 255);
+  static map<size_t, cv::Vec3b> colormap;
+  
+  // -- Draw the halos.
+  ROS_ASSERT(img.rows % 4 == 0 && img.cols % 4 == 0);
+  for(auto it = tracks_.begin(); it != tracks_.end(); ++it) {
+    size_t track_id = it->first;
+    const Instance& frame = *it->second.instance_;
+    const Blob& blob = *frame.raw<Blob::ConstPtr>();
+    ROS_ASSERT(blob.color_height_ == img.rows);
+    // Don't show old tracks.
+    if(blob.frame_id_ != frame_id_)
+      continue;
+    
+    // Choose between track classification colors and track id colors.
+    // TODO: add support for more than one class.
+    cv::Vec3b color(127, 127, 127);
+    if(track_classification_colors) {
+      // If a classifier doesn't exist (yet), we won't have a filter yet.
+      if(filters.count(track_id)) {
+        //Label pred = filters.find(track_id)->second.mostRecentFramePrediction();
+        const vector<Eigen::VectorXf>& fpreds = filters.find(track_id)->second.framePredictions();
+        cv::Vec3b color = cv::Vec3b(255, 0, 0);  //ColorServer::instance().framePredictionsToColor(fpreds);
+//        ROS_INFO_STREAM("Draw halo 1");
+        Blob::drawHalo(blob.indices_, color, &img);
+      }
+    } else {
+      if(colormap.find(track_id) == colormap.end())
+        colormap[track_id] = mix(color0, color1, color2, 0.2);
+      color = colormap[track_id];
+//      ROS_INFO_STREAM("Draw halo 2");
+      Blob::drawHalo(blob.indices_, color, &img);
+    }
+  }
+   // cv::imshow("halo", img);
+   // cv::waitKey(1000);
+}
+
+void addTimestamp(const bpt::ptime& ptime, cv::Mat3b img)
+{
+  boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("PST-08:00:00"));
+  boost::local_time::local_date_time dt_with_zone(ptime, zone);
+  
+  ostringstream oss;
+  //const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  const boost::local_time::local_time_facet* f = new boost::local_time::local_time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  oss.imbue(locale(oss.getloc(), f));
+  //oss << ptime;
+  oss << dt_with_zone;
+  
+  float thickness = 1.5;
+  float scale = 0.5;
+  cv::putText(img, oss.str(), cv::Point(10, img.rows - 10),
+              cv::FONT_HERSHEY_SIMPLEX, scale,
+              cv::Scalar(0, 255, 0), thickness, CV_AA);
+}
+
+void orient(int rotation, cv::Mat3b* img)
+{
+  ROS_ASSERT(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  // Somehow this assertion isn't triggering on Rg despite the following cout
+  // showing that it clearly should.
+  // It works properly on Al.  What the hell.
+  // assert(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  // cout << "rotation: " << rotation << endl;
+  
+  if(rotation == 90) {    
+    cv::transpose(*img, *img);
+    cv::flip(*img, *img, 0);  // Flip y.
+  }
+  else if(rotation == 180) {
+    cv::flip(*img, *img, -1); // Flip both x and y.
+  }
+  else if(rotation == 270) {
+    cv::transpose(*img, *img);
+    cv::flip(*img, *img, 1);  // Flip y.
+  }
+}

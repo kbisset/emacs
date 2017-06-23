@@ -1,0 +1,13 @@
+--- build/cpp_netlib/upstream/src/cpp_netlib-upstream/CMakeLists.txt	2016-10-18 19:20:56.083153084 -0700
++++ build/cpp_netlib/upstream/src/cpp_netlib-upstream/CMakeLists.txt.orig	2016-10-18 19:20:13.675333684 -0700
+@@ -41,8 +41,8 @@
+ endif()
+ 
+ set(Boost_USE_MULTI_THREADED ON)
+-find_package( Boost 
+-    REQUIRED system regex date_time thread filesystem
++find_package( Boost 1.54.0
++    REQUIRED unit_test_framework system regex date_time thread filesystem
+     program_options chrono atomic )
+ 
+ if (CPP-NETLIB_ENABLE_HTTPS)

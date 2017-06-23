@@ -1,0 +1,28 @@
+#include "bag_of_tricks/timestamp.h"
+
+std::string TimeConvert::ToISO8601(const mongo::BSONElement& e)
+{
+  return ToISO8601(e.Date());
+}
+
+std::string TimeConvert::ToISO8601(const mongo::Date_t& d)
+{
+  // toTimeT returns seconds
+  return timestampToISO8601(d.toTimeT()*1000);
+}
+
+// TODO(keith) change name to match above
+std::string TimeConvert::timestampToISO8601(Timestamp ts)
+{
+  time_t sec=ts/1000;
+  int ms=ts%1000;
+  struct tm t;
+  localtime_r(&sec, &t);
+  // tmtoff is in secs
+  int tzoff_h = t.tm_gmtoff/3600;
+  int tzoff_m = t.tm_gmtoff%3600;
+  char buf[strlen("2017-06-15T11:54:29.000-07:00")+1];
+  sprintf(buf, "%4d-%02d-%02dT%02d:%02d:%02d.%03d%+d:%02d", t.tm_year+1900, t.tm_mon+1, t.tm_mday,
+          t.tm_hour, t.tm_min, t.tm_sec, ms, tzoff_h, tzoff_m);
+  return buf;
+}

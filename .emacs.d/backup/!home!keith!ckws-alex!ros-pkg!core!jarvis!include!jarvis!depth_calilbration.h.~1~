@@ -1,0 +1,13 @@
+cv::Mat K_rgb;
+cv::Mat dist_params_rgb;
+
+cv::Mat K_depth;
+cv::Mat dist_params_depth;
+
+cv::Mat RT;
+
+cv::Mat rotation_matrix;
+cv::Mat rotation_vector;
+cv::Mat translation_vector;
+
+const int radius = 5;

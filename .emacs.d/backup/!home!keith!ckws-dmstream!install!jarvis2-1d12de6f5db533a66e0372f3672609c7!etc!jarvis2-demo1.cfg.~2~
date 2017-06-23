@@ -1,0 +1,34 @@
+--config=/home/keith/ckws-dmstream/install/jarvis2/etc/config/mosaic.yml
+--caffe_config_path=/home/keith/ckws-dmstream/install/jarvis2/etc/config
+--mongo_uri=mongodb://deep3:27017
+--amqp_host=deep3
+--amqp_queue=alexandria-analysis-work
+--amqp_private_queue=true
+--classifier=none
+--doorman_host=deep3
+--doorman_port=38080
+--doorman_timeout=120
+--record_archive=/home/keith/data-alex/archive
+--record_tds=/home/keith/data-alex/tds
+--publish_tracks
+--track_snippets=true
+--story_snippets=false
+--s3_snippets=
+--disk_snippets=/home/keith/data-alex/snippets
+--assert_action=throw
+--ws_port=0
+--day_timelapse_only=1
+--single_threaded_stories
+--snippet_backup_dir=/home/keith/data-alex/snippets
+--segment_cache_size=100
+--alert_warn_latency=120
+--slack_alert_channel=slacktest
+--vis_level=0
+# --skip_classification=true
+# --fake_classification=alert
+#--lighthouse_timestamp=1486587410489
+# --lighthouse_timestamp=0
+# --lighthouse_sensor=00:0a:f5:bf:11:70
+--vis_singlestep=false
+--vis_fullsizehalos=false
+--alexandria_only=true

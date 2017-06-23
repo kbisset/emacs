@@ -1,0 +1,228 @@
+#include <algorithm>
+#include <signal.h>
+#include <thread>
+#include <vector>
+
+#include "jarvis2/jarvis2.h"
+#include "jarvis2/ArchiveReader.h"
+#include "jarvis2/TaskReader.h"
+#include "snitch_protocols/sensor.pb.h"
+
+#include "jarvis/descriptor_pipeline.h"
+#include "bag_of_tricks/GitSHA1.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include <bag_of_tricks/flags.h>
+#include <bag_of_tricks/thread.h>
+#include <gflags/gflags.h>
+#include <gflags/gflags_completions.h>
+#include <gperftools/profiler.h>
+#include <google/protobuf/stubs/common.h>
+#include <online_learning/grid_classifier.h>
+#include <ros/assert.h>
+#include <timer/profile.h>
+#include <video_archive/va_reader.h>
+
+using namespace std;
+using namespace Eigen;
+using namespace Jarvis2;
+
+bool g_quitting = false;
+Jarvis2::FrameQueue frameQueue;
+
+DECLARE_string(doorman_host);
+DECLARE_string(doorman_port);
+DECLARE_string(doorman_path);
+DECLARE_int32(caffe_batch_size);
+
+void sighup(int none)
+{
+  print_timers();
+  fflush(stdout);
+}
+
+void sigint(int none)
+{
+  fprintf(stderr, "Got sigint; quitting when convenient...\n");
+//  print_timers();
+  g_quitting = true;
+  exit(-1);
+  std::thread *t = new std::thread([]() {
+      set_current_thread_name("Shutdown");
+      ScopedThreadCounter counter("Shutdown");
+      fprintf(stderr, "Sleeping 10\n");
+      frameQueue.Quit();
+      sleep(15);
+      fprintf(stderr, "Shutdown stalled, forcing exit(-1)\n");
+      exit(-1);
+    });
+  t->detach();
+}
+
+DEFINE_string(record_tds, "", "Directory where to save TD files");
+DEFINE_string(record_archive, "", "Directory where to save archive files");
+DEFINE_string(config, DescriptorPipeline::defaultSpecificationPath(),
+              "Descriptor pipeline config file");
+DEFINE_string(classifier, DescriptorPipeline::defaultClassifierPath(),
+              "Track classifier binary (*.gc)");
+DEFINE_int64(read_archive_offset, 0, "Use this offset for --readarchive file(s)");
+DECLARE_bool(profile);
+DECLARE_string(read_archive);
+DECLARE_string(read_proto);
+DEFINE_bool(alexandria_only, false, "Deprecated, use alexandria_mode");
+DECLARE_bool(alexandria_mode);
+
+namespace pb = ::google::protobuf;
+// TODO - this should be in bag_of_tricks somewhere
+void LogHandler(pb::LogLevel level, const char* filename, int line,
+                const std::string& message)
+{
+  if (level == pb::LOGLEVEL_INFO)
+    ROS_INFO_STREAM("Protobuf [" << filename << ":" << line << "] " << message);
+  else
+    ROS_WARN_STREAM("Protobuf [" << filename << ":" << line << "] " << message);
+//  boost::assert_backtrace();
+}
+
+int main(int argc, char** argv)
+{
+  // If this is instantiated, protobuf won't log to stdout
+//  ::google::protobuf::LogSilencer shutup_google;
+  // Make protobuf use our own logger
+  pb::SetLogHandler(&LogHandler);
+  
+  google::SetUsageMessage("");
+  if(argc == 1) {
+//  ROS_INFO_STREAM("Git commit: " << BagOfTricks::git_sha1);
+    google::ShowUsageWithFlags(argv[0]);
+    return 0;
+  }
+  google::RegisterFlagValidator(&FLAGS_record_tds,
+                                validateDirectoryMkdirIfNotThereYetEmptyOk);
+  google::RegisterFlagValidator(&FLAGS_config, validateFilenameEmptyOk);
+  google::RegisterFlagValidator(&FLAGS_classifier, validateFilenameEmptyOk);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  FLAGS_caffe_batch_size = 1;
+  
+  signal(SIGINT, sigint);
+  signal(SIGTERM, sigint);
+  signal(SIGHUP, sighup);
+
+  // Complain about the deprecated the alexandria_only flag, and use alexandria_mode instead
+  google::CommandLineFlagInfo flag;
+  if (google::GetCommandLineFlagInfo("alexandria_only", &flag) && !flag.is_default) {
+    
+    ROS_WARN_STREAM("Flag alexandria_only is deprecated, use alexandria_mode instead");
+    FLAGS_alexandria_mode = FLAGS_alexandria_only;
+  }
+
+  ros::Time::init();
+  // Create shared instance before we start any threads.
+  VideoArchiveReader::instance();
+  
+  if (!FLAGS_read_archive.empty()) {
+    // Reading an archive (ROS ComptressedRGBD)
+    ROS_ASSERT_MSG(FLAGS_record_archive.empty(), "Can't record an archive while reading an archive!");
+    if (FLAGS_read_archive.find('/') == string::npos)
+      VideoArchiveReader::instance()->open(".");
+    else
+      VideoArchiveReader::instance()->open(
+          FLAGS_read_archive.substr(0, FLAGS_read_archive.rfind("/")));
+  } else if (!FLAGS_read_proto.empty()) {
+    // Reading a proto (Protobuf SegmentSegment
+    ROS_ASSERT_MSG(FLAGS_record_archive.empty(), "Can't record an archive while reading a proto!");
+  } else {
+    // Writing an archive
+    if (FLAGS_record_archive.empty()) {
+      FLAGS_record_archive = FLAGS_record_tds + "/../archive";
+      ROS_INFO_STREAM("Auto-setting --record_archive=" << FLAGS_record_archive);
+    }
+    VideoArchiveReader::instance()->open(FLAGS_record_archive);
+  }
+  VideoArchiveReader::instance()->setFrameCacheSize(600);
+
+  ROS_INFO_STREAM("FLAGS_record_tds: " << FLAGS_record_tds);
+
+  if(FLAGS_config.empty() != FLAGS_classifier.empty()) {
+    ROS_FATAL("You must provide both a config and a classifier "
+              "or neither a config nor a classifier.");
+    return 1;
+  }
+
+  Jarvis jarvis(FLAGS_record_tds, FLAGS_record_archive, FLAGS_read_archive.empty(), frameQueue);
+
+  {
+    ROS_INFO_STREAM("Loading classifier at " << FLAGS_classifier);
+    GridClassifier::Ptr gc;
+    if (!FLAGS_classifier.empty() && FLAGS_classifier != "none") {
+      gc.reset(new GridClassifier);
+      gc->load(FLAGS_classifier);
+    }
+
+    ROS_INFO_STREAM("Using config defined at " << FLAGS_config);
+
+    jarvis.setClassifier(FLAGS_config);
+  }
+
+  if (FLAGS_profile)
+    ProfilerStart("jarvis.prof");
+  
+  vector<string> archives = expandFilenames(FLAGS_read_archive);
+  if (archives.size() > 0) {
+    ROS_INFO("Processing %zu archive files", archives.size());
+    sort(archives.begin(), archives.end());
+    for (size_t i = 0; i < archives.size(); i++) {
+      readArchive(archives[i], g_quitting, FLAGS_read_archive_offset, frameQueue);
+      jarvis.processQueue(-1, true); // treat each archive as a unit of work
+      if (g_quitting)
+        break;
+    }
+  } else // *** Typical Processing Loop
+  {
+    // Connect to doorman and wait for events
+    vector<string> protos = expandFilenames(FLAGS_read_proto);
+    TaskReader taskReader(jarvis, frameQueue);
+    
+    if (protos.size() > 0) {
+      ROS_INFO("Processing %zu proto file(s)", protos.size());
+      readProtos(protos, g_quitting, FLAGS_read_archive_offset, frameQueue);
+      jarvis.processQueue(-1, true); // treat all protos together as one unit of work
+      frameQueue.dumpStats();
+    } else // read from doorman
+    {
+      // Start monitoring AnalysisTask queue
+      while (!g_quitting && !frameQueue.isQuitting())
+      {
+        boost::timer::cpu_timer timer;
+        timer.start();
+        taskReader.startEventLoop();
+        fflush(stdout);
+        fflush(stderr);
+        timer.stop();
+        ROS_INFO_STREAM("Event loop Time: "
+                        << timer.format(3, string("%ws wall, %us user + %ss system = %ts CPU (%p%), ")));
+      }      
+      while (!g_quitting && !frameQueue.isQuitting())
+      {
+        usleep(3e5);
+        fflush(stdout);
+        fflush(stderr);
+      }
+      fprintf(stderr, "Stopping jarvis\n");
+      jarvis.stop();
+    }
+  }
+  
+  if(FLAGS_profile)
+    ProfilerStop();
+
+  fprintf(stderr, "Flushing jarvis");
+  // Save any remaining tracks and video data.
+  jarvis.flush();
+  if (!g_quitting)
+    print_timers();
+  fprintf(stderr, "Exiting cleanly");
+
+  return 0;
+}

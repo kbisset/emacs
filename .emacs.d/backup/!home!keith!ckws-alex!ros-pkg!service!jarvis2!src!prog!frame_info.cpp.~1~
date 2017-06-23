@@ -1,0 +1,18 @@
+#include "jarvis2/frame_metadata.h"
+
+FrameMetadata::FrameMetadata(Doorman::SensorSegmentPtr seg,
+                             Doorman::SensorFramePtr frame,
+                             BagOfTricks::DepthCalibration::Ptr depthCalib)
+  : seg_(seg),
+    frame_(frame),
+    depthCalib_(depthCalib)
+{
+  if (depthCalib_ == nullptr) {
+    if (seg->has_sensor_details() && seg->sensor_details().has_geo_calib()) 
+      depthCalib_ = std::make_shared<BagOfTricks::DepthCalibration>(seg->sensor_details().geo_calib());
+    else
+      // If no calibration params, use default data
+      depthCalib_ = std::make_shared<BagOfTricks::DepthCalibration>();
+  }
+}
+

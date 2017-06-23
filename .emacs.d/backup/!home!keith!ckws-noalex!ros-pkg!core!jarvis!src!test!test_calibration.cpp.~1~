@@ -1,0 +1,37 @@
+//#define ENABLE_TEST_LOGGING
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/sensorid.h"
+#include "bag_of_tricks/testEnv.h"
+#include "doorman_client/convert.h"
+#include "doorman_client/doorman_utils.h"
+#include "timer/profile.h"
+#include "video_archive/rgbd_stream_decoder.h"
+#include "video_archive/va_reader.h"
+#include "video_archive/va_stream.h"
+#include "video_archive/video_cache.h"
+
+#include <boost/range/adaptor/reversed.hpp>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <log4cxx/logger.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <sstream>
+
+
+int main()
+{
+  std::string sensor_str = "00:e0:2d:81:12:7a";
+  SensorId sensor(sensor_str);
+  Utility::SensorSite::instance().recordSite(sensor.numeric(), Utility::SensorSite::defaultId());
+
+  Doorman::SensorSegmentPtr seg =
+      Doorman::getSegment("find", sensor.numeric(), &time);
+
+  // Test postcoditions of the setup
+  ASSERT_TRUE(seg != nullptr) << "Couldn't fetch segment";
+
+  std::vector<ubercam_msgs::CompressedRGBDPtr> cframes =
+      Doorman::SensorSegmentToCompressedRGBD(seg);
+  std::vector<RGBDFrame::Ptr> frames = SensorSegmentToRGBD(seg);

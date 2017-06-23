@@ -1,0 +1,29 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(Sherlock)
+
+find_package(catkin_simple REQUIRED)
+catkin_simple()
+
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+find_package(PCL REQUIRED)
+
+include_directories(./inc/)
+include_directories(${PCL_INCLUDE_DIRS})
+
+cs_add_executable(sherlock 
+                  src/main.cpp
+                  src/sherlock.cpp
+                  src/colormap.cpp
+                  src/rawdata_capture.cpp
+                  src/tof_config_file_parser.cpp
+                  src/pmd_background_model.cpp
+                  src/connected_components.cpp)
+
+cs_add_executable(amplitude_filter_tuning
+                  src/amplitude_filter_tuning.cpp)
+
+target_link_libraries(sherlock ${OpenCV_LIBS} gflags ${TCMALLOC_LIB})
+target_link_libraries(amplitude_filter_tuning ${OpenCV_LIBS} gflags ${TCMALLOC_LIB})
+
+target_link_libraries(sherlock ${OpenCV_LIBS} ${PCL_LIBRARIES} gflags tcmalloc)
+target_link_libraries(amplitude_filter_tuning ${OpenCV_LIBS} gflags tcmalloc)

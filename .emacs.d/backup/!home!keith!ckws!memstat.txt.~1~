@@ -1,0 +1,935 @@
+MALLOC: =     14037152 (   13.4 MiB) Actual memory used (physical + swap)
+MALLOC: =     14790816 (   14.1 MiB) Virtual address space used
+[0m[ INFO] [1493786482.943911517] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     14037152 (   13.4 MiB) Actual memory used (physical + swap)
+MALLOC: =     14790816 (   14.1 MiB) Virtual address space used
+MALLOC: =     32370848 (   30.9 MiB) Actual memory used (physical + swap)
+MALLOC: =     70234272 (   67.0 MiB) Virtual address space used
+[0m[ INFO] [1493786826.835706109] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     32084128 (   30.6 MiB) Actual memory used (physical + swap)
+MALLOC: =     70234272 (   67.0 MiB) Virtual address space used
+MALLOC: =     66146464 (   63.1 MiB) Actual memory used (physical + swap)
+MALLOC: =     71282848 (   68.0 MiB) Virtual address space used
+[0m[ INFO] [1493787009.818150753] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     66146464 (   63.1 MiB) Actual memory used (physical + swap)
+MALLOC: =     71282848 (   68.0 MiB) Virtual address space used
+MALLOC: =     11890848 (   11.3 MiB) Actual memory used (physical + swap)
+MALLOC: =     72331424 (   69.0 MiB) Virtual address space used
+[0m[ INFO] [1493787273.210756014] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     11890848 (   11.3 MiB) Actual memory used (physical + swap)
+MALLOC: =     72331424 (   69.0 MiB) Virtual address space used
+MALLOC: =     91951264 (   87.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+[0m[ INFO] [1493787454.462707958] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     91951264 (   87.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+MALLOC: =     99569824 (   95.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+[0m[ INFO] [1493787636.918121722] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     99569824 (   95.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+MALLOC: =    105033888 (  100.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+[0m[ INFO] [1493787817.786417963] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    105033888 (  100.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   1389260960 ( 1324.9 MiB) Virtual address space used
+MALLOC: =    750129312 (  715.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2088415392 ( 1991.7 MiB) Virtual address space used
+[0m[ INFO] [1493787998.843431084] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    750129312 (  715.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2088415392 ( 1991.7 MiB) Virtual address space used
+MALLOC: =    138465440 (  132.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+[0m[ INFO] [1493788179.425714460] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    138465440 (  132.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+MALLOC: =    136646816 (  130.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+[0m[ INFO] [1493788360.550183544] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    136646816 (  130.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+MALLOC: =    127307936 (  121.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+[0m[ INFO] [1493788540.611197986] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    127307936 (  121.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+MALLOC: =     90878112 (   86.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+[0m[ INFO] [1493788811.252060231] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     90878112 (   86.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+MALLOC: =    132403360 (  126.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+[0m[ INFO] [1493788991.430666993] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    132403360 (  126.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2142728352 ( 2043.5 MiB) Virtual address space used
+MALLOC: =     93982880 (   89.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493789800.946371893] [7fcc16534000]: ------------------------------------------------
+MALLOC: =     93982880 (   89.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    139522208 (  133.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493789983.736460947] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    139522208 (  133.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    139522208 (  133.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493790164.126756369] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    139522208 (  133.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    141889696 (  135.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493790345.256664807] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    141889696 (  135.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    153276576 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493790525.774803277] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153276576 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    153276576 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493790711.134958909] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153276576 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    151736480 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493790893.879703069] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151736480 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    152015008 (  145.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493791074.446231292] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152015008 (  145.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    146821280 (  140.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+[0m[ INFO] [1493791255.504533414] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    146821280 (  140.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207568032 ( 2105.3 MiB) Virtual address space used
+MALLOC: =    208023712 (  198.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493791437.937287052] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    208023712 (  198.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    154865824 (  147.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493791626.485714165] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    154865824 (  147.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    155136160 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493791808.599387084] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    155136160 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    152752288 (  145.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493791990.082213700] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152752288 (  145.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    153137312 (  146.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493792178.626013631] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153137312 (  146.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    151629984 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493792360.512930124] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151629984 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    151662752 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493792540.795736019] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151662752 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    145813664 (  139.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493792727.915094443] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    145813664 (  139.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    144437408 (  137.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493792908.066578144] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    144437408 (  137.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =   1152659616 ( 1099.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+[0m[ INFO] [1493793089.058136215] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1152659616 ( 1099.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2207699104 ( 2105.4 MiB) Virtual address space used
+MALLOC: =    161607840 (  154.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493793271.854146635] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    161607840 (  154.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    161976480 (  154.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493793452.696522051] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    161976480 (  154.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    159846560 (  152.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493793634.309695700] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    159846560 (  152.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    160059552 (  152.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493793815.124800609] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    160059552 (  152.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152383648 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493793999.051921304] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152383648 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151908512 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493794179.621771776] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151908512 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151318688 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493794360.135281688] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151318688 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151859360 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493794542.532947623] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151859360 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    125407392 (  119.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493794729.149817932] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    125407392 (  119.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    762687648 (  727.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493794916.830620529] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    762687648 (  727.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    165474464 (  157.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493795097.973092033] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    165474464 (  157.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    161689760 (  154.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493795278.561554910] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    161689760 (  154.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    672125088 (  641.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493795459.888179373] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    672125088 (  641.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    155504800 (  148.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493795647.956612618] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    155504800 (  148.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    153792672 (  146.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493795840.905924029] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153792672 (  146.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151695520 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796029.564473360] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151695520 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    154284192 (  147.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796209.669552356] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    154284192 (  147.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    155046048 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796390.781644501] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    155046048 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    155046048 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796573.436918509] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    155046048 (  147.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152539296 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796753.991477883] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152539296 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152301728 (  145.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493796934.274239641] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152301728 (  145.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152383648 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493797128.395737551] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152383648 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    139727008 (  133.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493797311.026801199] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    139727008 (  133.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152367264 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493797492.174017045] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152367264 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152424608 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493797672.923706604] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152424608 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152416416 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493797853.241706320] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152416416 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152866976 (  145.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798034.262975990] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152866976 (  145.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    153481376 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798217.147479474] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153481376 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    153481376 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798399.167835205] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153481376 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    153497760 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798582.430411741] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153497760 (  146.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    150950048 (  144.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798762.651946297] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150950048 (  144.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151138464 (  144.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493798951.208444132] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151138464 (  144.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    119550112 (  114.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493799216.897550410] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    119550112 (  114.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151163040 (  144.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493799400.151295525] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151163040 (  144.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151351456 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493799581.331790238] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151351456 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493799761.430081915] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151384224 (  144.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493799942.521302957] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151384224 (  144.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151720096 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493800123.463471673] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151720096 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151785632 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493800304.197774827] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151785632 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151834784 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493800484.889403763] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151834784 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151900320 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493800676.002457640] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151900320 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151883936 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493800856.502255764] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151883936 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152162464 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801037.150869428] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152162464 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    152195232 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801219.326725942] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152195232 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    150392992 (  143.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801400.792977321] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150392992 (  143.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    150474912 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801583.479897168] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150474912 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    150491296 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801777.873746650] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150491296 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    151564448 (  144.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+[0m[ INFO] [1493801963.438017189] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151564448 (  144.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2289176736 ( 2183.1 MiB) Virtual address space used
+MALLOC: =    156790944 (  149.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493802143.726290639] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    156790944 (  149.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    137908384 (  131.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493802333.433567749] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    137908384 (  131.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150507680 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493802520.506003966] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150507680 (  143.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150646944 (  143.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493802701.515646385] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150646944 (  143.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151056544 (  144.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493802883.201051903] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151056544 (  144.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150696096 (  143.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803064.297752040] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150696096 (  143.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150007968 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803245.282598053] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150007968 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150032544 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803436.744229387] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150032544 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150048928 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803617.235013366] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150048928 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149172384 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803798.819261255] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149172384 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149737632 (  142.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493803979.356043435] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149737632 (  142.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150261920 (  143.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493804160.033414039] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150261920 (  143.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149221536 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493804341.098079769] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149221536 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149254304 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493804522.089165841] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149254304 (  142.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149344416 (  142.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493804702.891196012] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149344416 (  142.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149516448 (  142.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493804883.140222560] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149516448 (  142.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    149958816 (  143.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805068.514154523] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    149958816 (  143.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150073504 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805249.407839095] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150073504 (  143.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    150171808 (  143.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805429.492289917] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    150171808 (  143.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    147738784 (  140.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805610.362628242] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    147738784 (  140.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148099232 (  141.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805790.363658359] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148099232 (  141.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148197536 (  141.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493805970.969058434] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148197536 (  141.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148328608 (  141.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493806151.176874071] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148328608 (  141.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148508832 (  141.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493806331.369928789] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148508832 (  141.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148656288 (  141.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493806528.140161480] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148656288 (  141.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148664480 (  141.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493806708.510260362] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148664480 (  141.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148795552 (  141.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493806889.899876284] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148795552 (  141.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148312224 (  141.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807070.490778182] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148312224 (  141.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148410528 (  141.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807251.400436400] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148410528 (  141.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148517024 (  141.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807432.110949466] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148517024 (  141.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    148582560 (  141.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807614.410833042] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    148582560 (  141.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    156733600 (  149.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807812.376904702] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    156733600 (  149.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152596640 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493807993.466023035] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152596640 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151318688 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493808175.090663870] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151318688 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493808356.217018632] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493808536.218920701] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493808717.013260692] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151277728 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151310496 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493808897.733223177] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151310496 (  144.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151425184 (  144.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809078.743593982] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151425184 (  144.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151539872 (  144.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809259.286941528] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151539872 (  144.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151605408 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809440.465417286] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151605408 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151670944 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809621.765475518] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151670944 (  144.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151736480 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809802.442635623] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151736480 (  144.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151810208 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493809982.916638937] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151810208 (  144.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    151916704 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493810164.067428163] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    151916704 (  144.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152015008 (  145.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493810344.819466664] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152015008 (  145.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152113312 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493810525.123872964] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152113312 (  145.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152244384 (  145.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493810705.320102691] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152244384 (  145.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152359072 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493810886.550039055] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152359072 (  145.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152473760 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811067.052601369] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152473760 (  145.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152572064 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811248.182527771] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152572064 (  145.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152637600 (  145.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811428.295780842] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152637600 (  145.6 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152735904 (  145.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811608.434134508] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152735904 (  145.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    152842400 (  145.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811790.828497318] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    152842400 (  145.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    153350304 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+[0m[ INFO] [1493811971.826362706] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    153350304 (  146.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   2385563808 ( 2275.1 MiB) Virtual address space used
+MALLOC: =    202428576 (  193.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+[0m[ INFO] [1493812151.949446901] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    202428576 (  193.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+MALLOC: =    164081824 (  156.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+[0m[ INFO] [1493812331.949767413] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    164081824 (  156.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+MALLOC: =    162721952 (  155.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+[0m[ INFO] [1493812512.734967589] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    162721952 (  155.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+MALLOC: =    162746528 (  155.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+[0m[ INFO] [1493812693.458086079] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    162746528 (  155.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   3544797344 ( 3380.6 MiB) Virtual address space used
+MALLOC: =   2172326048 ( 2071.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   3545059488 ( 3380.8 MiB) Virtual address space used
+[0m[ INFO] [1493812873.747653276] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2172326048 ( 2071.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   3545059488 ( 3380.8 MiB) Virtual address space used
+MALLOC: =    255004832 (  243.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272285344 ( 5028.0 MiB) Virtual address space used
+[0m[ INFO] [1493813057.169384821] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    255004832 (  243.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272285344 ( 5028.0 MiB) Virtual address space used
+MALLOC: =   1369444512 ( 1306.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272285344 ( 5028.0 MiB) Virtual address space used
+[0m[ INFO] [1493813238.390756437] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1369444512 ( 1306.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272285344 ( 5028.0 MiB) Virtual address space used
+MALLOC: =   1949773984 ( 1859.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272416416 ( 5028.2 MiB) Virtual address space used
+[0m[ INFO] [1493813420.268782103] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1949773984 ( 1859.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272416416 ( 5028.2 MiB) Virtual address space used
+MALLOC: =   2041491616 ( 1946.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272678560 ( 5028.4 MiB) Virtual address space used
+[0m[ INFO] [1493813602.280702341] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2041491616 ( 1946.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   5272678560 ( 5028.4 MiB) Virtual address space used
+MALLOC: =   1836355744 ( 1751.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   5273202848 ( 5028.9 MiB) Virtual address space used
+[0m[ INFO] [1493813787.543111351] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1836355744 ( 1751.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   5273202848 ( 5028.9 MiB) Virtual address space used
+MALLOC: =   2164699296 ( 2064.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   6593188000 ( 6287.8 MiB) Virtual address space used
+[0m[ INFO] [1493813971.562578471] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2165239968 ( 2064.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   6593188000 ( 6287.8 MiB) Virtual address space used
+MALLOC: =   2559701152 ( 2441.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   6593581216 ( 6288.1 MiB) Virtual address space used
+[0m[ INFO] [1493814151.628753941] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2559701152 ( 2441.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   6593581216 ( 6288.1 MiB) Virtual address space used
+MALLOC: =   1526165664 ( 1455.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493814331.857739754] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1526165664 ( 1455.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   2054426784 ( 1959.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493814512.500779730] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2056507552 ( 1961.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   2135584928 ( 2036.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493814693.415738997] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2135584928 ( 2036.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   2013221024 ( 1920.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493814877.072639468] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   2013221024 ( 1920.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1507258528 ( 1437.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815057.490437619] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1507258528 ( 1437.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1416122528 ( 1350.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815237.597291630] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1416122528 ( 1350.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1229033632 ( 1172.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815417.614172450] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1229033632 ( 1172.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1195913376 ( 1140.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815600.535330366] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1195913376 ( 1140.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1803301024 ( 1719.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815782.121674467] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1803301024 ( 1719.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    703025312 (  670.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493815962.262603760] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    703025312 (  670.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =   1008570528 (  961.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493816150.446524116] [7fcc16534000]: ------------------------------------------------
+MALLOC: =   1008570528 (  961.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    883142816 (  842.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493816331.190759213] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    883142816 (  842.2 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    741806240 (  707.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493816524.674461874] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    741806240 (  707.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    205910176 (  196.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493816707.205212075] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    205910176 (  196.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    205910176 (  196.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493816887.240796346] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    205910176 (  196.4 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    206704800 (  197.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493817083.948519101] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    206704800 (  197.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    747466912 (  712.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493817282.698764570] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    747466912 (  712.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    189608096 (  180.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493817464.015167269] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    189608096 (  180.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    215085216 (  205.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493817646.035208921] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    215085216 (  205.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    187633824 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493817826.121739421] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    187633824 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    187617440 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818007.623097652] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    187617440 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    187617440 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818188.485296803] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    187617440 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    188420256 (  179.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818368.614240857] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    188420256 (  179.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    187625632 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818552.527266889] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    187625632 (  178.9 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818734.989129882] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493818918.423667208] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186478752 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493819103.650070752] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186478752 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493819284.791530731] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493819465.097908972] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493819645.899369843] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493819826.451695121] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186486944 (  177.8 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186953888 (  178.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820006.997115410] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186953888 (  178.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    746270880 (  711.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820187.239440355] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    746270880 (  711.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    245051552 (  233.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820370.439411400] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    245051552 (  233.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    784822432 (  748.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820565.306924011] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    784822432 (  748.5 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186658976 (  178.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820745.957363778] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186658976 (  178.0 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    185888928 (  177.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493820928.991212953] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    185888928 (  177.3 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    185315488 (  176.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493821109.120446063] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    185315488 (  176.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    210882720 (  201.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493821297.438437514] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    210882720 (  201.1 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+MALLOC: =    186314912 (  177.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used
+[0m[ INFO] [1493821478.093132775] [7fcc16534000]: ------------------------------------------------
+MALLOC: =    186314912 (  177.7 MiB) Actual memory used (physical + swap)
+MALLOC: =   7289663648 ( 6952.0 MiB) Virtual address space used

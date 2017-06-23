@@ -1,0 +1,90 @@
+# This is a combination of 7 commits.
+# The first commit's message is:
+Remove flush
+
+# This is the 2nd commit message:
+
+reset current_track_gap_ in flush()
+
+# This is the 3rd commit message:
+
+Add extra logging
+
+# This is the 4th commit message:
+
+Don't stop at end of activity if --lighthouse_end_timestamp is set
+
+# This is the 5th commit message:
+
+Do proper flush at end of task.
+
+# This is the 6th commit message:
+
+Flush in non-serial mode
+
+# This is the 7th commit message:
+
+Call detect and update in flush
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Mon May 1 19:14:20 2017 -0700
+#
+# interactive rebase in progress; onto 1e4394b
+# Last commands done (7 commands done):
+#    squash 2bcb79d Flush in non-serial mode
+#    squash 4a2fbca Call detect and update in flush
+# No commands remaining.
+# You are currently editing a commit while rebasing branch 'keith/track-to-event' on '1e4394b'.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/core/jarvis/include/jarvis/track_streamer.h
+#	modified:   ros-pkg/core/jarvis/include/jarvis/tracker.h
+#	modified:   ros-pkg/core/jarvis/src/lib/halo_color.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/smart_timelapse.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/track_processor.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/track_publisher.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/track_streamer.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/tracker.cpp
+#	modified:   ros-pkg/core/online_learning/include/online_learning/dataset.h
+#	modified:   ros-pkg/service/doorman_client/src/lib/doorman_client.cpp
+#	modified:   ros-pkg/service/jarvis2/include/jarvis2/jarvis2.h
+#	modified:   ros-pkg/service/jarvis2/src/prog/TaskReader.cpp
+#	modified:   ros-pkg/service/jarvis2/src/prog/jarvis2.cpp
+#
+# Untracked files:
+#	015bae359980-0-story.h264?v=015bb0162508
+#	015bae359980-0-story.h264?v=015bb0162508.1
+#	debug/
+#	dollface.cfg
+#	env1.txt
+#	env2.txt
+#	jarvis-cache/
+#	jarvis-penguin.cfg
+#	jarvis2-alex.cfg
+#	jarvis2-canary.cfg
+#	jarvis2-canaryseg.cfg
+#	jarvis2-penguin.cfg
+#	log.32.nopid.framecachesmall.master.txt
+#	logs.valgrind.05.txt
+#	lt2-split.txt
+#	memleak.cfg
+#	memory.gpl
+#	memstat.txt
+#	nopersonid_jarvis_flag.cfg
+#	personid/
+#	personid_jarvis_flag.cfg
+#	pid.sh
+#	ros-pkg/core/jarvis/src/lib/dataset
+#	ros-pkg/core/jarvis/src/lib/update
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private-penguin.cfg
+#	ros-pkg/service/jarvis2/config/jarvis2-beta-private.cfg
+#	ros-pkg/service/jarvis2/config/tlgen-alex-alpha.cfg
+#	snippets/
+#	tasks-track.txt
+#	tasks.txt
+#	tasks2.txt
+#	tds/
+#	tim.sh
+#

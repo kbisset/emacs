@@ -1,0 +1,135 @@
+#include "jarvis2/frameQueue.h"
+
+#include <ros/message_forward.h>
+#include <ros/ros.h>
+#include <iostream>
+
+using namespace std;
+using namespace snitch::sensor;
+
+namespace Jarvis2 {
+FrameQueue::FrameQueue()
+  : expected_buffer_size_(20),
+    expected_playback_period_(1.0 / 30.0),
+    rosMemBytes_(0),
+    rosWireBytes_(0),
+    protoMemBytes_(0),
+    protoWireBytes_(0),
+    numFramesProcessed_(0),
+    quitting_(false)
+{
+ROS_INFO_STREAM("Creating FrameQueue");
+}
+
+FrameQueue::~FrameQueue()
+{
+}
+
+void FrameQueue::dumpStats() const
+{
+  if (numFramesProcessed_ > 0)
+    ROS_INFO_STREAM("Message info:\n" <<
+                    "\t ROS Mem bytes   : " << rosMemBytes_ << " " <<
+                    rosMemBytes_/numFramesProcessed_ << "\n" <<
+                    "\t ROS Wire bytes  : " << rosWireBytes_ << " " <<
+                    rosWireBytes_/numFramesProcessed_ << "\n" <<
+                    "\t Proto Mem bytes : " << protoMemBytes_ << " " <<
+                    protoMemBytes_/numFramesProcessed_ << "\n" <<
+                    "\t Proto Wire bytes: " << protoWireBytes_ << " " <<
+                    protoWireBytes_/numFramesProcessed_ << "\n");
+}
+
+void FrameQueue::pushCRGBDFrame(const ubercam_msgs::CompressedRGBDPtr& msg)
+{
+  ROS_ASSERT_MSG(false, "Conversion Not yet implemented");
+#if 0  
+  ROS_INFO_THROTTLE(1, "Sensor Id: %s", msg->sensor_id.c_str());
+  
+  sensorId_ 
+  SensorSegment segment = Doorman::CompressedRGBDToSensorSegment(msg);
+  pushSensorSegment(segment);
+#endif
+}
+
+ubercam_msgs::CompressedRGBDPtr FrameQueue::popCRGBDFrame()
+{
+  auto frame = popSensorFrame();
+  auto msg = Doorman::SensorFrameToCompressedRGBD(sensorId_, frame);
+//  cout << "In popCRGBD, size " << msg->compressed_color.size() << endl;
+//  ROS_INFO_STREAM("Frame:\n " << frame.DebugString());
+  protoMemBytes_ += frame.SpaceUsed();
+  protoWireBytes_ += frame.ByteSize();
+  rosWireBytes_ += ros::serialization::serializationLength(*msg);
+  numFramesProcessed_++;
+  return msg;
+}
+
+void FrameQueue::pushSensorSegment(SensorSegment& segment)
+{
+  // TODO: Enforce that sensorId_ only changes when the queue is empty? Also requires managing both values under buffer_mutex_
+  {
+    std::unique_lock<std::mutex> lock(segment_mutex_);
+    sensorId_ = segment.sensor_id();
+  }
+  {
+    std::unique_lock<std::mutex> lock(buffer_mutex_);
+    for (int i=0; i < segment.frames().size(); ++i) 
+    {
+      segment.mutable_frames(i)->set_site_id(segment.site_id());
+      segment.mutable_frames(i)->set_sensor_id(segment.sensor_id());
+      buffer_.push(segment.frames().Get(i));
+      if (i < segment.frames().size()-1)
+        buffer_.back().set_next_frame(segment.frames().Get(i+1).timestamp());
+      else
+        buffer_.back().set_next_frame(segment.next_segment());
+    }
+  }
+  buffer_cond_.notify_one();
+}
+
+void FrameQueue::pushSensorFrame(const SensorFrame& frame)
+{
+  {
+    std::unique_lock<std::mutex> lock(buffer_mutex_);
+    buffer_.push(frame);
+  }
+  buffer_cond_.notify_one();
+}
+
+// TODO: Use shared pointers
+SensorFrame FrameQueue::popSensorFrame()
+{
+  std::unique_lock<std::mutex> lock(buffer_mutex_);
+  if (buffer_.empty())
+  {
+    buffer_cond_.wait_for(lock, std::chrono::milliseconds(2000),
+                          [&] { return !buffer_.empty(); });
+  }
+  static ros::Time last_good_msg = ros::Time::now();
+
+  // if (buffer_.empty())
+  // {
+  //   ROS_WARN_STREAM_THROTTLE(2, "Buffer underrun!");
+  //   if ((ros::Time::now() - last_good_msg).toSec() > 5)
+  //   {
+  //     pinger.streaming = false;
+  //   }
+  // } else {
+  //   last_good_msg = ros::Time::now();
+  //   pinger.streaming = true;
+  // }
+
+//        double period = expected_playback_period_ * ((double)expected_buffer_size_ / buffer_.size());
+  //cout << "period: " << period << " " << buffer_.size() << " / " << expected_buffer_size_ << endl;
+  // if(buffer_.size() > expected_buffer_size_ * 2)
+  //   ROS_WARN_STREAM_THROTTLE(1, "Jarvis is not keeping up with messages.  Buffer size: "
+  //                            << buffer_.size());
+  SensorFrame frame;
+  if(!buffer_.empty()) { // && (ros::Time::now() - prev_process_time_).toSec() > period) {
+    frame = buffer_.front();
+    buffer_.pop();
+  }
+
+  return frame;
+}
+}

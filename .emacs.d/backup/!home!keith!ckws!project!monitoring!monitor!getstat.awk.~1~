@@ -1,0 +1,14 @@
+BEGIN {now=systime()}
+$1 == "sensor_id:" {sensor_id=$2}
+$1 == "site_id:" {site_id=$2}
+$1 == "timestamp:" {timestamp=$2/1000}
+$1 == "rom_version:" {rom_version=$2}
+$1 == "boot_timestamp:" {boot_timestamp=$2/1000}
+$0 == "frames {" {exit 0}
+END {printf("%x %s %s %s %s %d %s", sensor_id, substr(site_id, 2, 32),
+            rom_version,
+            strftime("%Y-%m-%dT%H:%M:%S%z", boot_timestamp),
+            strftime("%Y-%m-%dT%H:%M:%S%z", timestamp),
+            (now-timestamp),
+            (now-timestamp<60?"online":"offline")      \
+    )}

@@ -1,0 +1,1053 @@
+#include "bag_of_tricks/depth_calibration.h"
+#include "timer/profile.h"
+
+#include <exception>
+#include <fstream>
+#include <gflags/gflags.h>
+#include <ros/assert.h>
+#include <ros/console.h>
+
+namespace ss = snitch::sensor;
+namespace {
+const int o_rows = 1520;
+const int o_cols = 2688;
+
+const int s_rows = 1080;
+const int s_cols = 1920;
+
+double deg2rad(const float val) {
+  return val * M_PI / 180.0;
+}
+
+}
+
+DEFINE_double(Radj, 0.0, "Adjust depth value");
+
+namespace BagOfTricks {
+std::mutex DepthCalibration::cache_lock_;
+DepthCalibration::CacheMap DepthCalibration::calibration_cache_;
+
+const DepthCalibration& DepthCalibration::instance(const SensorId& sensor)
+{
+  std::lock_guard<std::mutex> lock (cache_lock_);
+  static DepthCalibration* defaultDC = new DepthCalibration(ss::SensorGeometricCalibration());
+  
+  auto result = calibration_cache_.find(sensor.numeric());
+  if (result != calibration_cache_.end()) {
+    return *(result->second);
+  } else {
+    ROS_WARN_STREAM("Using default calibration parameters for " << sensor.str());
+    return *defaultDC;
+  }
+}
+
+void DepthCalibration::addSensor(const SensorId& sensor,
+                                 const snitch::sensor::SensorGeometricCalibration& params)
+{
+  std::lock_guard<std::mutex> lock (cache_lock_);
+  if (calibration_cache_.find(sensor.numeric()) == calibration_cache_.end())
+    calibration_cache_[sensor.numeric()] = new DepthCalibration(params);
+}
+
+DepthCalibration::DepthCalibration()
+{
+  const std::string dir("/home/keith/alex_params/");
+  readIntrinsicParameters(dir+"rgb_intrinsics_1178.txt", K_rgb_);
+  readDistortionParameters(dir+"rgb_distortion_1178.txt", dist_params_rgb_);
+
+  readIntrinsicParameters(dir+"tof_intrinsics_1178.txt", K_depth_);
+  readDistortionParameters(dir+"tof_distortion_1178.txt", dist_params_depth_);
+
+  readExtrinsicParameters(dir+"rgb_tof_extrinsics.txt", RT_);
+
+  // ROS_INFO_STREAM("Params from file:\n"
+  //                 << "K_rgb_: " << K_rgb_ << "\n"
+  //                 << "dist_params_rgb: " << dist_params_rgb_ << "\n"
+  //                 << "K_depth_: " << K_depth_ << "\n"
+  //                 << "dist_depth_rgb: " << dist_params_depth_ << "\n"
+  //                 << "RT_: " << RT_);
+
+  rotation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  rotation_vector_.at<float>(0, 0) = RT_.at<float>(0, 0);
+  rotation_vector_.at<float>(1, 0) = RT_.at<float>(1, 0);
+  rotation_vector_.at<float>(2, 0) = RT_.at<float>(2, 0);
+  
+  translation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  translation_vector_.at<float>(0, 0) = RT_.at<float>(3, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(1, 0) = RT_.at<float>(4, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(2, 0) = RT_.at<float>(5, 0) * 0.001; // m to mm
+
+  // The extrinsics are RGB to TOF
+  // what we need is TOF to RGB
+  getInverseTransformation(rotation_vector_, translation_vector_);
+
+}
+
+DepthCalibration::DepthCalibration(const ss::SensorGeometricCalibration& params)
+{
+  if (params.rgb().k2() == 0 && params.rgb().k4() == 0 && params.rgb().k6() == 0) {
+    // Use defaults
+      setDefaultParameters();
+  } else {
+    // Use parameters passed in
+    readIntrinsicParameters(params.rgb(), K_rgb_);
+    readDistortionParameters(params.rgb(), dist_params_rgb_);
+
+    readIntrinsicParameters(params.tof(), K_depth_);
+    readDistortionParameters(params.tof(), dist_params_depth_);
+
+    readExtrinsicParameters(params.ext(), RT_);
+    adjustRGBParams();
+  }
+  
+  // ROS_INFO_STREAM("Params from seg:\n"
+  //                 <<  "K_rgb_: " << K_rgb_ << "\n"
+  //                 << "dist_params_rgb: " << dist_params_rgb_ << "\n"
+  //                 << "K_depth_: " << K_depth_ << "\n"
+  //                 << "dist_depth_rgb: " << dist_params_depth_ << "\n"
+  //                 << "RT_: " << RT_);
+
+  // const std::string dir("/home/keith/alex_params/");
+  // readIntrinsicParameters(dir+"rgb_intrinsics_1178.txt", K_rgb_);
+  // readDistortionParameters(dir+"rgb_distortion_1178.txt", dist_params_rgb_);
+
+  // readIntrinsicParameters(dir+"tof_intrinsics_1178.txt", K_depth_);
+  // readDistortionParameters(dir+"tof_distortion_1178.txt", dist_params_depth_);
+
+  // readExtrinsicParameters(dir+"rgb_tof_extrinsics.txt", RT_);
+
+  // ROS_INFO_STREAM("Params from file:\n"
+  //                 << "K_rgb_: " << K_rgb_ << "\n"
+  //                 << "dist_params_rgb: " << dist_params_rgb_ << "\n"
+  //                 << "K_depth_: " << K_depth_ << "\n"
+  //                 << "dist_depth_rgb: " << dist_params_depth_ << "\n"
+  //                 << "RT_: " << RT_);
+
+  rotation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  rotation_vector_.at<float>(0, 0) = RT_.at<float>(0, 0);
+  rotation_vector_.at<float>(1, 0) = RT_.at<float>(1, 0);
+  rotation_vector_.at<float>(2, 0) = RT_.at<float>(2, 0);
+  
+  translation_vector_ = cv::Mat(3, 1, CV_32FC1);
+  translation_vector_.at<float>(0, 0) = RT_.at<float>(3, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(1, 0) = RT_.at<float>(4, 0) * 0.001; // m to mm
+  translation_vector_.at<float>(2, 0) = RT_.at<float>(5, 0) * 0.001; // m to mm
+
+  // The extrinsics are RGB to TOF
+  // what we need is TOF to RGB
+  getInverseTransformation(rotation_vector_, translation_vector_);
+}
+
+void DepthCalibration::setDefaultParameters()
+{
+  // Set parameters from device 1178. These should be close enought to produce reasonable
+  // results
+  K_rgb_ = cv::Mat::eye(3, 3, CV_32FC1);
+  K_rgb_.at<float> (0, 0) = 1004.97377;
+  K_rgb_.at<float> (1, 1) = 1000.07509;
+  K_rgb_.at<float> (0, 2) = 1000.24233;
+  K_rgb_.at<float> (1, 2) = 542.929898;
+
+  K_depth_ = cv::Mat::eye(3, 3, CV_32FC1);
+  K_depth_.at<float> (0, 0) = 212.822;
+  K_depth_.at<float> (1, 1) = 213.043;
+  K_depth_.at<float> (0, 2) = 178.412;
+  K_depth_.at<float> (1, 2) = 145.096;
+
+  dist_params_rgb_ = cv::Mat::zeros(8, 1, CV_32FC1);
+  dist_params_rgb_.at<float>(1, 0) = -0.159866;
+  dist_params_rgb_.at<float>(5, 0) = 0.000324324;
+  dist_params_rgb_.at<float>(7, 0) = 0.0157475;
+  
+  dist_params_rgb_.at<float>(2, 0) = 0;
+  dist_params_rgb_.at<float>(3, 0) = 0;
+
+  
+  dist_params_depth_ = cv::Mat::zeros(8, 1, CV_32FC1);
+  dist_params_depth_.at<float>(1, 0) = -0.186658;
+  dist_params_depth_.at<float>(5, 0) = 0.41802;
+  dist_params_depth_.at<float>(7, 0) = -0.266755;
+
+  dist_params_depth_.at<float>(2, 0) = 0;
+  dist_params_depth_.at<float>(3, 0) = 0;
+
+  RT_ = cv::Mat(6, 1, CV_32FC1);
+  
+  RT_.at<float> (0, 0) = -0.00424751;
+  RT_.at<float> (1, 0) = 0.00261765;
+  RT_.at<float> (2, 0) = 0.00397755; 
+  RT_.at<float> (3, 0) = -0.751181; 
+  RT_.at<float> (4, 0) = -22.9719;  
+  RT_.at<float> (5, 0) = -1.88854;   
+}
+
+void DepthCalibration::readIntrinsicParameters(const std::string& filename, cv::Mat& K)
+{
+  float fx, fy, cx, cy;
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Intrinsic Parameter file: ") + filename);
+  }
+
+  ifile >> fx >> fy >> cx >> cy;
+
+  K = cv::Mat::eye(3, 3, CV_32FC1);
+  K.at<float> (0, 0) = fx;
+  K.at<float> (1, 1) = fy;
+  K.at<float> (0, 2) = cx;
+  K.at<float> (1, 2) = cy;
+}
+
+void DepthCalibration::readIntrinsicParameters(const ss::SensorIntrinsics& params, cv::Mat& K)
+{
+  K = cv::Mat::eye(3, 3, CV_32FC1);
+  K.at<float> (0, 0) = params.fx();
+  K.at<float> (1, 1) = params.fy();
+  K.at<float> (0, 2) = params.cx();
+  K.at<float> (1, 2) = params.cy();
+}
+
+void DepthCalibration::readExtrinsicParameters(const std::string& filename, cv::Mat& RT)
+{
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Extrinsic Parameter file: ") + filename);
+  }
+
+  float rx = 0.0;
+  float ry = 0.0;
+  float rz = 0.0;
+  float tx = 0.0;
+  float ty = 0.0;
+  float tz = 0.0;
+
+  ifile >> rx >> ry >> rz >> tx >> ty >> tz;
+
+  RT = cv::Mat(6, 1, CV_32FC1);
+  
+  RT.at<float> (0, 0) = rx;
+  RT.at<float> (1, 0) = ry;
+  RT.at<float> (2, 0) = rz;
+
+  RT.at<float> (3, 0) = tx;
+  RT.at<float> (4, 0) = ty;
+  RT.at<float> (5, 0) = tz;
+}
+
+void DepthCalibration::readExtrinsicParameters(const ss::SensorExtrinsics& params, cv::Mat& RT)
+{
+  RT = cv::Mat(6, 1, CV_32FC1);
+  
+  RT.at<float> (0, 0) = params.rx();
+  RT.at<float> (1, 0) = params.ry();
+  RT.at<float> (2, 0) = params.rz();
+
+  RT.at<float> (3, 0) = params.tx();
+  RT.at<float> (4, 0) = params.ty();
+  RT.at<float> (5, 0) = params.tz();
+}
+
+void DepthCalibration::readDistortionParameters(const std::string& filename,
+                                                cv::Mat& distortion_params)
+{
+  std::ifstream ifile(filename.c_str());
+  if(!ifile) {
+    throw std::runtime_error(std::string("Unable to open file Distortion Parameter file: ") + filename);
+  }
+
+  float k1, k2, k3, k4, k5, k6; // radial distortion
+  float p1, p2;  // tangential distortion
+
+  ifile >> k1 >> k2 >> k3 >> k4 >> k5 >> k6;
+  ifile >> p1 >> p2;
+
+  distortion_params = cv::Mat::zeros(8, 1, CV_32FC1);
+  distortion_params.at<float>(0, 0) = k1;
+  distortion_params.at<float>(1, 0) = k2;
+
+  distortion_params.at<float>(2, 0) = p1;
+  distortion_params.at<float>(3, 0) = p2;
+
+  distortion_params.at<float>(4, 0) = k3;
+  distortion_params.at<float>(5, 0) = k4;
+  distortion_params.at<float>(6, 0) = k5;
+  distortion_params.at<float>(7, 0) = k6;
+}
+
+void DepthCalibration::readDistortionParameters(const ss::SensorIntrinsics& params,
+                                                cv::Mat& distortion_params)
+{
+  distortion_params = cv::Mat::zeros(8, 1, CV_32FC1);
+  distortion_params.at<float>(1, 0) = params.k2();
+
+  distortion_params.at<float>(2, 0) = params.p1();
+  distortion_params.at<float>(3, 0) = params.p2();
+
+  distortion_params.at<float>(5, 0) = params.k4();
+  distortion_params.at<float>(7, 0) = params.k6();
+}
+
+void DepthCalibration::getInverseTransformation(cv::Mat& rotation_vector, 
+                                                cv::Mat& translation_vector) const
+{
+  cv::Mat rotation_matrix;
+  cv::Rodrigues(rotation_vector, rotation_matrix);
+
+  cv::Mat rotation_matrix_transpose;
+  cv::transpose(rotation_matrix, rotation_matrix_transpose);
+
+  cv::Rodrigues(rotation_vector, rotation_matrix_transpose);
+
+  // std::cout << "Initial rotation " << rotation_matrix << std::endl;
+  // std::cout << "Inverse rotation " << rotation_matrix_transpose << std::endl;
+
+//  std::cout << "Intital translation " << translation_vector << std::endl;
+  translation_vector = - rotation_matrix_transpose * translation_vector;
+//  std::cout << "Inverse translation " << translation_vector << std::endl;
+}
+
+void DepthCalibration::undistortDepth(const cv::Mat& img, cv::Mat& undistorted_img) const
+{
+  undistort(img, undistorted_img, K_depth_, dist_params_depth_);
+}
+
+void DepthCalibration::undistortColor(const cv::Mat& img, cv::Mat& undistorted_img) const
+{
+  undistort(img, undistorted_img, K_rgb_, dist_params_rgb_);
+}
+
+void DepthCalibration::undistort(const cv::Mat& img, cv::Mat& undistorted_img, 
+                 const cv::Mat& K, const cv::Mat& distortion_params) const
+{
+  float k1 = distortion_params.at<float>(0 ,0);
+  float k2 = distortion_params.at<float>(1 ,0);
+  float p1 = distortion_params.at<float>(2 ,0);
+  float p2 = distortion_params.at<float>(3 ,0);
+  float k3 = distortion_params.at<float>(4 ,0);
+  float k4 = distortion_params.at<float>(5 ,0);
+  float k5 = distortion_params.at<float>(6, 0);
+  float k6 = distortion_params.at<float>(7, 0);
+
+  float fx = K.at<float>(0, 0);
+  float fy = K.at<float>(1, 1);
+  float cx = K.at<float>(0, 2);
+  float cy = K.at<float>(1, 2);
+
+  undistorted_img = cv::Mat(img.rows, img.cols, img.type());
+
+  cv::Mat Kinv = K.inv();
+
+  float r = 0.,
+        r2 = 0.,
+        r4 = 0.,
+        r6 = 0.,
+        r8 = 0.,
+        r10 = 0.,
+        r12 = 0.;
+
+  cv::Mat map_x (img.rows, img.cols, CV_32FC1, cv::Scalar(0));
+  cv::Mat map_y (img.rows, img.cols, CV_32FC1, cv::Scalar(0));
+
+  cv::Mat pt(3, 1, CV_32FC1);
+  for(int r = 0; r < img.rows; r++) {
+    for(int c = 0; c < img.cols; c++) {
+      pt.at<float>(0, 0) = c;
+      pt.at<float>(1, 0) = r;
+      pt.at<float>(2, 0) = 1;
+      cv::Mat npt = Kinv * pt;
+      float xu = npt.at<float> (0, 0);
+      float yu = npt.at<float> (1, 0);
+
+      r2 = xu*xu + yu*yu;
+      r4 = r2 * r2;
+      r6 = r4 * r2;
+      r8 = r4 * r4;
+      r10 = r8 * r2;
+      r12 = r6 * r6;
+
+      float xd = xu * (1 + k1*r2 + k2*r4 + k3*r6 + k4*r8 + k5*r10 + k6*r12) 
+                 + 2*p1*xu*yu + p2 * (r2 + 2*xu*xu);
+      float yd = yu * (1 + k1*r2 + k2*r4 + k3*r6 + k4*r8 + k5*r10 + k6*r12) 
+                 + 2*p1*xu*yu + p2 * (r2 + 2*yu*yu);
+
+      float u = fx * xd + cx;
+      float v = fy * yd + cy;
+
+      map_x.at<float>(r, c) = u;
+      map_y.at<float>(r, c) = v;
+    }
+  }
+
+  cv::remap(img, undistorted_img, map_x, map_y, CV_INTER_LINEAR);
+}
+
+cv::Point DepthCalibration::undistortPointLiteOn(const int x, const int y) const 
+{
+  PROFILE_BLOCK("undistortPointLiteOn");
+  float k1 = dist_params_depth_.at<float>(0 ,0);
+  float k2 = dist_params_depth_.at<float>(1 ,0);
+  float p1 = dist_params_depth_.at<float>(2 ,0);
+  float p2 = dist_params_depth_.at<float>(3 ,0);
+  float k3 = dist_params_depth_.at<float>(4 ,0);
+  float k4 = dist_params_depth_.at<float>(5 ,0);
+  float k5 = dist_params_depth_.at<float>(6, 0);
+  float k6 = dist_params_depth_.at<float>(7, 0);
+
+  float fx = K_depth_.at<float>(0, 0);
+  float fy = K_depth_.at<float>(1, 1);
+  float cx = K_depth_.at<float>(0, 2);
+  float cy = K_depth_.at<float>(1, 2);
+
+  cv::Mat Kinv = K_depth_.inv();
+
+  float r1 = 0.,
+        r2 = 0.,
+        r3 = 0.,
+        r4 = 0.,
+        r5 = 0.,
+        r6 = 0.;
+
+  cv::Mat pt(3, 1, CV_32FC1);
+  pt.at<float>(0, 0) = x;
+  pt.at<float>(1, 0) = y;
+  pt.at<float>(2, 0) = 1;
+
+  cv::Mat npt = Kinv * pt;
+  float xu = npt.at<float> (0, 0);
+  float yu = npt.at<float> (1, 0);
+
+  r2 = xu*xu + yu*yu;
+  r1 = sqrt(r2);
+  r3 = r2 * r1;
+  r4 = r2 * r2;
+  r5 = r4 * r1;
+  r6 = r4 * r2;
+
+  float kr = (1 + k1*r1 + k2*r2 + k3*r3 + k4*r4 + k5*r5 + k6*r6);
+
+  float xd = xu*kr + 2*p1*xu*yu + p2 * (r2 + 2*xu*xu);
+  float yd = yu*kr + 2*p1*xu*yu + p2 * (r2 + 2*yu*yu);
+
+  float u = fx * xd + cx;
+  float v = fy * yd + cy;
+
+  cv::Point pt2d(u, v);
+  return pt2d;
+}
+
+// Takes depth value (R) and point (x,y) from distorted depth image and returns the
+// corresponding point in the distorted RGB image
+void DepthCalibration::getRGBPoint(float R, int x, int y, int* rgb_x, int* rgb_y) const  
+{
+  PROFILE_BLOCK("getRGBPoint");
+
+  float f = K_depth_.at<float>(0, 0);
+  float cx = K_depth_.at<float>(0, 2);
+  float cy = K_depth_.at<float>(1, 2);
+//  std::cout << "f = " << f << " cx = " << cx << " cy = " << cy << std::endl;
+
+  // Adjust for rows dropped from depth image on device
+  y += 12;
+  cv::Point pt = undistortPointLiteOn(x, y);
+  x = pt.x;
+  y = pt.y;
+
+  float x2y2 = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+  float D = sqrt(f*f + x2y2);
+
+//  float val = depth.at<cv::Vec3b>(y, x)[0];
+//  float R = depth.at<float>(y, x)+1;
+  
+
+//  ROS_INFO_STREAM("depth: " << val << " " << R << " @ " << x << ", " << y);
+
+//  std::cout << "Radial distance " << R << std::endl;
+
+  cv::Point3f pt3d;
+  pt3d.z = R * f / D;
+  pt3d.x = pt3d.z * (x-cx) / f;
+  pt3d.y = pt3d.z * (y-cy) / f;
+
+//  std::cout << "Point in TOF frame " << pt3d  << std::endl;
+  std::vector<cv::Point3f> pt3d_vec;
+  std::vector<cv::Point2f> pt2d_vec;
+  pt3d_vec.push_back(pt3d);
+  {
+    PROFILE_BLOCK("cv::projectPoints");
+    // TODO: call liteon function
+    cv::projectPoints/*_liteon*/(pt3d_vec, rotation_vector_, translation_vector_, 
+                             K_rgb_, dist_params_rgb_, pt2d_vec);
+  }
+  *rgb_x = pt2d_vec[0].x;
+  *rgb_y = pt2d_vec[0].y;
+  // ROS_INFO_STREAM("Depth point " << x << ", " << y << " (" << R << ")"
+  //                 << " RGB point " << *rgb_x << " " << *rgb_y);
+}
+
+void DepthCalibration::adjustRGBParams()
+{
+  std::vector< std::vector<cv::Point3f>> checker_board_coordinates_3d;
+  std::vector< std::vector<cv::Point3f>> checker_board_coordinates_3d_local;
+
+  computeCheckerBoardCoordiantes3D(checker_board_coordinates_3d, checker_board_coordinates_3d_local);
+
+  std::vector< std::vector<cv::Point2f> > checker_board_coordinates_2d;
+  computeImageProjections(checker_board_coordinates_3d,
+                          K_rgb_,
+                          dist_params_rgb_,
+                          checker_board_coordinates_2d);
+
+  saveImageProjections(checker_board_coordinates_2d);
+
+  std::vector< std::vector<cv::Point2f> > checker_board_coordinates_2d_scaled;
+  scaledImageProjections(checker_board_coordinates_2d, checker_board_coordinates_2d_scaled);
+
+  cv::Mat Knew = cv::Mat::eye(3, 3, CV_32FC1);
+  Knew.at<float>(0, 0) = 1000;
+  Knew.at<float>(1, 1) = 1000;
+  Knew.at<float>(0, 2) = 960;
+  Knew.at<float>(1, 2) = 540;
+  int flags = CV_CALIB_USE_INTRINSIC_GUESS | CV_CALIB_RATIONAL_MODEL;
+  cv::Mat distortion_params_new = cv::Mat::zeros(8, 1, CV_32FC1);
+
+  std::vector <cv::Mat> rvecs;
+  std::vector <cv::Mat> tvecs;
+
+  cv::calibrateCamera(checker_board_coordinates_3d_local,
+                      checker_board_coordinates_2d_scaled,
+                      cv::Size(s_cols, s_rows), 
+                      Knew,
+                      distortion_params_new, rvecs, tvecs, flags);
+  
+  
+  // std::cout << K_rgb_ << "\n" << Knew << "\n";
+  // std::cout << dist_params_rgb_ << "\n" << distortion_params_new << std::endl;
+  
+  K_rgb_ = Knew;
+  dist_params_rgb_ = distortion_params_new;
+//  print_timers();
+}
+
+// angle in radians
+cv::Mat DepthCalibration::getRotationX(const float angle) {
+  PROFILE_FUNC;
+  cv::Mat R = cv::Mat::eye(3, 3, CV_32FC1);
+  R.at<float> (0, 0) = 1;   R.at<float> (0, 1) = 0;            R.at<float> (0, 2) = 0;
+  R.at<float> (1, 0) = 0;   R.at<float> (1, 1) = cos(angle);   R.at<float> (1, 2) = -sin(angle);
+  R.at<float> (2, 0) = 0;   R.at<float> (2, 1) = sin(angle);   R.at<float> (2, 2) = cos(angle);
+  return R;
+}
+
+// angle in radians
+cv::Mat DepthCalibration::getRotationY(const float angle) {
+  PROFILE_FUNC;
+  cv::Mat R = cv::Mat::eye(3, 3, CV_32FC1);
+  R.at<float> (0, 0) = cos(angle);    R.at<float> (0, 1) = 0;   R.at<float> (0, 2) = sin(angle);
+  R.at<float> (1, 0) = 0;             R.at<float> (1, 1) = 1;   R.at<float> (1, 2) = 0;
+  R.at<float> (2, 0) = -sin(angle);   R.at<float> (2, 1) = 0;   R.at<float> (2, 2) = cos(angle);
+  return R;
+}
+
+// angle in radians
+cv::Mat DepthCalibration::getRotationZ(const float angle) {
+  PROFILE_FUNC;
+  cv::Mat R = cv::Mat::eye(3, 3, CV_32FC1);
+  R.at<float> (0, 0) = cos(angle);    R.at<float> (0, 1) = -sin(angle);  R.at<float> (0, 2) = 0;
+  R.at<float> (1, 0) = sin(angle);    R.at<float> (1, 1) = cos(angle);   R.at<float> (1, 2) = 0;
+  R.at<float> (2, 0) = 0;             R.at<float> (2, 1) = 0;            R.at<float> (2, 2) = 1;
+  return R;
+}
+
+// angles in radians
+void DepthCalibration::transformPoints(const std::vector<cv::Point3f>& points_initial, 
+                     std::vector<cv::Point3f>&  points_final, 
+                     const float rx, const float ry, const float rz, 
+                     const float  tx, const float ty, const float tz)
+{
+
+  PROFILE_FUNC;
+  points_final.clear();
+  cv::Mat R = cv::Mat::eye(3, 3, CV_32FC1);
+  cv::Mat T = cv::Mat(3, 1, CV_32FC1);
+
+  T.at<float>(0, 0) = tx;
+  T.at<float>(1, 0) = ty;
+  T.at<float>(2, 0) = tz;
+
+  R = getRotationX(rx) * getRotationY(ry) * getRotationZ(rz);
+
+  cv::Mat point(3, 1, CV_32FC1);
+  for(int i = 0; i < points_initial.size(); i++) {
+    point.at<float>(0, 0) = points_initial[i].x;
+    point.at<float>(1, 0) = points_initial[i].y;
+    point.at<float>(2, 0) = points_initial[i].z;
+
+    cv::Mat point_transformed = R * point + T;
+
+    cv::Point3f pt;
+    pt.x = point_transformed.at<float>(0, 0);
+    pt.y = point_transformed.at<float>(1, 0);
+    pt.z = point_transformed.at<float>(2, 0);
+    points_final.push_back(pt);
+  }
+
+}
+
+void DepthCalibration::computeCheckerBoardCoordiantes3D(std::vector< std::vector<cv::Point3f> >& checker_board_coordinates,
+                                      std::vector< std::vector<cv::Point3f> >& checker_board_coordinates_local) {
+  PROFILE_FUNC;
+
+  std::vector<cv::Point3f> points_initial;
+  const float square_size = 0.1; // size of the square
+  const int nsquares_x = 10;
+  const int nsquares_y = 8;
+
+  for (int i = 0; i < nsquares_x; i++)  {
+    float x = i * square_size;
+    for (int j = 0; j < nsquares_y; j++)  {
+      float y = j * square_size;
+      points_initial.push_back(cv::Point3f(x, y, 0));
+    }
+  }
+
+  float rx = 0, ry = 0, rz = 0;
+  float tx = 0, ty = 0, tz = 2;
+
+  std::vector<cv::Point3f> points_final;
+
+  // 1
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 2
+  rx = 0, ry = deg2rad(45), rz = 0;
+  tx = 0, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 3
+  rx = 0, ry = deg2rad(-45), rz = 0;
+  tx = 0, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 4
+  rx = deg2rad(45), ry = 0, rz = 0;
+  tx = 0, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 5
+  rx = deg2rad(-45), ry = 0, rz = 0;
+  tx = 0, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // -- 
+ 
+  // 6
+  rx = 0, ry = deg2rad(45), rz = 0;
+  tx = 0.5, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 7
+  rx = 0, ry = deg2rad(-45), rz = 0;
+  tx = 0.5, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 8
+  rx = deg2rad(45), ry = 0, rz = 0;
+  tx = 0.5, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 9
+  rx = deg2rad(-45), ry = 0, rz = 0;
+  tx = 0.5, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+  // -- 
+  //
+
+  // 10
+  rx = 0, ry = deg2rad(45), rz = 0;
+  tx = -1.25, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 11
+  rx = 0, ry = deg2rad(-45), rz = 0;
+  tx = -2.0, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 12
+  rx = 0, ry = deg2rad(-45), rz = 0;
+  rx = deg2rad(45), ry = 0, rz = 0;
+  tx = -1.25, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 13
+  rx = deg2rad(-45), ry = 0, rz = 0;
+  tx = -1.25, ty = 0, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+  // --
+  //
+
+  // 14
+  rx = 0, ry = deg2rad(45), rz = 0;
+  tx = -1., ty = -0.65, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 15
+  rx = 0, ry = deg2rad(-45), rz = 0;
+  tx = -1., ty = -0.75, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 16
+  rx = deg2rad(45), ry = 0, rz = 0;
+  tx = -1., ty = -0.75, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+
+  // 17
+  rx = deg2rad(-45), ry = 0, rz = 0;
+  tx = -1., ty = -0.75, tz = 2;
+  transformPoints(points_initial, points_final, rx, ry, rz, tx, ty, tz);
+  checker_board_coordinates.push_back(points_final);
+  checker_board_coordinates_local.push_back(points_initial);
+}
+
+void DepthCalibration::computeImageProjections(const std::vector< std::vector<cv::Point3f> >& checker_board_coordinates_3d, 
+                             const cv::Mat& K, 
+                             const cv::Mat& distortion_params,
+                             std::vector< std::vector<cv::Point2f> >& checker_board_coordinates_2d)
+{
+  PROFILE_FUNC;
+
+  for(size_t i= 0; i < checker_board_coordinates_3d.size(); i++) {
+
+    std::vector<cv::Point2f> points_2d;
+    const std::vector<cv::Point3f>& points_3d = checker_board_coordinates_3d[i];
+
+    cv::Mat Rvec = cv::Mat::zeros(3, 1, CV_32FC1);
+    cv::Mat Tvec = cv::Mat::zeros(3, 1, CV_32FC1);
+    {
+      PROFILE_BLOCK("cv::projectPoints(2)");
+      cv::projectPoints/*_liteon*/(points_3d, Rvec, Tvec, K, distortion_params, points_2d);
+    }
+    checker_board_coordinates_2d.push_back(points_2d);
+//    std::cout << "# of points pushed = " << points_2d.size() << std::endl;
+  }
+
+//  std::cout << "# of orientations = " << checker_board_coordinates_2d.size()  << std::endl;
+
+}
+
+void DepthCalibration::saveImageProjections(const std::vector< std::vector<cv::Point2f> >& checker_board_coordinates_2d)
+{
+  PROFILE_FUNC;
+
+  const int radius = 5;
+  const int color = 255;
+
+  for(size_t i= 0; i < checker_board_coordinates_2d.size(); i++) {
+
+    cv::Mat img(o_rows, o_cols, CV_8UC1, cv::Scalar(0));
+
+    const std::vector<cv::Point2f>& points_2d = checker_board_coordinates_2d[i];
+    for(size_t k = 0; k < points_2d.size(); k++) {
+
+      int x = points_2d[k].x;
+      int y = points_2d[k].y;
+
+      //std::cout << "(" << x << "," << y << ")"  << std::endl;
+
+      if(x >= 0 and x < o_cols and y >= 0 and y < o_rows) {
+        cv::circle(img, cv::Point(x, y), radius, color);
+      }
+
+    }
+
+    // ostringstream ostr;
+    // ostr << "image-" << i+1 << ".png";
+    // std::cout << "Saving file : " << ostr.str()  << std::endl;
+    // cv::imwrite(ostr.str(), img);
+  }
+
+}
+
+void DepthCalibration::scaledImageProjections(const std::vector< std::vector<cv::Point2f> >& checker_board_coordinates_2d, 
+                            std::vector< std::vector<cv::Point2f> >&  checker_board_coordinates_2d_scaled)
+{
+
+  PROFILE_FUNC;
+  float sx = static_cast<float> (s_cols) / o_cols;
+  float sy = static_cast<float> (s_rows) / o_rows;
+
+//  std::cout << "Scaling factor : " << sx << " " << sy << std::endl;
+
+  for(size_t i = 0; i < checker_board_coordinates_2d.size(); i++) {
+    const std::vector<cv::Point2f>& points_2d = checker_board_coordinates_2d[i];
+    std::vector<cv::Point2f> points_2d_scaled;
+
+    for(size_t k = 0; k < points_2d.size(); k++) {
+      cv::Point2f pt;
+      pt.x = points_2d[k].x * sx;
+      pt.y = points_2d[k].y * sy;
+      points_2d_scaled.push_back(pt);
+    }
+    checker_board_coordinates_2d_scaled.push_back(points_2d_scaled);
+  }
+}
+
+
+void projectPoints_liteon(const std::vector<cv::Point3f>& pt3d_vec,
+                          cv::Mat& rotation_vector_, cv::Mat& translation_vector,
+                          const cv::Mat& intrinsics, const cv::Mat& distortions,
+                          std::vector<cv::Point2f>& pt2d_vec)
+{
+    cv::Mat rotation_matrix;
+    cv::Rodrigues(rotation_vector_, rotation_matrix);
+
+    for(int i = 0; i < pt3d_vec.size(); i++) {
+        cv::Mat pt(3, 1, CV_32FC1);
+        pt.at<float>(0, 0) = pt3d_vec[i].x;
+        pt.at<float>(1, 0) = pt3d_vec[i].y;
+        pt.at<float>(2, 0) = pt3d_vec[i].z;
+
+        cv::Mat t = rotation_matrix * pt;
+        t.at<float>(0, 0) += translation_vector.at<float>(0, 0);
+        t.at<float>(1, 0) += translation_vector.at<float>(1, 0);
+        t.at<float>(2, 0) += translation_vector.at<float>(2, 0);
+
+        t.at<float>(0, 0) /= t.at<float>(2, 0);
+        t.at<float>(1, 0) /= t.at<float>(2, 0);
+        t.at<float>(2, 0) = 1.0;
+
+        float k1 = distortions.at<float>(0 ,0);
+        float k2 = distortions.at<float>(1 ,0);
+        float p1 = distortions.at<float>(2 ,0);
+        float p2 = distortions.at<float>(3 ,0);
+        float k3 = distortions.at<float>(4 ,0);
+        float k4 = distortions.at<float>(5 ,0);
+        float k5 = distortions.at<float>(6, 0);
+        float k6 = distortions.at<float>(7, 0);
+
+        float fx = intrinsics.at<float>(0, 0);
+        float fy = intrinsics.at<float>(1, 1);
+        float cx = intrinsics.at<float>(0, 2);
+        float cy = intrinsics.at<float>(1, 2);
+
+        float xu = t.at<float> (0, 0);
+        float yu = t.at<float> (1, 0);
+
+        float r2 = xu*xu + yu*yu;
+        float r1 = sqrt(r2);
+        float r3 = r2 * r1;
+        float r4 = r2 * r2;
+        float r5 = r4 * r1;
+        float r6 = r4 * r2;
+
+        float kr = (1 + k1*r1 + k2*r2 + k3*r3 + k4*r4 + k5*r5 + k6*r6);
+        float xd = xu * kr + 2*p1*xu*yu + p2 * (r2 + 2*xu*xu);
+        float yd = yu * kr + 2*p1*xu*yu + p2 * (r2 + 2*yu*yu);
+
+        float u = fx * xd + cx;
+        float v = fy * yd + cy;
+
+        pt2d_vec.push_back(cv::Point2f(u, v));
+    }
+}
+
+void undistort_liteon(const cv::Mat& img, cv::Mat& undistorted_img, 
+                      const cv::Mat& K, const cv::Mat& distortion_params)
+{
+    float k1 = distortion_params.at<float>(0 ,0);
+    float k2 = distortion_params.at<float>(1 ,0);
+    float p1 = distortion_params.at<float>(2 ,0);
+    float p2 = distortion_params.at<float>(3 ,0);
+    float k3 = distortion_params.at<float>(4 ,0);
+    float k4 = distortion_params.at<float>(5 ,0);
+    float k5 = distortion_params.at<float>(6, 0);
+    float k6 = distortion_params.at<float>(7, 0);
+
+    float fx = K.at<float>(0, 0);
+    float fy = K.at<float>(1, 1);
+    float cx = K.at<float>(0, 2);
+    float cy = K.at<float>(1, 2);
+
+    std::cout << "Undistort LiteOn" << std::endl;
+    std::cout << "k1 " << k1 << " " 
+        << "k2 " << k2 << " " 
+        << "k3 " << k3 << " "
+        << "k4 " << k4 << " "
+        << "k5 " << k5 << " "
+        << "k6 " << k6 << " "
+        << "p1 " << p1 << " "
+        << "p2 " << p2 
+        << std::endl;
+
+    std::cout << "fx " << fx << " "
+        << "fy " << fy << " "
+        << "cx " << cx << " "
+        << "cy " << cy << " "
+        << std::endl;
+
+    std::cout << K << std::endl;
+
+
+    cv::Mat Kinv = K.inv();
+    std::cout << "K inverse : " << Kinv << std::endl;
+
+
+    cv::Mat map_x (img.rows, img.cols, CV_32FC1, cv::Scalar(0));
+    cv::Mat map_y (img.rows, img.cols, CV_32FC1, cv::Scalar(0));
+
+    cv::Mat pt(3, 1, CV_32FC1);
+    for(int r = 0; r < img.rows; r++) {
+        for(int c = 0; c < img.cols; c++) {
+            pt.at<float>(0, 0) = c;
+            pt.at<float>(1, 0) = r;
+            pt.at<float>(2, 0) = 1;
+            cv::Mat npt = Kinv * pt;
+            float xu = npt.at<float> (0, 0);
+            float yu = npt.at<float> (1, 0);
+
+            float r2 = xu*xu + yu*yu;
+            float r1 = sqrt(r2);
+            float r3 = r2 * r1;
+            float r4 = r2 * r2;
+            float r5 = r4 * r1;
+            float r6 = r4 * r2;
+
+            float kr = (1 + k1*r1 + k2*r2 + k3*r3 + k4*r4 + k5*r5 + k6*r6);
+            float xd = xu * kr + 2*p1*xu*yu + p2 * (r2 + 2*xu*xu);
+            float yd = yu * kr + 2*p1*xu*yu + p2 * (r2 + 2*yu*yu);
+
+            float u = fx * xd + cx;
+            float v = fy * yd + cy;
+
+            map_x.at<float>(r, c) = u;
+            map_y.at<float>(r, c) = v;
+            //std::cout << "(r,c) = " << r << " " << c << " ";
+            //std::cout << "u = " << u << " v = " << v << std::endl;
+        }
+    }
+
+    cv::remap(img, undistorted_img, map_x, map_y, CV_INTER_LINEAR);
+}
+
+
+} // namespace
+
+
+#if 0 
+void initKMatrix(cv::Mat& K) {
+
+  float fx = 1406.96,
+        fy = 1407.51;
+
+  float cx = 1400.34,
+        cy = 764.125;
+
+  K.at<float>(0,0) = fx;  K.at<float>(0,1) = 0;  K.at<float>(0,2) = cx;
+  K.at<float>(1,0) = 0;   K.at<float>(1,1) = fy; K.at<float>(1,2) = cy;
+  K.at<float>(2,0) = 0;   K.at<float>(2,1) = 0;  K.at<float>(2,2) = 1;
+}
+
+void initDistortionParams(cv::Mat& distortion_params) {
+
+  float k1 = 0,
+        k2 = -0.159866,
+        k3 = 0,
+        k4 = -0.000324324,
+        k5 = 0,
+        k6 = 0.0157475;
+
+  float p1 = 0,
+        p2 = 0;
+
+  distortion_params = cv::Mat(8, 1, CV_32FC1);
+  distortion_params.at<float> (0, 0) = k1;
+  distortion_params.at<float> (1, 0) = k2;
+  distortion_params.at<float> (2, 0) = p1;
+  distortion_params.at<float> (3, 0) = p2;
+  distortion_params.at<float> (4, 0) = k3;
+  distortion_params.at<float> (5, 0) = k4;
+  distortion_params.at<float> (6, 0) = k5;
+  distortion_params.at<float> (7, 0) = k6;
+
+}
+
+void initRotationVector(cv::Mat& rotation) {
+  cv::Mat R(3, 3, CV_32FC1, cv::Scalar(0));
+  R.at<float>(0, 0) = 1.0;
+  R.at<float>(1, 1) = 1.0;
+  R.at<float>(2, 2) = 1.0;
+  cv::Rodrigues(rotation, R);
+//  std::cout << "Rotation vector : " << rotation << std::endl;
+  
+}
+
+int main(int argc, char*argv[]) {
+
+  cv::Mat K(3, 3, CV_32FC1, cv::Scalar(0));
+  initKMatrix(K);
+
+  cv::Mat distortion_params(8, 1, CV_32FC1, cv::Scalar(0));
+  initDistortionParams(distortion_params);
+
+  std::vector< std::vector<cv::Point3f> > checker_board_coordinates_3d, checker_board_coordinates_3d_local;
+  computeCheckerBoardCoordiantes3D(checker_board_coordinates_3d, checker_board_coordinates_3d_local);
+
+  std::vector< std::vector<cv::Point2f> > checker_board_coordinates_2d;
+  computeImageProjections(checker_board_coordinates_3d, K, distortion_params, checker_board_coordinates_2d);
+
+  saveImageProjections(checker_board_coordinates_2d);
+
+  std::vector< std::vector<cv::Point2f> > checker_board_coordinates_2d_scaled;
+  scaledImageProjections(checker_board_coordinates_2d, checker_board_coordinates_2d_scaled);
+
+  cv::Mat Knew = cv::Mat::eye(3, 3, CV_32FC1);
+  Knew.at<float>(0, 0) = 1000;
+  Knew.at<float>(1, 1) = 1000;
+  Knew.at<float>(0, 2) = 960;
+  Knew.at<float>(1, 2) = 540;
+  int flags = CV_CALIB_USE_INTRINSIC_GUESS | CV_CALIB_RATIONAL_MODEL;
+  cv::Mat distortion_params_new = cv::Mat::zeros(8, 1, CV_32FC1);
+
+  std::vector <cv::Mat> rvecs;
+  std::vector <cv::Mat> tvecs;
+
+  cv::calibrateCamera(checker_board_coordinates_3d_local, checker_board_coordinates_2d_scaled, cv::Size(s_cols, s_rows), 
+                      Knew, distortion_params_new, rvecs, tvecs, flags);
+
+  cout << K << endl << Knew << "\n";
+  cout << distortion_params << endl << distortion_params_new << endl;
+
+  print_timers();
+  return 0;
+#endif

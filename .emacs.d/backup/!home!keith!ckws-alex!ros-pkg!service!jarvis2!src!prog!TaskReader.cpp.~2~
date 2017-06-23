@@ -1,0 +1,278 @@
+#include "jarvis2/TaskReader.h"
+
+#include "jarvis2/jarvis2.h"
+#include "jarvis2/ArchiveReader.h"
+
+#include <bag_of_tricks/flags.h>
+#include <bag_of_tricks/sensorid.h>
+#include <bag_of_tricks/sensor_site.h>
+#include <bag_of_tricks/thread.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
+#include <boost/timer/timer.hpp>
+#include <gflags/gflags.h>
+#include <gflags/gflags_completions.h>
+#include <gperftools/profiler.h>
+#include <ros/assert.h>
+#include <snitch_protocols/sensor.pb.h>
+#include <timer/profile.h>
+#include <video_archive/va_reader.h>
+#include <SimpleAmqpClient/SimpleAmqpClient.h>
+
+#include <algorithm>
+#include <exception>
+#include <signal.h>
+#include <thread>
+#include <time.h>
+#include <vector>
+
+using namespace std;
+
+DECLARE_string(amqp_host);
+DECLARE_int32(amqp_port);
+DECLARE_string(amqp_user);
+DECLARE_string(amqp_password);
+DECLARE_string(amqp_vhost);
+DEFINE_string(amqp_queue, "sensor-analysis-work", "name of RabbitMQ queue");
+
+namespace Jarvis2 {
+
+TaskReader::TaskReader(Jarvis& jarvis,
+                       FrameQueue& queue)
+  : jarvis_(jarvis),
+    queue_(queue),
+    nextTaskId_(1)
+{
+  idleTimer_.start();
+}
+
+TaskReader::~TaskReader()
+{
+}
+
+bool TaskReader::readDoorman(FrameQueue& queue,
+                             snitch::sensor::SensorActivityAnalysisTask task,
+                             uint64_t* nextTimestamp)
+{
+  Doorman::SensorSegmentPtr segPtr = Doorman::getSegment("find", task.sensor_id(), nextTimestamp);
+  if (segPtr == nullptr)
+    return false;
+  
+  SensorId id(segPtr->sensor_id());
+  queue.pushSensorSegment(*segPtr);
+  *nextTimestamp = segPtr->next_segment();
+  // ROS_INFO_STREAM("Found segment " << segPtr->timestamp() << " - "
+  //                 << segPtr->end_timestamp() << ", "
+  //                 << segPtr->prev_segment() << " - "
+  //                 << segPtr->next_segment());
+                  
+  ROS_INFO_STREAM("queued " << segPtr->frames().size() << " frames for " 
+                  << SensorId(segPtr->sensor_id()).str());
+  return segPtr->activity();
+}
+
+bool TaskReader::processMessage(uint64_t taskId, const std::string& message)
+{
+  idleTimer_.stop();
+  bool success=true;
+//  int taskId = nextTaskId_++;
+
+  try {
+    snitch::sensor::SensorActivityAnalysisTask task;
+    task.ParseFromString(message);
+    const long timestamp = task.segment_timestamp()/1000;
+
+    string start_time(ctime(&timestamp));
+    boost::algorithm::trim_right(start_time);
+    ROS_INFO_STREAM("Task Started: " << std::hex << taskId << std::dec << " "
+                    << SensorId(task.sensor_id()).str() << " "
+                    << timestamp << " '" 
+                    << (task.has_site_id()?task.site_id():"-unset-") << "' "
+                    << start_time 
+                    // <  < "." << setw(4) << setfill(0) << (task.segment_timestamp()%1000) 
+      ); 
+    // TODO: Pass this around instead
+    Utility::SensorSite::instance().recordSite(task.sensor_id(), task.site_id());
+    
+    uint64_t time = task.segment_timestamp();
+    boost::timer::cpu_timer timer;
+// TODO: update to listen to doorman signal to stop processing.
+    timer.start();
+    int frames=0;
+<<<<<<< variant A
+    bool more = true;
+    while (more && !queue_.isQuitting()) {
+      // readDoorman returns false when the returned segment had no activity, so by
+      // processing that segment as well we can be reasonably confident that we've
+      // processed more than FLAGS_track_max_gap frames past the last active track.
+      more = readDoorman(queue_, task, &time);
+>>>>>>> variant B
+#if 0
+    while (!queue_.isQuitting() && readDoorman(queue_,
+                                               task,
+                                               &time))
+    {
+####### Ancestor
+    while (!queue_.isQuitting() && readDoorman(queue_,
+                                               task,
+                                               &time))
+    {
+======= end
+      frames += queue_.size();
+<<<<<<< variant A
+      jarvis_.processQueue(taskId, !more);
+>>>>>>> variant B
+      jarvis_.processQueue(taskId);
+    }
+#else
+                           
+    // Last frame 1470858313801
+    while (true) {
+      readDoorman(queue_, task, &time);
+      ROS_INFO_STREAM("Time " << time);
+      if (time == 0)
+        break;
+      frames += queue_.size();
+      jarvis_.processQueue(taskId);
+    }
+#endif
+    // doorman returns false when it queues the last set of frames. We still need to
+    // process them.
+    if (!queue_.isQuitting())
+    {
+      frames += queue_.size(); 
+      jarvis_.processQueue(taskId);
+####### Ancestor
+      jarvis_.processQueue(taskId);
+    }
+
+    // doorman returns false when it queues the last set of frames. We still need to
+    // process them.
+    if (!queue_.isQuitting())
+    {
+      frames += queue_.size(); 
+      jarvis_.processQueue(taskId);
+======= end
+    }
+
+    // ROS_INFO_STREAM("Task Done: " << SensorId(task.sensor_id()).str() << " " 
+    //                 << setprecision(12) << timestamp << "-" << (time/1000) << " "
+    //                 << ((time/1000) - timestamp)); 
+    timer.stop();
+    // ROS_INFO_STREAM("Task Time: "
+    //                 << timer.format(3, string("%ws wall, %us user + %ss system = %ts CPU (%p%), "))
+    //                 << frames << " frames " << " (" << (frames/(timer.elapsed().wall/1e9)) << " fps)"
+    //                 << ((time/1000) - timestamp));
+    time_t now;
+    std::time(&now);
+    // ROS_INFO_STREAM("Task Delay: " << (now-time) << " "
+    //                 << timer.format(3, string("%ws wall")) << " "
+    //                 << ctime(&now));
+    ROS_INFO_STREAM("Task Stat: "
+                    << std::hex << taskId << std::dec << " "
+                    << SensorId(task.sensor_id()).str() << " "
+                    << timestamp << " "
+                    << timer.format(3, string("%w")) << " "
+                    << timer.format(3, string("%t")) << " "
+                    << frames << " "
+                    << (frames/(timer.elapsed().wall/1e9)) << " "
+                    << (now-(time/1000)) << " "
+                    << idleTimer_.format(3, string("%t")) << " "
+                    << ((time/1000) - timestamp) 
+      );
+
+  }
+  catch (std::exception& e)
+  {
+    ROS_WARN_STREAM("Task Failed: " << std::hex << taskId << std::dec << " "
+//                      << SensorId(task.sensor_id()).str() << " " 
+//                       << setprecision(12) << timestamp << "-" << (time/1000) << "\n\t"
+                    << e.what());
+    success=false;
+  }
+  idleTimer_.start();
+  
+  return success;
+}
+
+void TaskReader::startEventLoop()
+{
+  ROS_INFO_STREAM("TR: Starting event loop");
+  try {
+#if 0
+    // TODO - create secure (SSL) connection
+    AmqpClient::Channel::ptr_t channel = AmqpClient::Channel::Create(FLAGS_amqp_host,
+                                                                        FLAGS_amqp_port,
+                                                                        FLAGS_amqp_user,
+                                                                        FLAGS_amqp_password,
+                                                                        FLAGS_amqp_vhost);
+    // TODO - prefetch 1 message? May cause delay of that message. Probably not needed
+    //        for real-time processing
+    const bool no_local = true;
+    const bool no_ack = false;  // // Too many negatives. If this is true, no need to ack.
+    const bool exclusive = false; // Other clients can connect to this queue
+    std::string consumer_tag = channel->BasicConsume(FLAGS_amqp_queue,
+                                                     "",     // consumer_tag
+                                                     no_local,
+                                                     no_ack,
+                                                     exclusive);
+    while (true)
+    {
+      boost::timer::cpu_timer timer;
+      timer.start();
+      try {
+        AmqpClient::Envelope::ptr_t envelope;
+        int timeout = 60*1000; // 60 seconds
+        if (!channel->BasicConsumeMessage(consumer_tag, envelope, timeout))
+        {
+          ROS_INFO_STREAM("RabbitMQ consume timed out");
+          ROS_INFO_STREAM("RabbitMQ Time: (TO) "
+                          << timer.format(3, string("%ws wall, %us user + %ss system = %ts CPU (%p%), ")));
+          return;               // Return and open channel again
+        }
+        ROS_INFO_STREAM("RabbitMQ Time: "
+                        << timer.format(3, string("%ws wall, %us user + %ss system = %ts CPU (%p%), ")));
+        // TODO - process in threads 
+        if (processMessage(envelope->DeliveryTag(), envelope->Message()->Body()))
+        {
+//          channel->BasicAck(envelope);
+          ROS_INFO_STREAM("Task processed successful");
+        } else {
+//          const bool requeue = true;
+//          channel->BasicReject(envelope, requeue);
+          // TODO: log failed tasks
+          ROS_WARN_STREAM("Task processing failed");
+        }
+        channel->BasicAck(envelope);
+    } catch (AmqpClient::ChannelException& e) {
+        // Recoverable error, channel still good
+        ROS_WARN_STREAM("Caught ChannelException: " << e.what());
+      }
+      }
+#else
+    snitch::sensor::SensorActivityAnalysisTask task;
+    SensorId sensor("00:0a:f5:1b:12:f0");
+    task.set_sensor_id(sensor.numeric());
+    task.set_segment_timestamp(1471889538060LL);
+    task.set_site_id("00000000000000000000000000000000");
+    Utility::SensorSite::instance().recordSite(task.sensor_id(), task.site_id());
+    std::string msg;
+    task.SerializeToString(&msg);
+    processMessage(0, msg);
+#endif
+  }
+  catch (AmqpClient::ConnectionException& e) {
+    // Unrecoverable error, channel must be restarted
+    ROS_ERROR_STREAM("Caught ConnectionException: " << e.what());
+  } catch (AmqpClient::AmqpResponseLibraryException& e) {
+    // Unrecoverable error, channel must be restarted
+    ROS_ERROR_STREAM("Caught AmqpResponseLibraryException: " << e.what());
+  } catch (std::exception& e) {
+    ROS_ERROR_STREAM("Caught std::exception: " << e.what());
+  } catch (...) {
+    ROS_ERROR_STREAM("Caught unknown exception");
+  }
+  ROS_INFO_STREAM("TR: finished event loop");
+}
+
+} // namespace

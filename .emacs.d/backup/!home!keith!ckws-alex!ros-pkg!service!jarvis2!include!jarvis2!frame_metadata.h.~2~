@@ -1,0 +1,30 @@
+#pragma once
+// Carry metadata associated with sensor analysis task (e.g., segmentation,
+// calabration params. etc
+// #include "doorman_client/doorman_utils.h"
+#include "bag_of_tricks/depth_calibration.h"
+#include <mutex>
+
+namespace snitch { namespace sensor { class SensorSegment;}}
+
+class FrameMetadata
+{
+public:
+  // If depthCalib == nullptr, generate from info in seg
+  FrameMetadata(Doorman::SensorSegmentPtr seg,
+                Doorman::SensorFramePtr frame,
+                BagOfTricks::DepthCalibration::Ptr depthCalib);
+
+  ~FrameMetadata() = default;
+  FrameMetadata& operator=(const FrameMetadata&) = default;
+private:
+  // Segment this frame is part of
+  Doorman::SensorSegmentPtr seg_;
+
+  // Actual frame data
+  Doorman::SensorFramePtr frame_;
+
+  // Depth calibration data for the sensor
+  BagOfTricks::DepthCalibration::Ptr depthCalib_;
+};
+

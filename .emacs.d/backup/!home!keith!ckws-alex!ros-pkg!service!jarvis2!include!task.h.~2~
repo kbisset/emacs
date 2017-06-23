@@ -1,0 +1,21 @@
+#pragma once
+// Carry metadata associated with sensor analysis task (e.g., segmentatoin,
+// classification. etc
+#include "bag_of_tricks/depth_calibration.h"
+#include <mutex>
+
+namespace snitch { namespace sensor { class SensorSegment;}}
+
+class Task
+{
+public:
+  Task(const snitch::sensor::SensorSegment& seg ):seg_(seg){};
+  ~Task = default;
+private:
+  static int taskId;
+std:mutex idLock;
+  int taskId;
+  const snitch::sensor::SensorSegment& seg_;
+  BagOfTricks::DepthCalibration depthCalib;
+};
+

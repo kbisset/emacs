@@ -1,0 +1,29 @@
+#pragma once
+// Carry metadata associated with sensor analysis task (e.g., segmentatoin,
+// classification. etc
+#include "bag_of_tricks/depth_calibration.h"
+#include <mutex>
+
+namespace snitch { namespace sensor { class SensorSegment;}}
+
+class FrameMetadata
+{
+public:
+  // If depthCalib == nullptr, generate from info in seg
+  FrameMetadata::FrameMetadata(Doorman::SensorSegmentPtr seg,
+                               Doorman::SensorFramePtr frame,
+                               BagOfTricks::DepthCalibration::Ptr depthCalib);
+
+  ~Task = default;
+  operator = default;
+private:
+  // Segment this frame is part of
+  snitch::sensor::SensorSegment::Ptr seg_;
+
+  // Actual frame data
+  snitch::sensor::SensorFrame::Ptr frame_;
+
+  // Depth calibration data for the sensor
+  BagOfTricks::DepthCalibration::Ptr depthCalib_;
+};
+

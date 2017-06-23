@@ -1,0 +1,18 @@
+#include "snitch-protocols/logging.pb.h"
+
+#include <unistd.h>
+#include <ctime>
+
+namespace ss = snitch::sensor
+int main(int argc, char** argv)
+{
+  
+  SS::LoggingRequest = req;
+  char hostname[HOST_NAME_MAX];
+  gethostname(hostname, HOST_NAME_MAX);
+  
+  req.setDevice(hostname);
+  req.setTimestamp(time());
+
+  std::cout << req.DebugString() << std::endl;
+}

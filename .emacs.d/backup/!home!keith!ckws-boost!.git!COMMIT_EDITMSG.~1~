@@ -1,0 +1,568 @@
+# This is a combination of 88 commits.
+# The first commit's message is:
+Veneer: Fix unit test
+
+# The 2nd commit message will be skipped:
+
+#	Veneer: Avoid NPE when the query failed to parse
+
+# The 3rd commit message will be skipped:
+
+#	Some model updates
+
+# The 4th commit message will be skipped:
+
+#	Veneer: Fix test NPE
+
+# The 5th commit message will be skipped:
+
+#	Veneer: Update to latest wit.ai endpoint version
+
+# The 6th commit message will be skipped:
+
+#	Veneer: Update default wit.ai API token -- for some reason it seems to have changed?!
+
+# The 7th commit message will be skipped:
+
+#	Veneer: Revert token changes -- the token is per user and the 'jarvis-lighthouse' one should be the default
+
+# The 8th commit message will be skipped:
+
+#	Link fix for 16.04 breaks build on 14.04
+
+# The 9th commit message will be skipped:
+
+#	Veneer: Rudimentary handling for summary queries (e.g. "Summarize Tuesday for me")
+
+# The 10th commit message will be skipped:
+
+#	Veneer: Fix mongo query when list of labels ends up being empty, and simplify handling of timelapse requests
+
+# The 11th commit message will be skipped:
+
+#	Update in deep_depth_experiment debugging tool
+
+# The 12th commit message will be skipped:
+
+#	VAR: Add test for issue #10
+
+# The 13th commit message will be skipped:
+
+#	TINC: Add Lighthouse Chromebook 1 (lhcb1)
+
+# The 14th commit message will be skipped:
+
+#	VAR: Standalone test for issue #10
+
+# The 15th commit message will be skipped:
+
+#	Trying different RGB2YUV conversion for sentinel.
+
+# The 16th commit message will be skipped:
+
+#	TINC: new keys for chromebook
+
+# The 17th commit message will be skipped:
+
+#	update on visualization server
+
+# The 18th commit message will be skipped:
+
+#	small fixes
+
+# The 19th commit message will be skipped:
+
+#	added query-model script
+
+# The 20th commit message will be skipped:
+
+#	Updating wit.ai model.
+#	Also minor wit.ai model download tweak.
+
+# The 21st commit message will be skipped:
+
+#	update clang-format
+
+# The 22nd commit message will be skipped:
+
+#	Comment
+
+# The 23rd commit message will be skipped:
+
+#	Veneer: Improve wit query handling
+#	- Handle 'year' ambiguity, e.g. "24th of August"
+#	- Handle 'month' ambiguity correctly in all cases, e.g. "the 31st"
+#	- Don't throw when 'intent' is missing, just return null
+
+# The 24th commit message will be skipped:
+
+#	Veneer: Log actual site name/id when discarding alarm events even when the message doesn't have a site id
+
+# The 25th commit message will be skipped:
+
+#	Veneer: Log alarm latency
+
+# The 26th commit message will be skipped:
+
+#	Comments
+
+# The 27th commit message will be skipped:
+
+#	Protos: Added optional timestamp to PresenceTransitionRequest
+
+# The 28th commit message will be skipped:
+
+#	Veneer: Return SERVICE_UNAVAILABLE when unable to call wit.ai
+
+# The 29th commit message will be skipped:
+
+#	Removed duplicate test code.  test/socket_sync app now tests
+#	the code that lives in the Camera app directory.
+
+# The 30th commit message will be skipped:
+
+#	Veneer: AlertMessageHandler should be transactional
+
+# The 31st commit message will be skipped:
+
+#	Updated socket to build for NDK
+
+# The 32nd commit message will be skipped:
+
+#	Camera working as part of system image
+
+# The 33rd commit message will be skipped:
+
+#	Adding the first version of depth computation cleanup : 1) Independent classes for different sequences (9 frame and 18 frame) 2) Config files / parsers for TOF depth processsing
+
+# The 34th commit message will be skipped:
+
+#	1) Addinng atan2 implementation 2) Adding more entries to the tof config file 3) Fixing an error in logsnitch.h that prevented logging errors LOGE(..)
+
+# The 35th commit message will be skipped:
+
+#	Adding multi path interference detection and some formating changes
+
+# The 36th commit message will be skipped:
+
+#	Adding sample config files
+
+# The 37th commit message will be skipped:
+
+#	Tweaking background model: Move partially moving objects less agressively into background.
+#
+#	Like people working at their desk or standing in groups.
+
+# The 38th commit message will be skipped:
+
+#	Tweak timelapse generation:
+#	Include images with no foreground frames that are part of the same event.
+
+# The 39th commit message will be skipped:
+
+#	Bugfixing previous commit.
+
+# The 40th commit message will be skipped:
+
+#	Removing the assertion
+
+# The 41st commit message will be skipped:
+
+#	Handle case where $BUILD_NUMBER does not exist (i.e. local build version jenkins)
+
+# The 42nd commit message will be skipped:
+
+#	Adding some checks to prevent people from shooting themselves in the foot by not including a cmap or dmap in TD files.
+
+# The 43rd commit message will be skipped:
+
+#	Updating header and library for NDK build (these come from AOSP)
+
+# The 44th commit message will be skipped:
+
+#	update Cdc to latest header and library
+
+# The 45th commit message will be skipped:
+
+#	output is required in online_learning filter_track
+
+# The 46th commit message will be skipped:
+
+#	Updating tof to use Cdc changes
+
+# The 47th commit message will be skipped:
+
+#	Integrated Cdc changes
+
+# The 48th commit message will be skipped:
+
+#	Add an option to display tracks in ascending order
+
+# The 49th commit message will be skipped:
+
+#	Removing hard coded path in rx_raw.cpp
+
+# The 50th commit message will be skipped:
+
+#	VAR: Add new tests
+
+# The 51st commit message will be skipped:
+
+#	Fix wit.ai import-model script.
+
+# The 52nd commit message will be skipped:
+
+#	Updating wit.ai model to v657.
+
+# The 53rd commit message will be skipped:
+
+#	led implementation.  Need to validate on system image
+
+# The 54th commit message will be skipped:
+
+#	Update to header file.
+
+# The 55th commit message will be skipped:
+
+#	Replacing assertions withwarnings/errors in the log for tof_config_file_parser
+
+# The 56th commit message will be skipped:
+
+#	Enabling multi path detection only when we get valid depth returns on both frequency pairs
+
+# The 57th commit message will be skipped:
+
+#	Change socket path
+
+# The 58th commit message will be skipped:
+
+#	Add LED support to Alexandria.  With this checkin LED's will be functional
+
+# The 59th commit message will be skipped:
+
+#	Remove logs from LED module
+
+# The 60th commit message will be skipped:
+
+#	Update authorized_keys
+
+# The 61st commit message will be skipped:
+
+#	Add timothee to penguin ssh.
+
+# The 62nd commit message will be skipped:
+
+#	Add a classifier debugging tool
+
+# The 63rd commit message will be skipped:
+
+#	Intergrating background model with the new depth image generation module
+
+# The 64th commit message will be skipped:
+
+#	Removed logging from performance code paths
+
+# The 65th commit message will be skipped:
+
+#	Solve tcmalloc complaints on 16.04 for annotations
+
+# The 66th commit message will be skipped:
+
+#	Adding support for easier FPPN calibration. Calibraiton mode ON if /data/local/tmp/calibrate file exists.
+
+# The 67th commit message will be skipped:
+
+#	Relax required timing accuracy in unit test
+
+# The 68th commit message will be skipped:
+
+#	wit: tweak model import script
+
+# The 69th commit message will be skipped:
+
+#	Tinc: Force pid file into /var/run on OSX (rather than the default of /usr/local/Cellar...)
+
+# The 70th commit message will be skipped:
+
+#	Wit.ai: Update model with a few variations on existing queries (e.g. "Find ...")
+#	Also add some 'counter examples' with no intent as the model is starting to treat filter_query as a fallback for pretty much anything
+
+# The 71st commit message will be skipped:
+
+#	Veneer: Use object_class metadata from wit.ai model instead of hard-coded mapping to labels
+#	Also tweak how test data is recorded to avoid spurious changes in the repo
+
+# The 72nd commit message will be skipped:
+
+#	Now reading the calibration object distance from a file
+
+# The 73rd commit message will be skipped:
+
+#	Bug fix
+
+# The 74th commit message will be skipped:
+
+#	Adding unit test for github issue 25.
+
+# The 75th commit message will be skipped:
+
+#	working at 15 fps before caching frame
+
+# The 76th commit message will be skipped:
+
+#	Now streaming
+
+# The 77th commit message will be skipped:
+
+#	removed code for debugging memory leak.  This should help improve performance
+
+# The 78th commit message will be skipped:
+
+#	Code clean up.  Removed unused files.  Fixed issue with dequeuing first packet
+
+# The 79th commit message will be skipped:
+
+#	Enabling a bigger TOF frame for debugging background model
+
+# The 80th commit message will be skipped:
+
+#	VAR: Modify VideoArchiveReader getFrame and getKetframe to accept either a macadress or siteid/macaddress string. If the siteid is provided, it is passed to Doorman, otherwise the default siteid is passed. The siteid is ignored when reading from archive files.
+
+# The 81st commit message will be skipped:
+
+#	Add test
+
+# The 82nd commit message will be skipped:
+
+#	VAR: Add another test
+
+# The 83rd commit message will be skipped:
+
+#	1)Adding option to disable background model 2) Enabling 30 fps TOF output
+
+# The 84th commit message will be skipped:
+
+#	Tweak doorman.sh to allow site id to be passed in
+
+# The 85th commit message will be skipped:
+
+#	Doorman: Add internal tools for shard files, run via `doorman.jar run ...`
+#	- shard-info: Print human readable details about a shard file (--verbose=0..2)
+#	- shard-explode: Unpack raw color and depth streams for all segments of a shard file
+
+# The 86th commit message will be skipped:
+
+#	Doorman: Restrict the number of shards a segment is allowed to span to 3
+
+# The 87th commit message will be skipped:
+
+#	1 - Fixed corrupted tof image (30fps)
+#	2 - added logging to dump out frame types.  This will spam logcat for the time being
+
+# The 88th commit message will be skipped:
+
+#	Diable background model if /data/local/tmp/disable_bgm file is found
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Author:    Karsten Sperling <karsten@light.house>
+#
+# rebase in progress; onto ea7a196
+# You are currently rebasing branch 'cppnetlib-pcl-boost-fix' on 'ea7a196'.
+#
+# Changes to be committed:
+#	modified:   .clang-format
+#	modified:   arm/config/ssh/authorized_keys
+#	modified:   project/server/authorized_keys
+#	new file:   project/tinc/snitch/hosts/lhcb1
+#	modified:   project/tinc/snitch/tinc.osx
+#	new file:   ros-pkg/core/dbase/CMakeLists.txt
+#	new file:   ros-pkg/core/dbase/build.sh
+#	new file:   ros-pkg/core/dbase/import/dbase/build.d
+#	new file:   ros-pkg/core/dbase/package.xml
+#	modified:   ros-pkg/core/deep_depth_experiment/CMakeLists.txt
+#	modified:   ros-pkg/core/deep_depth_experiment/src/Makefile
+#	modified:   ros-pkg/core/deep_depth_experiment/src/backend_scripts/aggregate_video
+#	new file:   ros-pkg/core/deep_depth_experiment/src/prog/debug_track_processor.cpp
+#	modified:   ros-pkg/core/jarvis/include/jarvis/cluster_grid_view_controller.h
+#	modified:   ros-pkg/core/jarvis/include/jarvis/superimage_track_processor.hpp
+#	modified:   ros-pkg/core/jarvis/src/lib/smart_timelapse.cpp
+#	modified:   ros-pkg/core/jarvis/src/lib/superimage_track_processor.cpp
+#	modified:   ros-pkg/core/jarvis_extra/src/lib/cluster_grid_view_controller.cpp
+#	modified:   ros-pkg/core/online_learning/include/online_learning/dataset.h
+#	modified:   ros-pkg/core/online_learning/src/lib/dataset.cpp
+#	modified:   ros-pkg/core/online_learning/src/lib/roibitmask.cpp
+#	modified:   ros-pkg/core/online_learning/src/program/filter_tracks.cpp
+#	modified:   ros-pkg/core/openni2_interface/src/lib/openni_helpers.cpp
+#	modified:   ros-pkg/core/sentinel/include/sentinel/sentinel_network.h
+#	modified:   ros-pkg/core/sentinel/src/lib/background_model.cpp
+#	modified:   ros-pkg/core/sentinel/src/lib/sentinel_websocket.cpp
+#	modified:   ros-pkg/core/sentinel/src/lib/sentinel_xmlrpc.cpp
+#	modified:   ros-pkg/core/sentinel/src/prog/compressed_rgbd_stream.cpp
+#	modified:   ros-pkg/core/snitch-protocols/pom.xml
+#	modified:   ros-pkg/core/snitch-protocols/src/main/proto/alert.proto
+#	modified:   ros-pkg/core/snitch-protocols/src/main/proto/presence.proto
+#	new file:   ros-pkg/core/snitch-protocols/src/main/proto/vizserver.proto
+#	modified:   ros-pkg/core/snitch-protocols/util/protocols.sh
+#	modified:   ros-pkg/core/video_archive/CMakeLists.txt
+#	modified:   ros-pkg/core/video_archive/include/video_archive/va_reader.h
+#	modified:   ros-pkg/core/video_archive/src/lib/va_reader.cpp
+#	modified:   ros-pkg/core/video_archive/src/lib/va_repo.cpp
+#	new file:   ros-pkg/core/video_archive/src/test/issue10.cpp
+#	modified:   ros-pkg/core/video_archive/src/test/test_Segment.cpp
+#	new file:   ros-pkg/core/video_archive/src/test/test_SiteId.cpp
+#	modified:   ros-pkg/core/wit-ai-model/import-model
+#	new file:   ros-pkg/core/wit-ai-model/query-model
+#	modified:   ros-pkg/core/wit-ai-model/src/main/model/entities/intent.json
+#	modified:   ros-pkg/core/wit-ai-model/src/main/model/entities/object_class.json
+#	modified:   ros-pkg/core/wit-ai-model/src/main/model/expressions.json
+#	new file:   ros-pkg/external/pbjson/CMakeLists.txt
+#	new file:   ros-pkg/external/pbjson/Makefile
+#	new file:   ros-pkg/external/pbjson/package.xml
+#	modified:   ros-pkg/service/LighthouseCamera/jni/Android.mk
+#	modified:   ros-pkg/service/LighthouseCamera/jni/inc/CdcWrapper.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/inc/logsnitch.h
+#	deleted:    ros-pkg/service/LighthouseCamera/jni/inc/rgb_camera.h
+#	deleted:    ros-pkg/service/LighthouseCamera/jni/inc/snsockpipe.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/inc/socket_sync.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/inc/tof.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/lib/libCdcWrapper.so
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/atan2impl.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/atan2impl.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/colormap.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/depth_computation.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/depth_image_generation.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/depth_image_generation.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/pmd_background_model.cpp
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/pmd_background_model.h
+#	deleted:    ros-pkg/service/LighthouseCamera/jni/native/rgb_camera.cpp
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/rx_raw.cpp
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/rx_raw.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/native/tof.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/tof_config.cfg
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/tof_config_file_parser.cpp
+#	new file:   ros-pkg/service/LighthouseCamera/jni/native/tof_config_file_parser.h
+#	modified:   ros-pkg/service/LighthouseCamera/jni/socket_sync.cpp
+#	modified:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/Bluetooth/SentinelBluetooth.java
+#	new file:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/Led.java
+#	modified:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/SendSensorDetails.java
+#	modified:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/SentinelCamera.java
+#	modified:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/SentinelConnectionManager.java
+#	modified:   ros-pkg/service/LighthouseCamera/src/main/java/ai/snitch/sentinel3/SentinelModuleManager.java
+#	modified:   ros-pkg/service/LighthouseCamera/test/socket_sync/jni/Android.mk
+#	modified:   ros-pkg/service/LighthouseCamera/test/socket_sync/main.cpp
+#	deleted:    ros-pkg/service/LighthouseCamera/test/socket_sync/socket_sync.cpp
+#	deleted:    ros-pkg/service/LighthouseCamera/test/socket_sync/socket_sync.h
+#	modified:   ros-pkg/service/doorman/src/main/java/ai/snitch/Doorman.java
+#	renamed:    ros-pkg/service/doorman/src/main/java/ai/snitch/doorman/LiveStreamMode.java -> ros-pkg/service/doorman/src/main/java/ai/snitch/doorman/StreamMode.java
+#	modified:   ros-pkg/service/doorman/src/main/java/ai/snitch/doorman/repo/SensorShardRepository.java
+#	modified:   ros-pkg/service/doorman/src/main/java/ai/snitch/doorman/rest/LiveStreamServlet.java
+#	modified:   ros-pkg/service/doorman/src/main/java/ai/snitch/doorman/ws/LiveStreamSocketHandler.java
+#	new file:   ros-pkg/service/doorman/src/main/resources/static/facebook-paper_dash.mp4
+#	new file:   ros-pkg/service/doorman/src/main/resources/static/frag.mp4
+#	modified:   ros-pkg/service/doorman/util/doorman.sh
+#	new file:   ros-pkg/service/led/app/led.cpp
+#	new file:   ros-pkg/service/led/app/main.cpp
+#	new file:   ros-pkg/service/led/inc/led.h
+#	new file:   ros-pkg/service/led/jni/Android.mk
+#	new file:   ros-pkg/service/led/jni/Application.mk
+#	new file:   ros-pkg/service/led/test/Application.mk
+#	new file:   ros-pkg/service/led/test/ledtest.cpp
+#	modified:   ros-pkg/service/veneer/src/main/java/ai/snitch/veneer/AlertMessageHandler.java
+#	modified:   ros-pkg/service/veneer/src/main/java/ai/snitch/veneer/WitQueryParser.java
+#	modified:   ros-pkg/service/veneer/src/main/java/ai/snitch/veneer/rpc/AuthenticatingEndpoint.java
+#	modified:   ros-pkg/service/veneer/src/main/java/ai/snitch/veneer/rpc/HistoryEndpoint.java
+#	modified:   ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTest.java
+#	modified:   ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/WitQueryParserTestSetupTask.java
+#	modified:   ros-pkg/service/veneer/src/test/java/ai/snitch/veneer/rpc/PresenceFunctionalTest.java
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/did_the_cleaner_go_into_the_lounge__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/show_me_a_video_summary_for_saturday_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/show_me_all_my_dogs_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/show_me_dogs_and_people_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/show_me_dogs_in_the_lounge_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/show_me_dogs_together_with_people_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/show_me_people_in_the_hallway_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/show_me_what_happened_on_saturday_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/show_me_what_happened_on_the_15th_of_august_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/show_me_what_happened_on_the_29th_58490c471cde69fa0329448421a30c3b.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/show_me_what_happened_on_the_31st_cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/was_the_maid_here_at_7__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/what_did_my_dogs_do__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_11pm__bbbcb497f3064bd39f78ceed124b275f.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_11pm__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_1__bbbcb497f3064bd39f78ceed124b275f.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_7__5813d59551a6cd7c14ab361aa2fdccdf.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_7_this_morning__5813d59551a6cd7c14ab361aa2fdccdf.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_9_15am__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_at_9am__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_between_7_and_8__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_on_friday_afternoon__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_on_the_12th__bbbcb497f3064bd39f78ceed124b275f.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_on_the_19th__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_this_morning__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_yesterday__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_yesterday_at_lunch_time__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/service/veneer/src/test/resources/wit/who_was_here_yesterday_evening__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	new file:   ros-pkg/service/veneer/src/test/resources/wit/woman_cook_me_some_eggs_on_monday__cfdd11dc2a03d3ac75a8cee64f7c895e.json
+#	modified:   ros-pkg/utility/annotations/CMakeLists.txt
+#	new file:   ros-pkg/utility/annotations/include/annotations/collect_data.h
+#	new file:   ros-pkg/utility/annotations/include/annotations/custom_serializer.h
+#	new file:   ros-pkg/utility/annotations/include/annotations/data_access.h
+#	modified:   ros-pkg/utility/annotations/include/annotations/utils.h
+#	new file:   ros-pkg/utility/annotations/include/annotations/utils2.h
+#	modified:   ros-pkg/utility/annotations/package.xml
+#	new file:   ros-pkg/utility/annotations/src/collect_data.cpp
+#	new file:   ros-pkg/utility/annotations/src/custom_serializer.cpp
+#	new file:   ros-pkg/utility/annotations/src/data_access.cpp
+#	new file:   ros-pkg/utility/annotations/src/readme.md
+#	new file:   ros-pkg/utility/annotations/src/simple_server.cpp
+#	new file:   ros-pkg/utility/annotations/src/test_all.cpp
+#	modified:   ros-pkg/utility/annotations/src/utils.cpp
+#	new file:   ros-pkg/utility/annotations/src/utils2.cpp
+#	new file:   ros-pkg/utility/annotations/src/vizserver.cpp
+#	new file:   ros-pkg/utility/annotations/static/simple_server.html
+#	new file:   ros-pkg/utility/annotations/static/vizserver.css
+#	new file:   ros-pkg/utility/annotations/static/vizserver.html
+#	new file:   ros-pkg/utility/annotations/static/vizserver.js
+#	modified:   ros-pkg/utility/bag_of_tricks/include/bag_of_tricks/url.h
+#	modified:   ros-pkg/utility/bag_of_tricks/src/lib/url.cpp
+#	new file:   ros-pkg/utility/cmanip/CMakeLists.txt
+#	new file:   ros-pkg/utility/cmanip/README.md
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/algorithms.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/all.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/common.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/datetime.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/face.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/imgproc.h
+#	new file:   ros-pkg/utility/cmanip/include/cmanip/rect.h
+#	new file:   ros-pkg/utility/cmanip/package.xml
+#	new file:   ros-pkg/utility/cmanip/src/all.cpp
+#	new file:   ros-pkg/utility/cmanip/src/common.cpp
+#	new file:   ros-pkg/utility/cmanip/src/datetime.cpp
+#	new file:   ros-pkg/utility/cmanip/src/face.cpp
+#	new file:   ros-pkg/utility/cmanip/src/imgproc.cpp
+#	new file:   ros-pkg/utility/cmanip/src/rect.cpp
+#	new file:   ros-pkg/utility/cmanip/src/test_all.cpp
+#	modified:   ros-pkg/utility/snitch-java-util/src/main/java/ai/snitch/util/spring/SpringApplications.java
+#	modified:   ros-pkg/utility/snitch-java-util/src/main/java/ai/snitch/util/time/HalfDay.java
+#	new file:   ros-pkg/utility/snitch-java-util/src/main/java/ai/snitch/util/time/SameDayOfMonth.java
+#	new file:   ros-pkg/utility/snitch-java-util/src/main/java/ai/snitch/util/time/TimeUtil.java
+#	modified:   ros-pkg/utility/snitch-java-util/src/test/java/ai/snitch/util/TimingTest.java
+#	new file:   ros-pkg/utility/snitch-java-util/src/test/java/ai/snitch/util/time/SameDayOfMonthTest.java
+#	modified:   ros-pkg/utility/tof_processing_experiments/CMakeLists.txt
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/irs1125c_config_custom_21_28_28_42_exposure_0-4.lua
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/irs1125c_config_custom_2440_seq_9_exposure_0-5.lua
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/irs1125c_config_custom_24_40_exposure_0-5.lua
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/tof_config_21_28_42_18_frame_amplitude.cfg
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/tof_config_21_28_42_18_frame_depth.cfg
+#	new file:   ros-pkg/utility/tof_processing_experiments/configfiles/tof_config_24_40_amplitude.cfg
+#	new file:   ros-pkg/utility/tof_processing_experiments/src/colormap.cpp
+#	new file:   ros-pkg/utility/tof_processing_experiments/src/colormap.h
+#	new file:   ros-pkg/utility/tof_processing_experiments/src/compute_loop_over_distances.py
+#	new file:   ros-pkg/utility/tof_processing_experiments/src/test_colormap.cpp
+#
+# Untracked files:
+#	ros-pkg/core/dbase/package.xml.disable
+#	ros-pkg/external/boost/
+#

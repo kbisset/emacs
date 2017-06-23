@@ -1,0 +1,16 @@
+#!/bin/bash
+# Starts jarvis2 instances that will restart when they die
+
+
+cmd="/opt/jarvis/bin/generate_timelapse --flagfile=/opt/jarvis/etc/tlgen.cfg mongo"
+
+echo "Starting generate_timelapse"
+logfile=tlgen.log
+date
+echo "Starting generate_timelapse in" `pwd` 
+(while : ; do
+     ( echo -n "*** Starting generate_timelapse at "; date --rfc-3339=seconds ) >>$logfile 2>&1
+     nohup $cmd --appid beta.penguin >>$logfile 2>&1
+     sleep 1;
+ done )  &
+

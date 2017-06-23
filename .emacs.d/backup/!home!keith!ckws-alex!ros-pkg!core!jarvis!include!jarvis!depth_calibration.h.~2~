@@ -1,0 +1,58 @@
+#pragma once
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <string>
+
+namespace Jarvis {
+
+class DepthCalibration {
+public:
+  DepthCalibration(int color_cols, int color_rows, int depth_cols, int depth_rows);
+
+  void getRGBPoint(const cv::Mat& depth, int x, int y, int* rgb_x, int* rgb_y);
+  inline void idxToPoint(int idx, int* x, int* y);
+  inline void pointToIdx(int x, int y, int* idx);
+  
+private:
+  void readIntrinsicParameters(const std::string& filename, cv::Mat& K);
+  void readExtrinsicParameters(const std::string& filename, cv::Mat& RT);
+  void readDistortionParameters(const std::string& filename, cv::Mat& distortion_params);
+
+  // Convert the encoded depth value (1 byte) to actual depth (1-10 m)
+  float decodeDepth(const float val);
+
+  void getInverseTransformation(cv::Mat& rotation_vector, cv::Mat& translation_vector); 
+
+  int color_cols_;
+  int color_rows_;
+  int depth_cols_;
+  int depth_rows_;
+  
+  cv::Mat K_rgb_;
+  cv::Mat dist_params_rgb_;
+
+  cv::Mat K_depth_;
+  cv::Mat dist_params_depth_;
+
+  cv::Mat RT_;
+
+  cv::Mat rotation_matrix_;
+  cv::Mat rotation_vector_;
+  cv::Mat translation_vector_;
+
+  static const int radius_ = 5;
+};
+
+void DepthCalibration::depthIdxToPoint(int idx, int* x, int* y)
+{
+  *x =  idx/depth_cols_;
+  *y =  idx%depth_cols_;
+}
+
+void pointToIdx(int x, int y, int* idx);
+
+}

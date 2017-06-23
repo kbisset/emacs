@@ -1,0 +1,3 @@
+{printf "%s", system("Echo $3 | sed 's/\[|]//g")}
+{for (i=5; i <= NF; i++) printf " %s", $i}
+{print ""}

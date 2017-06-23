@@ -1,0 +1,46 @@
+//#define ENABLE_TEST_LOGGING
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/sensorid.h"
+#include "bag_of_tricks/testEnv.h"
+#include "doorman_client/convert.h"
+#include "doorman_client/doorman_utils.h"
+#include "timer/profile.h"
+#include "video_archive/rgbd_stream_decoder.h"
+#include "video_archive/va_reader.h"
+#include "video_archive/va_stream.h"
+#include "video_archive/video_cache.h"
+
+#include <boost/range/adaptor/reversed.hpp>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <log4cxx/logger.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <sstream>
+
+
+int main()
+{
+  uint64_t timestamp = 1479430600000LL
+  std::string sensor_str = "00:0a:f5:63:10:f4";
+  SensorId sensor(sensor_str);
+
+  Doorman::SensorSegmentPtr seg = Doorman::getSegment("find", sensor.numeric(), &timestamp);
+
+  // Test postcoditions of the setup
+  if (seg == nullptr)
+  {
+    std::cout << "Couldn't fetch segment\n";
+    return 0;
+  }
+
+  std::vector<RGBDFrame::Ptr> frames = SensorSegmentToRGBD(seg);
+
+  for (unsigned i = 1; i < frames.size(); ++i) {
+    cv::imshow("Uncalibrated", frames[i]->color_);
+    cv::waitkey(30);
+  }
+  
+
+}

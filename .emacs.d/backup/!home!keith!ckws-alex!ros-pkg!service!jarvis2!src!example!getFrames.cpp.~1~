@@ -1,0 +1,23 @@
+int main()
+{
+        ROS_INFO_STREAM("TR: Reading from " << FLAGS_lighthouse_sensor << "@"
+                      << FLAGS_lighthouse_timestamp);
+      snitch::sensor::SensorActivityAnalysisTask task;
+
+      SensorId sensor(FLAGS_lighthouse_sensor);
+      task.set_sensor_id(sensor.numeric());
+      uint64_t timestamp=0;
+      // Set to now-1sec
+      if (FLAGS_lighthouse_timestamp == "now")
+        timestamp = round(ros::Time::now().toSec() * 1000)-1000;
+      else
+        timestamp = stoull(FLAGS_lighthouse_timestamp);
+      ROS_INFO_STREAM("#### Timestamp " << std::fixed << " " << timestamp);
+      task.set_segment_timestamp(timestamp);
+      if (FLAGS_lighthouse_site != "")
+        task.set_site_id(FLAGS_lighthouse_site);
+      else
+        task.set_site_id("00000000000000000000000000000000");
+      ROS_INFO_STREAM("####  " << std::fixed << " " << task.site_id());
+      Utility::SensorSite::instance().recordSite(task.sensor_id(), task.site_id());
+}

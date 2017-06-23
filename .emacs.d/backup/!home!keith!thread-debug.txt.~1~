@@ -1,0 +1,78 @@
+Thread 1
+#0  0x00007fe6fb40e010 in SpinLock::SlowLock() () from /usr/lib/libtcmalloc.so.4
+#1  0x00007fe6fb414439 in tc_newarray () from /usr/lib/libtcmalloc.so.4
+#2  0x00007fe6fb17b87d in std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long) ()
+   from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#3  0x00007fe6fb16fcd5 in std::__cxx11::basic_stringbuf<char, std::char_traits<char>, std::allocator<char> >::overflow(int) () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#4  0x00007fe6fb179e79 in std::basic_streambuf<char, std::char_traits<char> >::xsputn(char const*, long) () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#5  0x00007fe6fb16aa03 in std::ostream::write(char const*, long) () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+#6  0x00007fe6f83312dd in FrameStreamOutput::encodedFrameCallback (this=0x7fffdcfc5c30, packet=0x39970880)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/utility/video_codec/src/lib/hardware_encoder.cpp:38
+#7  0x00007fe6f8339605 in SoftwareEncoder::encodeRgb (this=0x10ac037a0, img=...)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/utility/video_codec/src/lib/video_encoder.cpp:351
+#8  0x00007fe70065531a in encodeFrame (timestamp=timestamp@entry=1495830051.408, sensor=..., keyframe_only=<optimized out>, 
+    enc=std::shared_ptr (count 2, weak 0) 0x10ac037a0, td=..., listener=listener@entry=0x5a7f0b00, missing_frames=missing_frames@entry=0x7fffdcfc5bec)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/smart_timelapse.cpp:240
+#9  0x00007fe70065e1ae in SmartTimelapse::computeTimelapse (sensor=..., events=std::vector of length 1, capacity 1 = {...}, output=..., flags=..., flags@entry=..., 
+    start_time=<optimized out>, end_time=1495830115.641, story_end=story_end@entry=0x0, header_size=header_size@entry=0x7fffdcfc6630)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/smart_timelapse.cpp:480
+#10 0x00007fe70066141d in SmartTimelapse::computeTimelapse (event=std::shared_ptr (count 14, weak 0) 0x35360160, output=..., flags=flags@entry=..., 
+    header_size=header_size@entry=0x7fffdcfc6630)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/smart_timelapse.cpp:288
+#11 0x00007fe70030f3d2 in TrackPublisher::publishEvent (this=0x25be560, sensor=..., tds=std::shared_ptr (count 14, weak 0) 0x35360160, 
+    generateSnippet=generateSnippet@entry=true)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_publisher.cpp:473
+#12 0x00007fe7002c94e5 in TrackStreamer::streamEvent (this=this@entry=0x25d2d00, event=std::shared_ptr (count 14, weak 0) 0x35360160)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_streamer.cpp:533
+#13 0x00007fe7002c9c0d in TrackStreamer::flush (this=0x25d2d00)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_streamer.cpp:234
+#14 0x0000000000423240 in Jarvis::flush (this=0x7fffdcfc8d90)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/service/jarvis2/src/prog/jarvis2.cpp:125
+#15 0x00000000004304ac in Jarvis2::TaskReader::processMessage (this=this@entry=0x7fffdcfc8680, taskId=<optimized out>, 
+    message="\b\225\202\300ܔ\216\001\020\235ˬ\263\304+\032 0f08d89d3d9b4f17ac1e7fdc3dcf87cc")
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/service/jarvis2/src/prog/TaskReader.cpp:157
+#16 0x0000000000433616 in Jarvis2::TaskReader::startEventLoop (this=this@entry=0x7fffdcfc8680)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/service/jarvis2/src/prog/TaskReader.cpp:312
+#17 0x000000000041f622 in main (argc=1, argv=0x7fffdcfc9150)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/service/jarvis2/src/prog/jarvis_main.cpp:283
+
+Thread 29
+#0  0x00007fe6fb40e159 in base::internal::SpinLockDelay(int volatile*, int, int) () from /usr/lib/libtcmalloc.so.4
+#1  0x00007fe6fb40e026 in SpinLock::SlowLock() () from /usr/lib/libtcmalloc.so.4
+#2  0x00007fe6fb414870 in tc_deletearray () from /usr/lib/libtcmalloc.so.4
+#3  0x00007fe6d3c4ede2 in x264_encoder_close () from /usr/lib/x86_64-linux-gnu/libx264.so.148
+#4  0x00007fe6effd7810 in ?? () from /usr/lib/x86_64-linux-gnu/libavcodec-ffmpeg.so.56
+#5  0x00007fe6efff3c70 in avcodec_close () from /usr/lib/x86_64-linux-gnu/libavcodec-ffmpeg.so.56
+#6  0x00007fe6f0428949 in avcodec_free_context () from /usr/lib/x86_64-linux-gnu/libavcodec-ffmpeg.so.56
+#7  0x00007fe6f8338752 in SoftwareEncoder::close (this=0xb55fd110, inDestructor=<optimized out>)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/utility/video_codec/src/lib/video_encoder.cpp:222
+#8  0x00007fe70061b4e4 in TrackEncoder::encodeTrack (track=..., halo_color=..., out=..., timestamps=timestamps@entry=0x7fe6b42b1ff0, 
+    multi_threaded=multi_threaded@entry=false, overlay_timestamp=overlay_timestamp@entry=false)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_encoder.cpp:296
+#9  0x00007fe70061bfeb in TrackEncoder::encodeTrackGreyBg (track=..., halo_color=..., out=...)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_encoder.cpp:305
+#10 0x00007fe70030def8 in TrackPublisher::publishTrack[abi:cxx11](SensorId const&, std::shared_ptr<Dataset>, bool) (this=0x25be560, sensor=..., 
+    dataset=std::shared_ptr (count 7, weak 0) 0x10300c40, generateSnippet=generateSnippet@entry=true)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_publisher.cpp:420
+#11 0x00007fe7002cdd80 in TrackStreamer::streamTrack (this=this@entry=0x25d2d00, track=std::shared_ptr (count 4, weak 0) 0x10301910, 
+    dataset=std::shared_ptr (count 7, weak 0) 0x10300c40, notification_callback=...)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_streamer.cpp:405
+#12 0x00007fe7002cf808 in TrackStreamer::streamTrackWrapper (this=0x25d2d00, track=std::shared_ptr (count 4, weak 0) 0x10301910, 
+    dataset=std::shared_ptr (count 7, weak 0) 0x10300c40, notification_callback=...)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/core/jarvis/src/lib/track_streamer.cpp:332
+#13 0x00007fe7002d5efc in boost::_mfi::mf3<void, TrackStreamer, std::shared_ptr<Track>, std::shared_ptr<Dataset>, EnqueueAlert&>::operator() (a3=..., a2=..., a1=..., 
+    p=<optimized out>, this=<optimized out>)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/devel/.private/boost/include/boost/bind/mem_fn_template.hpp:393
+#14 boost::_bi::list4<boost::_bi::value<TrackStreamer*>, boost::_bi::value<std::shared_ptr<Track> >, boost::_bi::value<std::shared_ptr<Dataset> >, boost::_bi::value<EnqueueAlert> >::operator()<boost::_mfi::mf3<void, TrackStreamer, std::shared_ptr<Track>, std::shared_ptr<Dataset>, EnqueueAlert&>, boost::_bi::list0> (a=<synthetic pointer>, f=..., 
+    this=<optimized out>) at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/devel/.private/boost/include/boost/bind/bind.hpp:457
+#15 boost::_bi::bind_t<void, boost::_mfi::mf3<void, TrackStreamer, std::shared_ptr<Track>, std::shared_ptr<Dataset>, EnqueueAlert&>, boost::_bi::list4<boost::_bi::value<TrackStreamer*>, boost::_bi::value<std::shared_ptr<Track> >, boost::_bi::value<std::shared_ptr<Dataset> >, boost::_bi::value<EnqueueAlert> > >::operator() (this=<optimized out>)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/devel/.private/boost/include/boost/bind/bind_template.hpp:20
+#16 std::_Function_handler<void (), boost::_bi::bind_t<void, boost::_mfi::mf3<void, TrackStreamer, std::shared_ptr<Track>, std::shared_ptr<Dataset>, EnqueueAlert&>, boost::_bi::list4<boost::_bi::value<TrackStreamer*>, boost::_bi::value<std::shared_ptr<Track> >, boost::_bi::value<std::shared_ptr<Dataset> >, boost::_bi::value<EnqueueAlert> > > >::_M_invoke(std::_Any_data const&) (__functor=...) at /usr/include/c++/5/functional:1871
+#17 0x00007fe7002d1031 in std::function<void ()>::operator()() const (this=<optimized out>) at /usr/include/c++/5/functional:2267
+#18 std::future<void> threadpool11::Pool::postWork<void>(std::function<void ()>, threadpool11::Work::Type)::{lambda()#1}::operator()() (__closure=0x297a3480)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/utility/threadpool11/threadpool11/include/threadpool11/pool.hpp:246
+#19 std::_Function_handler<threadpool11::Work::Type (), std::future<void> threadpool11::Pool::postWork<void>(std::function<void ()>, threadpool11::Work::Type)::{lambda()#1}>::_M_invoke(std::_Any_data const&) (__functor=...) at /usr/include/c++/5/functional:1857
+#20 0x00007fe6f6188f65 in std::function<threadpool11::Work::Type ()>::operator()() const (this=<optimized out>) at /usr/include/c++/5/functional:2267
+#21 threadpool11::Worker::execute (this=0x2533e00, pool=...)
+    at /data/system/workspace/jarvis_master-V2BVYVETCEJNGPHZ4UIO65LYIK3BII4PK3H34SRS24PDUVZDXP7A/src/ros-pkg/utility/threadpool11/threadpool11/src/worker.cpp:46
+#22 0x00007fe6fb114c80 in ?? () from /usr/lib/x86_64-linux-gnu/libstdc++.so.6

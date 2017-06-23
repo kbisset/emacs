@@ -1,0 +1,16 @@
+--alexandria_mode=true
+--assert_action=throw
+--caffe_config_path=/opt/jarvis/jarvis2/etc/config
+--config=/opt/jarvis/jarvis2/etc/mosaic.yml
+--day_timelapse_only=1
+--disk_snippets=/opt/jarvis/var/jarvis-cache/snippets
+--doorman_host=deep4
+--doorman_port=38080
+--doorman_timeout=120
+--mongo_uri=mongodb://deep4:27017
+--segment_cache_size=100
+--single_threaded_stories
+--snippet_backup_dir=/opt/jarvis/var/jarvis-cache/snippets
+--timelapse_threads=2
+--timelapses_holdoff=0
+--update_stories

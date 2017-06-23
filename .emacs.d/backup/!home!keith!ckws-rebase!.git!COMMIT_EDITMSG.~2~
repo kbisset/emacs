@@ -1,0 +1,9 @@
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch feature/jarvis2-alexandria
+# Your branch is up-to-date with 'origin/feature/jarvis2-alexandria'.
+#
+# Changes to be committed:
+#	modified:   ros-pkg/service/jarvis2/src/prog/TaskReader.cpp
+#

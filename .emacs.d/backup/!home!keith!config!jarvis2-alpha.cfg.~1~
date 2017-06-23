@@ -1,0 +1,3 @@
+--flagfile ./ros-pkg/service/jarvis2/dist/etc/alpha.cfg
+--caffe_config_path=/opt/jarvis/jarvis2/etc/config
+--config=/opt/jarvis/jarvis2/etc/config/mosaic.yml

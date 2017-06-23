@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>bag_of_tricks</name>
+  <version>0.0.0</version>
+  <description>The bag_of_tricks package</description>
+  <maintainer email="teichman@todo.todo">teichman</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>cpp_netlib</depend>
+  <depend>gflags</depend>
+  <depend>rosconsole</depend>
+  <depend>boost</depend>
+
+</package>

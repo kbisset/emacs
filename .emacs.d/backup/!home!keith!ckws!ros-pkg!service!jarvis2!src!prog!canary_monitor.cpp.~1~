@@ -1,0 +1,103 @@
+#include "snitch_protocols/sensor.pb.h"
+#include <gflags/gflags.h>
+#include <gflags/gflags_completions.h>
+#include <ros/assert.h>
+
+
+namespace pb = ::google::protobuf;
+
+int main(int argc, char** argv)
+{
+  setlinebuf(stdout);
+  
+  google::SetUsageMessage("");
+  if(argc == 1) {
+    google::ShowUsageWithFlags(argv[0]);
+    return 0;
+  }
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  
+  ros::Time::init();
+
+  while (1)
+    startEventLoop();
+}
+
+void startEventLoop()
+{
+  try {
+    ROS_INFO_STREAM("Starting event loop");
+
+    AC::Channel::ptr_t channel = AC::Channel::Create(FLAGS_amqp_host,
+                                                       FLAGS_amqp_port,
+                                                       FLAGS_amqp_user,
+                                                       FLAGS_amqp_password,
+                                                       FLAGS_amqp_vhost);
+
+    std::string queue_name = "CanaryResult";
+
+    const bool no_local = true;
+    const bool no_ack = false; // Too many negatives. If this is true, no need to ack.
+    const bool exclusive = false; // Other clients can connect to this queue
+    std::string consumer_tag =channel->BasicConsume(queue_name,
+                                                    "", // consumer_tag
+                                                    no_local, no_ack, exclusive);
+    AC::Envelope::ptr_t envelope;
+    try {
+      int timeout = 60 * 1000; // 60 seconds
+      if (!channel->BasicConsumeMessage(consumer_tag, envelope, timeout)) {
+        ROS_INFO_STREAM("RabbitMQ consume timed out");
+        return; // Return and open channel again
+      }
+          
+      if (processMessage(envelope->DeliveryTag(), envelope->Message()->Body())) { 
+        ROS_INFO_STREAM("Task processed successful");
+      } else {
+        ROS_WARN_STREAM("Task processing failed");
+      }
+    } catch (AC::ChannelException &e) {
+      // Recoverable error, channel still good
+      ROS_WARN_STREAM("Caught ChannelException: " << e.what());
+      redeliver->BasicPublish(FLAGS_amqp_queue+"-redeliver-E",
+                              "",
+                              envelope->Message());
+    }
+    channel->BasicAck(envelope);
+  }
+  catch (AC::ConnectionException& e) {
+    // Unrecoverable error, channel must be restarted
+    ROS_ERROR_STREAM("Caught ConnectionException: " << e.what());
+  } catch (AC::AmqpResponseLibraryException& e) {
+    // Unrecoverable error, channel must be restarted
+    ROS_ERROR_STREAM("Caught AmqpResponseLibraryException: " << e.what());
+  } catch (std::exception& e) {
+    ROS_ERROR_STREAM("Caught std::exception: " << e.what());
+  } catch (...) {
+    ROS_ERROR_STREAM("Caught unknown exception");
+  }
+  ROS_INFO_STREAM("TR: finished event loop");
+}
+
+bool TaskReader::processMessage(const std::string& message)
+{
+  bool success=true;
+
+  try {
+    snitch::sensor::CanaryTaskProcessed canary;
+    if (!canary.ParseFromString(message)) {
+      ROS_WARN("Failed CanaryTaskProcessed.ParseFromString(len=%lu)", message.length());
+    }
+    SensorId sensor(canary.task().sensor_id(), canary.task().site_id());
+    ROS_INFO_STREAM("Got Canary " << canary.ShortDebugString());
+  }
+  catch (std::exception& e)
+  {
+    ROS_WARN_STREAM("Task Failed: " 
+                    // << Sensorid(task.sensor_id()).str() << " "
+                    // << std::fixed << timestamp << " "
+                    << e.what());
+    success=false;
+  }
+  
+  return success;
+}

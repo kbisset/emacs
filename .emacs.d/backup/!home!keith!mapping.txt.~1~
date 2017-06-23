@@ -1,0 +1,38 @@
+/home/keith/alex_params/rgb_distortion_1178.txt
+k1 0
+k2 -0.159866
+k3 0
+k4 0.000324324
+k5 0
+k6 0.0157475
+p1 0
+p2 0
+/home/keith/alex_params/rgb_intrinsics_1178.txt
+1004.97377 fx
+1000.07509 fy
+1000.24233 cx
+542.929898 cy
+/home/keith/alex_params/rgb_tof_extrinsics.txt
+-0.00424751 rx
+0.00261765 ry
+0.00397755 rz
+-0.751181 tx
+-22.9719 ty 
+-1.88854 tz
+
+/home/keith/alex_params/tof_distortion_1178.txt
+0 
+-0.186658
+0
+0.41802
+0
+-0.266755
+0
+0
+
+/home/keith/alex_params/tof_intrinsics_1178.txt
+212.822
+213.043
+178.412
+145.096
+

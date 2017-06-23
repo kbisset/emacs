@@ -1,0 +1,34 @@
+#include <bag_of_tricks/application.h>
+#include <doorman_client/doorman_client.h>
+#include <ros/console.h>
+#include <ros/assert.h>
+#include <boost/format.hpp>
+#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/client.hpp>
+#include <thread>
+#include <chrono>
+#include <gflags/gflags.h>
+
+DECLARE_bool(alexandria_mode);
+
+int main(int argc, char* argv[]) {
+  Application::Init(argc, argv, []{
+    FLAGS_alexandria_mode = true;
+    DoormanSettings settings = DoormanSettings::fromFlags();
+
+    DoormanClientPtr client = DoormanClient::create(settings);
+    SensorId sensor(FLAGS_lighthouse_sensor, FLAGS_lighthouse_site);
+    int64_t timestamp;
+    if (FLAGS_lighthouse_timestamp != "now") {
+      timestamp = atoll(FLAGS_lighthouse_timestamp.c_str());
+    } else {
+      timestamp = time(NULL) * 1000ll;
+    }
+    int64_t endTimestamp = atoll(FLAGS_lighthouse_end_timestamp.c_str());
+    IFrameStreamPtr stream = client->openTaskStream(sensor, timestamp, endTimestamp);
+    ROS_ASSERT(stream != nullptr);
+
+    SensorId dfSensor(FLAGS_dollface_sensor, FLAGS_dollface_site);
+    DollfaceCamera dfCamera(settings, dfSensor, stream);
+    dfCamera.run();
+  });

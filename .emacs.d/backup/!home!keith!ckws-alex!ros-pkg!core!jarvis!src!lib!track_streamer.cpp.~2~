@@ -1,0 +1,332 @@
+#include <set>
+
+#include <bag_of_tricks/next_path.h>
+#include <bag_of_tricks/thread.h>
+#include <bag_of_tricks/string.h>
+#include <boost/any.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+#include <boost/filesystem.hpp>
+#include <eigen_extensions/eigen_extensions.h>
+#include <gflags/gflags.h>
+#include "jarvis/track_streamer.h"
+#include "online_learning/blob.h"
+#include "jarvis/motion.h"
+#include "jarvis/server.h"
+#include "jarvis/track.h"
+#include "jarvis/tracker.h"
+#include "jarvis/track_identifier.h"
+#include "jarvis/track_publisher.h"
+#include "snitch_protocols/alert.pb.h"
+#include "doorman_client/amqp_utils.h"
+#include <online_learning/dataset.h>
+#include <ros/console.h>
+#include <serializable/threaded_serializer.h>
+#include <timer/profile.h>
+#include <cmath>
+
+DEFINE_int32(track_min_length, 15, "Minimum track length (frames)");
+DEFINE_int32(track_max_length, 600, "Maximum track length (frames)");
+DEFINE_int32(track_max_gap, 90, "Maximum gap between tracks of the same event (frames)");
+DEFINE_int64(track_max_file_size, 50e6, "Maximum track size (bytes)");
+
+
+using namespace std;
+namespace bfs = boost::filesystem;
+namespace ee = eigen_extensions;
+using namespace Eigen;
+
+TrackStreamer::TrackStreamer(std::string td_directory,
+                             bool load_existing_tds,
+                             std::shared_ptr<TrackPublisher> publisher) :
+  track_identifier_(new TrackIdentifier()),
+  td_directory_(td_directory),
+  publisher_(publisher)
+{
+  // Start off with empty name mappings.
+  // This needs to be overridden with applyNameMappings by whoever is using TrackStreamer.
+//  applyNameMapping("cmap", NameMapping());
+//  applyNameMapping("dmap", NameMapping());
+
+  if(td_directory_ != "") { 
+    if(!bfs::exists(td_directory_))
+      bfs::create_directory(td_directory_);
+    if (load_existing_tds)
+      track_identifier_->loadTdDirectory(td_directory);
+  }
+}
+
+TrackStreamer::~TrackStreamer()
+{
+  // ensure no update() or stream() calls are running. Note that there is still a race because update()
+  // might have started a stream() thread which has not yet managed to acquire the shared lock.
+  fprintf(stderr, "TrackStreamer shutting down\n");
+  scopeLockWrite;
+  fprintf(stderr, "TrackStreamer shutdown complete\n");
+}
+
+void TrackStreamer::update(std::map<size_t, std::shared_ptr<Track> > &tracks,
+                           uint64_t frame_id, TrackServer *track_server,
+                           NotificationCallback& notification_callback)
+{
+  PROFILE_BLOCK("TrackStreamer::update");
+  scopeLockRead;
+<<<<<<< HEAD
+  
+
+=======
+//  ROS_INFO_STREAM("TrackStreamer::update " << tracks.size());  
+>>>>>>> J2A: Additional Alexandria changes
+  // Check for tracks that should be fully or partially streamed, or that
+  // have ceased to be active. Also keep track of the gap we've seen
+  // where no significant (> FLAGS_track_min_length) tracks have been active.
+  if (current_event_) ++current_track_gap_; else current_track_gap_ = 0;
+  vector<size_t> to_delete;
+  for(auto it = tracks.begin(); it != tracks.end(); ++it) {
+    size_t id = it->first;
+    Track::Ptr track = it->second;
+    ROS_ASSERT(track->dataset_->size() <= FLAGS_track_max_length);
+    
+    if (track->latest_frame_id_ != frame_id) {
+      // Tracks that didn't get updated should either be streamed or dropped.
+      to_delete.push_back(id);
+      if (track->dataset_->size() > FLAGS_track_min_length) {
+        prepareStreamTrack(track, track->dataset_, track_server, notification_callback);
+      }
+    } else if (track->dataset_->size() == FLAGS_track_max_length) {
+      // Tracks that are too long should be partially streamed.
+      PROFILE_BLOCK("Partial stream");
+      ROS_INFO_STREAM("TS: Partial stream of track id=" << track->id_);
+
+      // Split the first part of the dataset into a separate fragment and stream it
+      const size_t partial = FLAGS_track_max_length / 2;
+      auto& src = track->dataset_->instances_;
+      Dataset::Ptr fragment = std::make_shared<Dataset>();
+      fragment->applyNameMappings(*track->dataset_);
+      fragment->instances_.insert(fragment->instances_.begin(), src.begin(), src.begin()+partial);
+      src.erase(src.begin(), src.begin()+partial);
+      prepareStreamTrack(track, fragment, track_server, notification_callback);
+      current_track_gap_ = 0; // partial is still going
+    } else if (track->dataset_->size() > FLAGS_track_min_length) {
+      current_track_gap_ = 0; // active and significant
+    }
+  }
+
+  // Delete inactive tracks
+  for(size_t i = 0; i < to_delete.size(); ++i) {
+    ROS_ASSERT(tracks.find(to_delete[i]) != tracks.end());
+    tracks.erase(to_delete[i]);
+  }
+
+  // Decide to publish the event based on the track gap. Any significant active
+  // track will have caused a reset of current_track_gap to 0 in the loop above.
+  // If FLAGS_track_max_gap is small (or even 0) we also required there to be no
+  // current tracks at all. However if the max gap is reasonably large we publish
+  // anyway -- at worst it turns out the active track will become significant after
+  // all, and we'll have produced two events with a gap of (max gap - min length).
+  // The benefit of this is that we're guaranteed a gap no larger than specified
+  // within the events that we do produce, i.e. crud won't keep the event alive.
+  if (current_event_) {
+    bool stream = current_track_gap_ > FLAGS_track_max_gap && (tracks.empty() || FLAGS_track_max_gap > 2*FLAGS_track_min_length);
+    if (stream || current_track_gap_ > 0 || tracks.empty()) ROS_DEBUG_STREAM(
+        "TS: pending event: size=" << current_event_->size() <<
+        " gap=" << current_track_gap_ << "/" << FLAGS_track_max_gap <<
+        " active=" << tracks.size() <<
+        (stream ? " (streaming now)" : ""));
+    if (stream) {
+      boost::thread(boost::bind(&TrackStreamer::streamEvent, this, current_event_));
+      current_event_.reset();
+      current_track_gap_ = 0;
+    }
+  }
+}
+
+void TrackStreamer::flush() {
+  if (current_event_) {
+    ROS_INFO_STREAM("TS: Event stream forced due to flush (gap=" << current_track_gap_ << "/" << FLAGS_track_max_gap << ")");
+    // We've stopped processing a task, stream the current event regardless of
+    // current_track_gap_, as no further data will be arriving for this task.
+    boost::thread(boost::bind(&TrackStreamer::streamEvent, this, current_event_));
+    current_event_.reset();
+  }
+}
+
+void TrackStreamer::prepareStreamTrack(
+    std::shared_ptr<Track> track, Dataset::Ptr dataset,
+    TrackServer *track_server,
+    NotificationCallback& notification_callback)
+{
+  // Augmented prediction that includes both semantic predictions and
+  // motion / size / alert decisions.
+  Label apred = track->dataset_->label();
+  const NameMapping& acmap = track->dataset_->nameMapping("cmap");
+  ROS_ASSERT((size_t)apred.rows() == acmap.size());
+  if (acmap.hasName("moving") && apred(acmap.toId("moving")) < 0) {
+    ROS_INFO_STREAM("TS: Filtering out unmoving track id=" << track->id_);
+    return;
+  }
+
+  dataset->makeLightweight(); // Discard Blobs
+//  dataset->applyNameMapping("dmap", NameMapping()); // Wipe out descriptors.
+// We don't need to do this anymore because TrackProcessor is setting the
+// augmented cmap already.
+//  dataset->applyNameMapping("cmap", ColorServer::instance().augmented_cmap_);
+
+  if (!current_event_) current_event_.reset(new TrackDataset());
+  current_event_->tracks_.push_back(dataset);
+
+  std::thread(
+      std::bind(&TrackStreamer::streamTrack, this, track, dataset,
+                  track_server, notification_callback)).detach();
+}
+
+
+void TrackStreamer::streamTrack(std::shared_ptr<Track> track,
+                                Dataset::Ptr dataset, TrackServer *track_server,
+                                NotificationCallback& notification_callback)
+{
+  scopeLockRead;
+  ROS_INFO_STREAM("TS::streamTrack '" << td_directory_ << "'");
+  long time = (long) dataset->instances_[0].rawRef().timestamp_;
+  set_current_thread_name(STRING("TK-" << time));
+  ROS_INFO_STREAM("TS::streamTrack got track with label " << dataset->label().transpose());
+
+  if(td_directory_ == "")
+    return;
+
+  std::lock_guard<std::mutex> lock(stream_mutex_);
+  
+  if(td_stream_target_ == "" || bfs::file_size(td_stream_target_) > FLAGS_track_max_file_size) {
+    td_stream_target_ = dateTimePath(td_directory_, "tracks.td");
+    TrackDataset td;
+    td.applyNameMapping("cmap", dataset->nameMapping("cmap"));
+    td.applyNameMapping("dmap", NameMapping());  // We're not going to store descriptors for now.
+    td.save(td_stream_target_);
+    ROS_DEBUG_STREAM("[TrackStreamer] Initialized new track streaming target at "
+                     << td_stream_target_);
+  }
+
+  int num = 0;
+  for(const Instance& frame : *dataset)
+    if(frame.label_.rows() > 0)
+      ++num;
+  ROS_INFO_STREAM("Streaming track with " << num << " / " << dataset->size() << " classified frames");
+
+  DatasetReference dref = dataset->stream(td_stream_target_);
+  dataset->dref_.td_path_ = dref.td_path_;
+  dataset->dref_.offset_ = dref.offset_;
+
+  // We're not using "find similar", but this is
+  // used for displaying history to the user.
+  track_identifier_->addTrack(dataset);
+
+  // Publish this track to remote durable storage
+  std::string key;
+  // TODO: only do this on alert
+  if (publisher_) {
+    const bool generateSnippet = true;
+    key = publisher_->publishTrack(SensorId(track->sensor_id_), dataset, generateSnippet);
+  } else {
+    ROS_WARN("Skipping track publishing");
+  }
+
+  ROS_ASSERT(dref.td_path_ == dataset->dref_.td_path_);
+  ROS_ASSERT(dref.offset_ == dataset->dref_.offset_);
+
+  
+  /************************************************************
+   * Notification
+   ************************************************************/
+  // TODO: The notification logic should be moved out into its own thing.
+  // TrackStreamer should be just for streaming to disk.
+
+  if (track->notified_) {
+    ROS_INFO_STREAM("[TrackStreamer] Track id " << track->id_ << " has already been notified.  Not sending.");
+  } else {
+    Label apred = dataset->label();
+    const NameMapping& acmap = dataset->nameMapping("cmap");
+    ROS_ASSERT((size_t)apred.rows() == acmap.size());
+    ROS_INFO_STREAM("Considering notification of track with apred " << apred.transpose());
+    ROS_INFO_STREAM("cmap: " << acmap.status("  "));
+    
+    if (acmap.hasName("alert") && apred(acmap.toId("alert")) > 0) {
+      ROS_ASSERT(dataset->instances_.size() > 0);
+
+      if (track_server) {
+        ROS_INFO_STREAM("Sending push notification");
+        
+        // Don't bother creating the video locally if TrackPublisher is handling it
+        if (!publisher_) track_server->ComputeVideo(dref);
+
+        if (dref.td_path_.rfind('/') != string::npos) {
+          dref.td_path_ = dref.td_path_.substr(dref.td_path_.rfind('/')+1);
+        }
+
+        ros::Time track_timestamp(dataset->instances_[0].rawRef().timestamp_);
+//        track_server->PostTcpActivityMessage(dref, track_timestamp, track->sensor_id_);
+        track_server->PostGcmActivityMessage(dref, track_timestamp, track->sensor_id_);
+        track->notified_ = true;
+
+        snitch::alert::AlertEvent alert;
+        alert.set_timestamp(static_cast<uint64_t>(round(track_timestamp.toSec() * 1000)));
+        SensorId sensor(track->sensor_id_);
+        alert.set_sensor_id(sensor.numeric());
+        alert.set_track_id(track->id_);
+        alert.set_threat_odds(apred(acmap.toId("alert")));
+        alert.set_snippet(key);
+
+        notification_callback(alert);
+      }
+    }
+  }
+}
+
+void TrackStreamer::streamEvent(TrackDataset::Ptr event)
+{
+  scopeLockRead;
+
+  long time = (long) event->tracks_[0]->instances_[0].rawRef().timestamp_;
+  set_current_thread_name(STRING("EV-" << time));
+  ScopedThreadCounter counter("streamEvent");
+  ROS_INFO_STREAM("Collected event with " << event->size() << " tracks");
+  if (publisher_) {
+    string sensor_id = event->tracks_[0]->instances_[0].rawRef().sensor_name_;
+    const bool generateSnippet = true;
+    publisher_->publishEvent(SensorId(sensor_id), event, generateSnippet);
+  } else {
+    ROS_WARN("TS::streamEvent: not creating Timelapse");
+  }
+}
+//
+//void TrackStreamer::_applyNameTranslator(const std::string& nmid, const NameTranslator& translator)
+//{
+//  for (auto const& entry : tracks_) {
+//    entry.second->dataset_->applyNameTranslator(nmid, translator);
+//  }
+//}
+
+//void TrackStreamer::computeMoving() {
+//  for (auto& entry : tracks_) {
+//    Track& track = *(entry.second);
+//    const Dataset::Ptr& ds = track.dataset_;
+//    const Instance& frame = ds->instances_.back();
+//    const Blob& blob = *frame.raw<Blob::ConstPtr>();
+//
+//    // Don't show old tracks.
+//    if (blob.frame_id_ != latest_frame_id_) continue;
+//
+//    // Ignore things that aren't moving much.
+//    bool moving = false;
+//    for (size_t i = max<int>(0, (int)ds->size() - 300); i < ds->size(); i += 30) {
+//      const Blob& refblob = *ds->instances_[i].raw<Blob::ConstPtr>();
+//      refblob.project(false);
+//      if ((ee::vecToEig(blob.centroid_) - ee::vecToEig(refblob.centroid_)).norm() > 0.05) {
+//        moving = true;
+//        break;
+//      }
+//    }
+//
+//    track.moving_ = min(15, max(-1, track.moving_ + (moving ? 1 : -1)));
+//  }
+//}
+

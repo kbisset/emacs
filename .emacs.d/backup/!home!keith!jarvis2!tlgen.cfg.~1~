@@ -1,0 +1,8 @@
+--mongo_uri=mongodb://localhost:27017
+--doorman_host=localhost
+--doorman_port=38080
+--update_stories
+--day_timelapse_only=1
+--timelapse_threads=1
+-segment_cache_size=200
+--disk_snippets=/home/keith/data/snippets3

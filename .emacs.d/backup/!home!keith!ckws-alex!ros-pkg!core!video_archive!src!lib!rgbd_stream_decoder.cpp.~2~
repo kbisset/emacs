@@ -1,0 +1,397 @@
+#include "video_archive/rgbd_stream_decoder.h"
+#include <ubercam_msgs/CompressedRGBD.h>
+
+#include <libavcodec/avcodec.h>
+#include <openni2/OpenNI.h>
+#include <pthread.h>
+#include <ros/assert.h>
+#include <ros/console.h>
+#include <timer/profile.h>
+#include <video_codec/video_decoder.h>
+#include <video_codec/video_utils.h>
+#include <video_codec/depth_packing.h>
+#include <gflags/gflags.h>
+#include <mutex>
+
+using ubercam_msgs::CompressedRGBD;
+using ubercam_msgs::CompressedRGBDConstPtr;
+
+DEFINE_int32(max_packed, 255, "");
+
+
+RGBDStreamDecoder::RGBDStreamDecoder()
+{
+  vid_dec_color_.reset(new VideoDecoder());
+  vid_dec_depth_.reset(new VideoDecoder());
+  vid_dec_color_->open(VideoDecoder::CODEC_H264);
+  vid_dec_depth_->open(VideoDecoder::CODEC_H264);
+}
+
+RGBDStreamDecoder::~RGBDStreamDecoder() {}
+
+bool RGBDStreamDecoder::updateInto(CompressedRGBDConstPtr msg,
+                                   RGBDFrame::Ptr frame)
+{
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  PROFILE_BLOCK("RGBDStreamDecoder::update");
+  if (&frame_ != &frame && frame.get() != nullptr) {
+    frame_ = frame;
+  }
+
+  if(vid_dec_color_->codec_id_ != msg->color_format) {
+    ROS_INFO("color_format old: %d new: %d", vid_dec_color_->codec_id_,
+             msg->color_format);
+    vid_dec_color_->close();
+    vid_dec_color_->open((VideoDecoder::VideoCodecID)msg->color_format);
+  }
+  if(vid_dec_depth_->codec_id_ != msg->depth_format) {
+    vid_dec_depth_->close();
+    vid_dec_depth_->open((VideoDecoder::VideoCodecID)msg->depth_format);
+  }
+
+  ROS_ASSERT(vid_dec_color_ != NULL);
+//  ROS_DEBUG("rgbdCallback frameType: color %c depth %c size %zu %zu",
+//           VideoUtils::getFrameType((char*)&msg->compressed_color[0]),
+//           VideoUtils::getFrameType((char*)&msg->compressed_depth[0]),
+//           msg->compressed_color.size(),
+//           msg->compressed_depth.size());
+  vid_dec_color_->setExpectedDecodeLatency(msg->color_codec_latency);
+  vid_dec_depth_->setExpectedDecodeLatency(msg->depth_codec_latency);
+
+  if (frame.get() != nullptr) {
+    std::lock_guard<std::mutex> guard(frame->write_mutex_);
+    frame->sensor_id_ = msg->sensor_id;
+    frame->frame_id_ = msg->frame_id;
+    frame->sensor_timestamp_ = msg->sensor_timestamp;
+    frame->wall_timestamp_ = msg->header.stamp;
+    frame->accel_.x() = msg->accel_x;
+    frame->accel_.y() = msg->accel_y;
+    frame->accel_.z() = msg->accel_z;
+  }
+
+  bool color_succeeded = decodeColor(msg.get(), frame.get());
+  bool depth_succeeded = decodeDepth(msg.get(), frame.get());
+  
+  // if (!color_succeeded)
+  //   ROS_WARN_STREAM("RGBDStreamDecoder::updateInto(): decodeColor() failed");
+
+  // if (!depth_succeeded)
+  //   ROS_WARN_STREAM("RGBDStreamDecoder::updateInto(): decodeDepth() failed");
+
+//  if (frame == nullptr)
+//    ROS_INFO_STREAM("RGBDStreamDecoder::updateInto(): returning null");
+  // else
+  //   ROS_INFO_STREAM("RGBDStreamDecoder::updateInto(): returning "
+  //                 << std::fixed << frame->sensor_id_ << " "
+  //                 << frame->wall_timestamp_.toSec());
+  
+  return color_succeeded && depth_succeeded;
+}
+
+bool RGBDStreamDecoder::drain(RGBDFrame::Ptr frame, ubercam_msgs::CompressedRGBDPtr last_msg)
+{
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  PROFILE_BLOCK("RGBDStreamDecoder::drain");
+//  ROS_INFO_STREAM("RGBDSD::drain");
+  if (&frame_ != &frame && frame.get() != nullptr) {
+    frame_ = frame;
+  }
+  
+  ROS_ASSERT(vid_dec_color_ != NULL);
+//  ROS_DEBUG("rgbdCallback frameType: color %c depth %c size %zu %zu",
+//           VideoUtils::getFrameType((char*)&msg->compressed_color[0]),
+//           VideoUtils::getFrameType((char*)&msg->compressed_depth[0]),
+//           msg->compressed_color.size(),
+//           msg->compressed_depth.size());
+
+  // TODO - how do we set these.
+  if (frame.get() != nullptr) {
+    std::lock_guard<std::mutex> guard(frame->write_mutex_);
+    frame->sensor_id_ = last_msg->sensor_id;
+    frame->frame_id_ = last_msg->frame_id+1;
+    // Take into account decoder delay
+    frame->sensor_timestamp_ = last_msg->sensor_timestamp
+      + (last_msg->compression_finished_timestamp-last_msg->header.stamp).toSec();
+    frame->wall_timestamp_ = last_msg->compression_finished_timestamp;
+    frame->accel_.x() = last_msg->accel_x;
+    frame->accel_.y() = last_msg->accel_y;
+    frame->accel_.z() = last_msg->accel_z;
+  }
+
+  bool color_succeeded = decodeColor(nullptr, frame.get());
+  bool depth_succeeded = decodeDepth(nullptr, frame.get());
+  
+  // if (!color_succeeded)
+  //   ROS_WARN_STREAM("RGBDStreamDecoder::drain(): decodeColor() failed");
+
+  // if (!depth_succeeded)
+  //   ROS_WARN_STREAM("RGBDStreamDecoder::drain(): decodeDepth() failed");
+
+//  ROS_INFO_STREAM("RGBDSD::drain " << ((color_succeeded && depth_succeeded)?"t":"f"));  
+  // if (color_succeeded && depth_succeeded)
+  //   ROS_INFO_STREAM("Drain returning frame at " << std::fixed << frame->wall_timestamp_); 
+  return color_succeeded && depth_succeeded;
+}
+
+bool RGBDStreamDecoder::update(CompressedRGBDConstPtr msg) {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  if (frame_.get() == NULL) {
+    frame_.reset(new RGBDFrame());
+  }
+  return updateInto(msg, frame_);
+}
+
+void RGBDStreamDecoder::reset() {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  if (vid_dec_color_->num_frames_ > 0) {
+    vid_dec_color_->close();
+    vid_dec_color_->open(VideoDecoder::CODEC_H264);
+  }
+  if (vid_dec_depth_->num_frames_ > 0) {
+    vid_dec_depth_->close();
+    vid_dec_depth_->open(VideoDecoder::CODEC_H264);
+  }
+}
+
+void RGBDStreamDecoder::copyColorInto(cv::Mat3b dest) {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  if (frame_.get() == NULL)
+    frame_.reset(new RGBDFrame());
+
+  frame_->color().copyTo(dest);
+}
+
+void RGBDStreamDecoder::nextFrame()
+{
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  frame_.reset(new RGBDFrame());
+}
+
+const std::shared_ptr<RGBDFrame>& RGBDStreamDecoder::frame()
+{
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  if (frame_.get() == NULL)
+    frame_.reset(new RGBDFrame());
+  return frame_;
+}
+
+bool RGBDStreamDecoder::decodeColor(const CompressedRGBD* msg,
+                                    RGBDFrame *frame)
+{
+  AVFrame* avframe;
+  if (msg != nullptr)
+  {
+    // ROS_INFO_STREAM("Decoding color " << std::fixed << msg->header.stamp.toSec() << " "
+    //                 << VideoUtils::getFrameType((char*)&msg->compressed_color[0]));
+    avframe = vid_dec_color_->decodeFrame(&msg->compressed_color[0],
+                                            msg->compressed_color.size());
+  } else {                          // drain decoder
+//    ROS_INFO_STREAM("Draining color");
+    avframe = vid_dec_color_->decodeFrame(nullptr, 0);
+  }
+  
+  if(!avframe)
+  {
+//    ROS_WARN("decodeColor: avframe null");
+    frame = nullptr;
+    return false;
+  }
+//  ROS_DEBUG("color_frame compressed size %5zu size %dx%d fmt %d linesize %d",
+//           msg.compressed_color.size(), avframe->width, avframe->height,
+//           avframe->format, avframe->linesize[0]);
+
+  if (frame != NULL) {
+    std::lock_guard<std::mutex> guard(frame->write_mutex_);
+    if(frame->color_.rows != avframe->height) {
+      frame->color_.release();
+      static int color_create = 0;
+      color_create++;
+      // if (color_create % 50000 == 0)
+      //   ROS_INFO("**DecodeColor: color_create=%d %dx%d", color_create, avframe->width, avframe->height);
+      frame->color_.create(cv::Size(avframe->width, avframe->height));
+    }
+
+    VideoDecoder::yuvToRgb(*avframe, &frame->color_);
+  }
+
+  return true;
+}
+
+
+bool RGBDStreamDecoder::decodeDepth(const CompressedRGBD* msg,
+                                    RGBDFrame *frame)
+{
+  AVFrame* avframe;
+  ROS_ASSERT(vid_dec_depth_.get() != nullptr);
+  if (msg != nullptr)
+  {
+    // ROS_INFO_STREAM("Decoding depth " << std::fixed << msg->header.stamp.toSec() << " "
+    //                 << VideoUtils::getFrameType((char*)&msg->compressed_depth[0]));
+    ROS_ASSERT(msg->compressed_depth.size() > 0);
+    ROS_ASSERT(msg->compressed_depth.data() != nullptr);
+    avframe = vid_dec_depth_->decodeFrame(&msg->compressed_depth[0],
+                                          msg->compressed_depth.size());
+  }
+  else
+  {
+//    ROS_INFO_STREAM("Draining depth");
+    avframe = vid_dec_depth_->decodeFrame(nullptr, 0);
+  }
+  if(!avframe)
+  {
+//    ROS_WARN("decodeDepth: avframe null");
+    frame = nullptr;
+    return false;
+  }
+//  ROS_DEBUG("depth_frame compressed size %5zu size %dx%d fmt %d linesize %d",
+//           msg.compressed_depth.size(), avframe->width, avframe->height,
+//           avframe->format, avframe->linesize[0]);
+
+  if (frame != NULL) {
+<<<<<<< HEAD
+=======
+    // TODO: Don't hard code these
+    int minx=0;
+    int maxx=320; 
+    int miny=0;
+    int maxy=240;
+    // Crop Alexandria frames
+    if (false && avframe->width == 352 && avframe->height == 288) {
+      ROS_INFO_STREAM("Adjusting Alexandria depth frame size");
+//      minx=15*2+1;
+      maxx=avframe->width;//-(16*2); 
+//      miny=23*2+1;
+      maxy=avframe->height;//-(24*2);
+    }
+>>>>>>> Merge master into feature/jarvis2-alexandria
+    std::lock_guard<std::mutex> guard(frame->write_mutex_);
+    frame->depth_known_empty_ = false;
+    frame->shift_valid_ = false;
+    frame->depth_valid_ = false;
+<<<<<<< HEAD
+    if(frame->packed_.rows != avframe->height)
+      frame->packed_.create(cv::Size(avframe->width, avframe->height));
+=======
+    if(frame->packed_.rows != maxy)
+      frame->packed_.create(cv::Size(maxx, maxy));
+>>>>>>> Merge master into feature/jarvis2-alexandria
+
+    int padding = avframe->linesize[0] - avframe->width;
+    int data_step = avframe->linesize[0];
+    ROS_ASSERT(avframe->base[0] != nullptr || avframe->data[0] != nullptr);
+    uint8_t* data = (avframe->base[0] != nullptr?avframe->base[0]:avframe->data[0]) + padding / 2 * (data_step+1);
+    
+#if 0
+    // works on 14.04 
+    ROS_ASSERT(avframe->base[0] != nullptr);
+    uint8_t* data = avframe->base[0] + padding / 2 * (data_step+1);
+
+    // works on 16.04  
+    ROS_ASSERT(avframe->data[0] != nullptr);
+    uint8_t* data = avframe->data[0] + padding / 2 * (data_step+1);
+#endif
+    for(int y = 0; y < avframe->height; y++) {
+      for(int x = 0; x < avframe->width; x++) {
+        uint16_t packed = data[y * data_step + x];
+        if (packed < 8 || (y < 30 && x < 50))  // deal with H264 compression errors
+          packed = 0;
+        if (packed > FLAGS_max_packed)
+          packed = 0;
+        frame->packed_(y, x) = packed;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool LazyRGBDStreamDecoder::updateInto(CompressedRGBDConstPtr msg,
+                                       RGBDFrame::Ptr frame)
+{
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  char frame_type = VideoUtils::getFrameType((char*)&msg->compressed_depth[0]);
+  bool is_keyframe = frame_type == 'I' || frame_type == 'S' || frame_type == 'p';
+  if (is_keyframe) {
+    if (msg_queue_.size() > 0) {
+      reset();
+    }
+  }
+  msg_queue_.push_back(msg);
+  if (first_frame_decoded_ &&
+      (msg_queue_.size() > 0 || is_keyframe) &&
+      VideoUtils::frameEmpty(frame_type, msg->compressed_depth.size())) {
+    frame->clear();
+    return true;
+  } else {
+    return catchupOnLazyDecoding(frame);
+  }
+}
+
+bool LazyRGBDStreamDecoder::catchup() {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  if (frame_.get() == NULL) {
+    frame_.reset(new RGBDFrame());
+  }
+  return catchupOnLazyDecoding(frame_);
+}
+
+bool LazyRGBDStreamDecoder::catchupOnLazyDecoding(RGBDFrame::Ptr frame) {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  // decompress entire queue followed by current frame
+  bool result = true;
+  if (!msg_queue_.empty()) {
+    for (CompressedRGBDConstPtr m : msg_queue_) {
+      if (!RGBDStreamDecoder::updateInto(m, frame))
+        result = false;
+    }
+    msg_queue_.clear();
+    first_frame_decoded_ |= result;
+  }
+  return result;
+}
+
+void LazyRGBDStreamDecoder::reset() {
+  std::lock_guard<std::recursive_mutex> lock(m_);
+  RGBDStreamDecoder::reset();
+  msg_queue_.clear();
+}
+
+// Internal use only, doesn't set time on last frame
+std::vector<RGBDFrame::Ptr> CompressedRGBDtoRGBD(const std::vector<ubercam_msgs::CompressedRGBDPtr>& cframes)
+{
+  std::vector<RGBDFrame::Ptr> frames;
+  RGBDStreamDecoder decoder;
+
+  for (unsigned i=0; i < cframes.size(); ++i)
+  {
+    if (decoder.update(cframes[i]))
+    {
+      if (decoder.frame()->color().cols > 0 &&
+          decoder.frame()->color().rows > 0)
+        frames.push_back(decoder.frame());
+    }
+    decoder.nextFrame();
+  }
+
+  // drain decoder
+  while (decoder.drain(nullptr, *cframes.rbegin()))
+    frames.push_back(decoder.frame());
+  
+  return frames;
+}
+
+std::vector<RGBDFrame::Ptr> SensorSegmentToRGBD(Doorman::SensorSegmentPtr segment)
+{
+  return SensorSegmentToRGBD(*segment.get());
+}
+
+std::vector<RGBDFrame::Ptr> SensorSegmentToRGBD(snitch::sensor::SensorSegment& segment)
+{
+  std::vector<ubercam_msgs::CompressedRGBDPtr> cframes = Doorman::SensorSegmentToCompressedRGBD(segment);
+  std::vector<RGBDFrame::Ptr> frames = CompressedRGBDtoRGBD(cframes);
+  // Set time of last compressed frame to next uncompressed frame
+  frames[frames.size()-1]->wall_timestamp_ = ros::Time(segment.next_segment()/1000.0);
+  frames[frames.size()-1]->sensor_timestamp_ = segment.next_segment()/1000.0;
+  return frames;
+}
+

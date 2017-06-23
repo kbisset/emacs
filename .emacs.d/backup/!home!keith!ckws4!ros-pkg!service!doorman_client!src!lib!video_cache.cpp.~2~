@@ -1,0 +1,304 @@
+#include "doorman_client/video_cache.h"
+
+#include <algorithm>
+#include <iostream>
+#include <ros/console.h>
+#include "bag_of_tricks/sensorid.h"
+#include "doorman_client/doorman_utils.h"
+#include "doorman_client/convert.h"
+
+#include "timer/profile.h"
+#include <gflags/gflags.h>
+#include <ros/assert.h>
+
+DEFINE_int32(segment_cache_size, 5000, "Maximum cache size in segments");
+
+namespace Doorman {
+// Handle comparison between segments, and segments and points.
+// A point has both timestamps equal
+bool SegmentCompare::operator()(const SegmentKey& lhs, const SegmentKey& rhs) const {
+      if (std::get<sensorP>(lhs) == std::get<sensorP>(rhs)) {
+        if (std::get<startP>(lhs) == std::get<endP>(lhs)) // lhs is a point  
+          return std::get<startP>(lhs) < std::get<startP>(rhs);
+        else if (std::get<startP>(lhs) == std::get<endP>(lhs)) // rhs is a point
+          return std::get<endP>(lhs) < std::get<startP>(rhs);
+        else                    // both are segmets, end of one segment == start of next
+          return std::get<endP>(lhs) <= std::get<startP>(rhs);
+      } else {
+        return std::get<sensorP>(lhs) < std::get<sensorP>(rhs);
+      }
+    }
+
+VideoCache::VideoCache()
+  : cache_(FLAGS_segment_cache_size),
+    cacheHits_(0), 
+    doormanMisses_(0),
+    cacheMisses_(0)
+{
+}
+
+VideoCache::~VideoCache()
+{
+}
+
+void VideoCache::clear()
+{
+  cache_.clear();
+  cacheHits_ = 0; 
+  doormanMisses_ = 0;
+  cacheMisses_ = 0;
+}
+
+void VideoCache::addSegment(SensorSegmentPtr seg)
+{
+  PROFILE_FUNC;
+
+  if (seg == nullptr)
+  {
+//    ROS_WARN("VC::addSegment null seg");
+    doormanMisses_++;
+    return;
+  }
+  // TODO: Doesn't work if end_timestamp == 0. Should only happen if we are grabbing an
+  // active segment
+  if (seg->next_segment() == 0)
+  {
+    ROS_WARN("VC::addSegment next_segment == 0");
+    return;
+  }
+
+  cache_.insert(SegmentKey(seg->sensor_id(), seg->timestamp(), seg->next_segment()), seg);
+  dumpStats();
+}
+
+#if 1
+ubercam_msgs::CompressedRGBDPtr VideoCache::SensorFrameToCompressedRGBD(VideoCache::SensorSegmentPtr segment,
+                                                                        int index)
+{
+//  ROS_INFO_STREAM("VC::SensorFrameToCompressedRGBD");
+  return Doorman::SensorFrameToCompressedRGBD(segment, index);  
+}
+#endif
+
+ubercam_msgs::CompressedRGBDPtr VideoCache::getCompressedRGBD(uint64_t sensor,
+                                                              uint64_t timestamp,
+                                                              uint64_t* next_timestamp)
+{
+//  ROS_INFO_STREAM("VC::getCompressedRGBD " << sensor << " " << timestamp);
+  int index;
+  SensorSegmentPtr seg = findFrameInSegment(sensor, timestamp, &index);
+  if (seg != nullptr)
+  {
+    // next_frame() isn't set by doorman, so we have to do this the hard way
+    //    *next_timestamp = seg->frames().Get(index).next_frame();
+    
+    if (index < seg->frames().size()-1) {
+      *next_timestamp = seg->frames().Get(index+1).timestamp();
+    } else {
+      if (seg->next_segment() > 0)
+        *next_timestamp = seg->next_segment();
+      else {
+        ROS_INFO("Missing next_timestamp at end of segment, assuming +33ms");
+        *next_timestamp = seg->end_timestamp()+33;
+        if (seg->end_timestamp() != timestamp)
+        {
+          ROS_WARN_STREAM("Mismatched timestamps: " << seg->end_timestamp() << " "
+                          << timestamp);
+          return nullptr;
+        }
+      }
+    }
+    // ROS_INFO_STREAM("VC::getCRGBD found seg " << std::fixed << index << " "
+    //                 << seg->frames().Get(index).timestamp() << " " 
+    //                 << seg->frames().Get(index).next_frame() << " "
+    //                 <<(index<seg->frames().size()?seg->frames().Get(index).timestamp():-1));
+    if (*next_timestamp <= timestamp) {
+      ROS_WARN("VC:getCRGBD: next_timestamp %ld <= timestamp %ld at index %d of %d",
+               *next_timestamp, timestamp, index, seg->frames().size());
+    }
+    ubercam_msgs::CompressedRGBDPtr result = SensorFrameToCompressedRGBD(seg, index);
+    if (labs(timestamp - result->header.stamp.toNSec()/1000000) >= 5)
+    {
+      ROS_WARN("requested ts %ld != CRGBD ts %ld", timestamp,
+               result->header.stamp.toNSec()/1000000);
+      return nullptr;
+    }
+    return result;
+  }
+  else
+  {
+    ROS_INFO("VC::getCRGBD didn't find %ld in seg", timestamp);
+    next_timestamp = 0;
+    return nullptr;
+  }
+}
+
+#if 0
+ubercam_msgs::CompressedRGBDPtr VideoCache::findCompressedRGBD(uint64_t sensor, uint64_t timestamp)
+{
+//  ROS_INFO_STREAM("VC::findCompressedRGBD");
+  int index;
+  VideoCache::SensorSegmentPtr seg = findFrameInSegment(sensor, timestamp, &index);
+  if (seg != nullptr)
+    return SensorFrameToCompressedRGBD(seg, index);
+  else
+    return nullptr;
+}
+#endif
+
+VideoCache::SensorSegmentPtr VideoCache::getFrameInSegment(uint64_t sensor, uint64_t timestamp, int* index)
+{
+//  ROS_INFO_STREAM("VC::getFrameInSegment looking for " << sensor << " " << timestamp);
+  VideoCache::SensorSegmentPtr seg = findSegment(sensor, timestamp);
+  if (seg == nullptr)
+  {
+    ROS_WARN_STREAM("VC::getFrameInSegment couldn't find segment");
+    return nullptr;
+  }
+  
+  for (int i=0; i < seg->frames().size(); ++i)
+  {
+    if (seg->frames().Get(i).timestamp() == timestamp)
+    {
+      // ROS_INFO_STREAM("VC::getFrameInSegment found " << seg->frames().Get(i).timestamp()
+      //                 << " at " << i);
+      *index = i;
+      return seg;
+    }
+  }
+  ROS_WARN_STREAM("VC::getFrameInSegment couldn't find frame in range "
+                  << seg->timestamp() << " - " << seg->end_timestamp());
+  return nullptr;
+}
+
+VideoCache::SensorSegmentPtr VideoCache::findFrameInSegment(uint64_t sensor, uint64_t timestamp, int* index)
+{
+//  ROS_INFO_STREAM("VC::findFrameInSegment looking for " << sensor << " " << timestamp);
+  VideoCache::SensorSegmentPtr seg = findSegment(sensor, timestamp);
+  if (seg == nullptr)
+  {
+    ROS_WARN_STREAM("VC::findFrameInSegment couldn't find segment");
+    return nullptr;
+  }
+  
+  for (int i=0; i < seg->frames().size()-1; ++i)
+  {
+    if (timestamp >= seg->frames().Get(i).timestamp() &&
+        timestamp < seg->frames().Get(i+1).timestamp())
+    {
+      // ROS_INFO_STREAM("VC::findFrameInSegment found " << seg->frames().Get(i).timestamp()
+      //                 << " at " << i);
+      *index = i;
+      return seg;
+    }
+  }
+  // check last frame of segment. If we have a next_segment time, use that otherwise use
+  // the end of this segment plus a rounding error (2ms)
+  int idx = seg->frames().size()-1;
+  if (timestamp >= seg->frames().Get(idx).timestamp() &&
+      ((seg->next_segment() != 0 && timestamp < seg->next_segment()) ||
+       timestamp <= seg->end_timestamp()+2))
+  {
+    *index = idx;
+    return seg;
+  }
+
+  // ROS_WARN_STREAM("VC::ffis " << timestamp  << " >= " << seg->frames().Get(idx).timestamp()
+  //                 << "[" << (timestamp >= seg->frames().Get(idx).timestamp()?"t":"f") << "] "
+  //                 << timestamp << " < " << seg->next_segment()
+  //                 << "[" << ((seg->next_segment() != 0 && timestamp < seg->next_segment())?"t":"f")
+  //                 << "] "
+  //                 << timestamp << " <= " << (seg->end_timestamp()+2)
+  //                 << "[" << (timestamp <= (seg->end_timestamp()+2)?"t":"f")
+  //   );
+
+  // ROS_WARN_STREAM("VC::findFrameInSegment couldn't find frame for "
+  //                 << std::fixed << timestamp << " in range "
+  //                 << seg->timestamp() << " - " << seg->end_timestamp() << " "
+  //                 << seg->frames().Get(0).timestamp() << " - " << seg->frames().Get(idx).timestamp()
+  //                 << " next " << seg->next_segment());
+  return nullptr;
+}
+
+VideoCache::SensorSegmentPtr VideoCache::getSegment(uint64_t sensor, uint64_t timestamp)
+{
+  // TODO do we need the distinction between getSegment and findSegment? Fo now use the
+  // more general version.
+  // Avctually, get is more efficient, only works with exact timestamp, and doesn't work
+  // for an active segment. 
+  return findSegment(sensor, timestamp);
+}
+
+VideoCache::SensorSegmentPtr VideoCache::findSegment(uint64_t sensor,
+                                                     uint64_t timestamp)
+{
+//  ROS_INFO_STREAM("VC::findSegment+");
+  std::lock_guard<std::mutex> lock(cacheMutex_);
+
+  SensorSegmentPtr seg = nullptr;
+  auto result = cache_.get(SegmentKey(sensor, timestamp, timestamp));
+  if (result)
+  {
+    seg =  *result;
+    cacheHits_++;
+  } else {
+    // seg = getSegmentFromDoorman(sensor, timestamp);
+    // if (seg != nullptr) {
+    //   cache_.insert(SegmentKey(seg->sensor_id(), seg->timestamp(), seg->end_timestamp()), seg);
+    //   doormanHits_++;
+    // } else {
+      cacheMisses_++;
+//    }
+  }
+
+  return seg;
+}
+
+VideoCache::SensorSegmentPtr VideoCache::getSegmentFromDoorman(uint64_t sensor, uint64_t timestamp)
+{
+//  ROS_INFO_STREAM("VC::getSegmentFromDoorman");
+  uint64_t requestts = timestamp;
+//  ROS_WARN_STREAM("Getting segment from doorman: " << sensor << " " << timestamp); 
+  
+  // SensorId sensor(sensor_name);
+  // uint64_t sensor_id = sensor.numeric();
+  // Uint64_t timestamp = round(ros_timestamp.toSec()*1000); // convert to milliseconds
+
+  SensorSegmentPtr segment = Doorman::getSegment(std::string("get"), sensor, &timestamp);
+  // TODO: DO this right
+  if (segment == nullptr)
+    segment = Doorman::getSegment(std::string("find"), sensor, &timestamp);
+  if (segment == nullptr)
+    ROS_WARN_STREAM("Couldn't find segment from doorman");
+  else
+  {
+//    ROS_WARN_STREAM("Got segment from doorman: " << segment->sensor_id() << " "
+//                    << segment->timestamp());
+
+    if (requestts < segment->timestamp() ||
+       requestts >= segment->next_segment())
+      ROS_WARN_STREAM("segment from doorman time out of range: "
+                       << "request " << requestts << " "
+                       << "segment [" << segment->timestamp() << ", "
+                       << segment->next_segment() << ")");
+  }
+  return segment; 
+}
+
+void VideoCache::dumpStats() const
+{
+  int total = cacheHits_ + cacheMisses_;
+  uint64_t bytes = 0;
+  for (auto it = cache_.begin(); it != cache_.end(); ++it)
+    bytes += (*it).second.first->ByteSize();
+  ROS_INFO_STREAM("Doorman Cache: " << std::fixed << std::setprecision(1)
+                  << "size " << cache_.size() << "/" << cache_.capacity() << " segments "
+                  << "hits " << cacheHits_ << " " << (100.0*cacheHits_/total) << "% "
+                  << "doorman " << doormanMisses_ << " " << (100.0*doormanMisses_/total) << "% "
+                  << "fails " << cacheMisses_ << " " << (100.0*cacheMisses_/total) << "% "
+                  << "memory " << bytes/(1024*1024*1024) << " GB"
+    );
+  // for (auto it = cache_.begin(); it != cache_.end(); ++it)
+  //   ROS_INFO_STREAM("\t" << it->first << ": " << it->second.size());
+}
+} // namespace

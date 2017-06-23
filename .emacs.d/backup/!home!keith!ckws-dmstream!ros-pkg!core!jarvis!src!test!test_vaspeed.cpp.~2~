@@ -1,0 +1,63 @@
+#include "bag_of_tricks/sensor_site.h"
+#include "bag_of_tricks/sensorid.h"
+#include "doorman_client/convert.h"
+#include "doorman_client/doorman_utils.h"
+#include "timer/profile.h"
+#include "video_archive/rgbd_stream_decoder.h"
+#include "video_archive/va_reader.h"
+
+#include <gtest/gtest.h>
+#include <boost/range/adaptor/reversed.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <log4cxx/logger.h>
+
+#include "online_learning/dataset.h"
+#include "online_learning/instance_serializer.h"
+#include "online_learning/blob.h"
+#include "online_learning/blob_serializer.h"
+
+CustomSerializer::Ptr Instance::custom_serializer_ = CustomSerializer::Ptr(new BlobSerializer(VideoArchiveReader::instance()));
+
+DECLARE_string(assert_action);
+
+TEST(IssueTest, Issue53) {
+  FLAGS_assert_action="throw";
+  double timestamp=1445383651.039;
+  std::string sensor("00:e0:2d:81:0c:9b");
+  ros::Time::init();
+  auto ptr=VideoArchiveReader::instance()->getFrame(ros::Time(timestamp), sensor, false, false);
+  EXPECT_TRUE(ptr != nullptr);
+
+  TrackDataset* td = new TrackDataset;
+  td->load("/data/vision/tests/mp-2.4/sets/test/00:e0:2d:91:00:26test/tds/1481325615436_1481688120195_pos.td");
+
+  ROS_INFO_STREAM("Tracks: " << td->size());
+  
+  for (int track_idx=-0; track_idx < 100; ++track_idx)
+  {
+    VideoArchiveReader::instance()->clearIndex();
+    Dataset::Ptr track(&(*td)[track_idx]);
+    ROS_INFO_STREAM("Opening track " << track_idx << ": " << track->dref_.td_path_ << ":" <<
+                    track->dref_.offset_ << " " << track->size());
+    for(size_t inst_idx = 0; inst_idx < track->size(); ++inst_idx) {
+      auto inst = (*track)[inst_idx];
+//      ROS_INFO_STREAM("Opening Instance " << inst_idx << ": ");
+      inst.raw();
+    }
+      
+    //   Track::Ptr track(new Track);
+    //   track->dataset_ = td.tracks_[j];
+    //   tpr[tid]->init(track);
+
+    //   const Instance& frame = (*track)[i];
+    //   ROS_INFO_STREAM(" Opening frame: " << i << " " << frame); 
+                        
+    //   Blob::ConstPtr blob = frame.raw<Blob::ConstPtr>();
+    //   ROS_ASSERT(blob->hasRaw());
+    //   blob->clearRaw();
+    //}
+  }
+  print_timers();
+}

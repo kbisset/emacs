@@ -1,0 +1,12 @@
+--doorman_host=deep4
+--doorman_port=38080
+--doorman_timeout=120
+
+--dollface_site=d00f3500000000000000000000000000
+--dollface_sensor=d0:0f:35:00:42:01
+
+--lighthouse_sensor=68:14:01:cf:d9:5b
+--lighthouse_site=ef21a0ef558649ba86e075a1ed16cd23
+--lighthouse_timestamp=1493790282027
+--lighthouse_end_timestamp=1493790582027
+

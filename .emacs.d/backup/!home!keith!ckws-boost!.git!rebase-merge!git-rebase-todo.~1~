@@ -1,0 +1,333 @@
+pick f8e513f Veneer: Fix unit test
+pick 1e6e16c Veneer: Avoid NPE when the query failed to parse
+pick ff7d07c Some model updates
+pick 5bc08b6 Veneer: Fix test NPE
+pick 6ea2b6b Veneer: Update to latest wit.ai endpoint version
+pick 2f8ab81 Veneer: Update default wit.ai API token -- for some reason it seems to have changed?!
+pick e2e21ff Veneer: Revert token changes -- the token is per user and the 'jarvis-lighthouse' one should be the default
+pick a78ed5c Link fix for 16.04 breaks build on 14.04
+pick fa15f1d Veneer: Rudimentary handling for summary queries (e.g. "Summarize Tuesday for me")
+pick 9377c33 Veneer: Fix mongo query when list of labels ends up being empty, and simplify handling of timelapse requests
+pick d75f97a Update in deep_depth_experiment debugging tool
+pick fab830a VAR: Add test for issue #10
+pick 77522ce TINC: Add Lighthouse Chromebook 1 (lhcb1)
+pick 0f30834 VAR: Standalone test for issue #10
+pick ce5d345 Trying different RGB2YUV conversion for sentinel.
+pick c9bddbb TINC: new keys for chromebook
+pick ec0710b update on visualization server
+pick 0fb66b4 small fixes
+pick d68c887 added query-model script
+pick 9255b5f Updating wit.ai model. Also minor wit.ai model download tweak.
+pick d6cad05 update clang-format
+pick 97548f3 Comment
+pick a08b169 Veneer: Improve wit query handling - Handle 'year' ambiguity, e.g. "24th of August" - Handle 'month' ambiguity correctly in all cases, e.g. "the 31st" - Don't throw when 'intent' is missing, just return null
+pick 28764fa Veneer: Log actual site name/id when discarding alarm events even when the message doesn't have a site id
+pick e35ae7f Veneer: Log alarm latency
+pick 8ca91d9 Comments
+pick c4c6c01 Protos: Added optional timestamp to PresenceTransitionRequest
+pick b55f44f Veneer: Return SERVICE_UNAVAILABLE when unable to call wit.ai
+pick eb8a4c3 Removed duplicate test code.  test/socket_sync app now tests the code that lives in the Camera app directory.
+pick cad5cc3 Veneer: AlertMessageHandler should be transactional
+pick 167d82a Updated socket to build for NDK
+pick 914711d Camera working as part of system image
+pick 2524b13 Adding the first version of depth computation cleanup : 1) Independent classes for different sequences (9 frame and 18 frame) 2) Config files / parsers for TOF depth processsing
+pick 654f564 1) Addinng atan2 implementation 2) Adding more entries to the tof config file 3) Fixing an error in logsnitch.h that prevented logging errors LOGE(..)
+pick 6ac74aa Adding multi path interference detection and some formating changes
+pick 3b0e1d6 Adding sample config files
+pick 2414565 Tweaking background model: Move partially moving objects less agressively into background.
+pick 3527fdd Tweak timelapse generation: Include images with no foreground frames that are part of the same event.
+pick 1b02951 Bugfixing previous commit.
+pick 5c0a126 Removing the assertion
+pick a3b74c8 Handle case where $BUILD_NUMBER does not exist (i.e. local build version jenkins)
+pick a8177c4 Adding some checks to prevent people from shooting themselves in the foot by not including a cmap or dmap in TD files.
+pick d941677 Updating header and library for NDK build (these come from AOSP)
+pick 33e7ab4 update Cdc to latest header and library
+pick b85b847 output is required in online_learning filter_track
+pick 9d561d2 Updating tof to use Cdc changes
+pick a503df2 Integrated Cdc changes
+pick 5de29f4 Add an option to display tracks in ascending order
+pick 573c4c5 Removing hard coded path in rx_raw.cpp
+pick c04c12f VAR: Add new tests
+pick 94f84e8 Fix wit.ai import-model script.
+pick 91eeaf0 Updating wit.ai model to v657.
+pick d0cc9c4 led implementation.  Need to validate on system image
+pick cb6f273 Update to header file.
+pick f2cf4fd Replacing assertions withwarnings/errors in the log for tof_config_file_parser
+pick ab8f8d7 Enabling multi path detection only when we get valid depth returns on both frequency pairs
+pick b3ac7ab Change socket path
+pick ea060c6 Add LED support to Alexandria.  With this checkin LED's will be functional
+pick 205c874 Remove logs from LED module
+pick 5b8fcf5 Update authorized_keys
+pick d90079c Add timothee to penguin ssh.
+pick daa58ce Add a classifier debugging tool
+pick e377b80 Intergrating background model with the new depth image generation module
+pick 5ae8fcd Removed logging from performance code paths
+pick 244df75 Solve tcmalloc complaints on 16.04 for annotations
+pick f6d101b Adding support for easier FPPN calibration. Calibraiton mode ON if /data/local/tmp/calibrate file exists.
+pick b0bacf4 Relax required timing accuracy in unit test
+pick 15490b0 wit: tweak model import script
+pick 2174dfb Tinc: Force pid file into /var/run on OSX (rather than the default of /usr/local/Cellar...)
+pick 7623a27 Wit.ai: Update model with a few variations on existing queries (e.g. "Find ...") Also add some 'counter examples' with no intent as the model is starting to treat filter_query as a fallback for pretty much anything
+pick 0e857a7 Veneer: Use object_class metadata from wit.ai model instead of hard-coded mapping to labels Also tweak how test data is recorded to avoid spurious changes in the repo
+pick 2e23822 Now reading the calibration object distance from a file
+pick 895f975 Bug fix
+pick aea7967 Adding unit test for github issue 25.
+pick 5efe823 working at 15 fps before caching frame
+pick 88d9956 Now streaming
+pick a1d69a4 removed code for debugging memory leak.  This should help improve performance
+pick eabf155 Code clean up.  Removed unused files.  Fixed issue with dequeuing first packet
+pick 8a7b87f Enabling a bigger TOF frame for debugging background model
+pick aeb9763 VAR: Modify VideoArchiveReader getFrame and getKetframe to accept either a macadress or siteid/macaddress string. If the siteid is provided, it is passed to Doorman, otherwise the default siteid is passed. The siteid is ignored when reading from archive files.
+pick d4de72b Add test
+pick ba90738 VAR: Add another test
+pick 08832d5 1)Adding option to disable background model 2) Enabling 30 fps TOF output
+pick 163891e Tweak doorman.sh to allow site id to be passed in
+pick fce07ae Doorman: Add internal tools for shard files, run via `doorman.jar run ...` - shard-info: Print human readable details about a shard file (--verbose=0..2) - shard-explode: Unpack raw color and depth streams for all segments of a shard file
+pick 0045b7e Doorman: Restrict the number of shards a segment is allowed to span to 3
+pick 3e5b422 1 - Fixed corrupted tof image (30fps) 2 - added logging to dump out frame types.  This will spam logcat for the time being
+pick 75d0169 Diable background model if /data/local/tmp/disable_bgm file is found
+pick c223e50 Completing automated FPPN calibration
+pick f9225bd Bug fix
+pick 5fe6dd9 Averting a potential crash
+pick 9a97cfd BoT: Add siteid to SensorId class
+pick 24ebb93 Temporary fix for issue #26
+pick 06a2557 Workaround for issue #27. Added VideoArchiveReader::clearIndex which removes all entries from the index. This should be called before opening archive files in a new directory.
+pick 0c3cde0 Initial update to LED
+pick fa19340 Updated LED code to better manage events
+pick 355988e Some code cleanup based on complaints by cppcheck
+pick b4bc214 Enable LED change
+pick b616fe3 Stupid check
+pick 94f1507 Add logging to leds
+pick abe629d Doorman: Add shard-id tool to compute the shard key from a site/sensor/timestamp triple
+pick 277d525 Refreshing LEDs after Bluetooth disconnect
+pick f82dd06 Cutting down LED updates during camera streaming
+pick 316e51f Remove led logging
+pick 0d01f09 tcmalloc conditional link
+pick 646d47e Use multilabel classifier in Jarvis
+pick 0fe1b1e Tidy
+pick 7bce939 Wit.ai: Tweak query-model script to use default reference time by default, or current time via --now
+pick b3882dc Veneer: Support for one-sided "before"/"after" time ranges, e.g. "on Friday after 4pm" One-sided ranges with "since" are still mostly broken
+pick 801ce65 1) No longer sending all AP's found, but 1 SSID if numerous AP's are found with the same SSID 2) Fixed LED issue when booting and network already configured (LED flashed blue until streamin)
+pick 7bb3ef0 Remove debug messages
+pick e8b3d34 Added enum values to Bluetooth progress notifications.  This also seems to fix the iOS app reporting an error when the camera is fully configured.
+pick 7ed13de Add debug print method
+pick eba3f6d Add test for issue #15. Cleanup some test environment stuff
+pick 6c2f9da Fix build problem
+pick f56abb6 Enabling debugging visualizations for troubleshooting depth-image/ multi-path issues
+pick 6da6375 Veneer: A few more NLP tests for one-sided intervals
+pick 59764db OTA: Support for channels, e.g. 'latest', 'release' and other improvements - Resolve flavor to use via per-device config or global config mapping from product_id and hardware_id - Resolve channel via per-device config or global config per flavor - Per-device configuration is loaded from S3 (e.g. s3://ota.lighthouse.ai/devices/<mac>.properties) - Configurable channels are managed via flag files in S3 (e.g. s3://ota.lighthouse.ai/channels/alexandria-release/0.1.123)
+pick d61af19 Moving header files to inc folder
+pick 583f8f7 Chaning header include path
+pick 6bd3948 GCO::getSize returns all xyz dimensions
+pick 24d7332 Make classification pipeline easily understandable
+pick 17c71c4 Output values from track_processor for debugging
+pick 411639c Detect vertical and horizontal motion
+pick 6983503 Factor out some functions in motion detector
+pick e198135 Do not publish motion labels until NLP is ready
+pick 89081cd OTA: Use separate cache interval for device list and properties
+pick 0c09a2e Bugfix: should avoid zero division
+pick b49e7f8 Update training to handle person and child class
+pick c7d23e2 Allow multi-label in Caffe input layer
+pick a675747 Publish new labels in jarvis for perf monitoring
+pick 368e024 Limit video query with "prediction > val" (debug)
+pick 833ea21 OTA: Tweak how product_id and hardware_id are concatenated. Logging tweaks.
+pick 622ce21 Remove files that shouldn't have been committed
+pick 58e1841 Doorman: Add a hacky way to send a hard-coded downstream diagnostics command
+pick dd7aaf3 Change a confidence threshold
+pick bcc476b Flag to have service restarted if it is brought down
+pick 2bdaf1a Restart service if brought down
+pick c9e2d82 Protocols: Added 'run_tests' command
+pick 8abdd6b Changed the return code.
+pick 34de121 Add a Makefile target for confidence sweep
+pick a03e625 Application level can now modify enablement of background model
+pick dbd0e28 Removing log message
+pick de30de7 Veneer: First cut of natural language rephrasing of the query
+pick 6db70fb Wit.ai: A few more examples
+pick e69954f Improve motion detector
+pick 5197241 Camera application checks system property if reboot on init failure is disabled.
+pick 616f78a Fix jenkins build failure.  Diags not ready to integrate
+pick f4ecdfb Increase vertical motion detector threshold by 0.1
+pick b5ccfe7 Configure Spring DefaultConversionService for use with configuration values
+pick 7ca2b36 Veneer: Filter labels to surface as classifications
+pick 1836b18 Add mongo indexes on 'site' for tracks/events/stories
+pick ca2eaf8 gitignore
+pick 0aa8332 _
+pick 770a97c _
+pick b9aa461 update clang-format
+pick 5e6a5a9 _
+pick dd42024 _
+pick ecd9467 _
+pick 136de57 _
+pick adbebab _
+pick d544504 _
+pick 09e2ddc Use seperatly compiled, non-system versions of boost, cpp-netlib, and pcl. See README-branch.txt
+pick 86c9a73 Update README
+pick ed704cd Update branch readme
+pick a30100e Veneer: Filter labels to surface as classifications (fix)
+pick 3bb6610 Veneer: Remove 'Showing' prefix from feedback
+pick 28f2e8c Veneer / wit.ai: Running and jumping
+pick 47c93b6 Lower margin for horizontal motion detector
+pick 6a5e5b9 Wit.ai: fix query-model script
+pick 7d79e12 Veneer: Compensate for inclusive understanding of "between X and Y" date ranges in natural feedback
+pick 3f47228 Let jarvis publish motion labels
+pick 1ef60c1 Veneer: Refactor NaturalQueryParser interface slightly to accommodate advanced functionality
+pick 2302461 Avoid warning
+pick 97333d8 Veneer: First cut of returning a simple hour-based histogram
+pick 7f40dea Export motion detector parameters to yaml
+pick 035c122 Working on diags interface
+pick 3764bf3 Reduction in memory usage on TOF stream.
+pick 25f4661 reduced logging
+pick f6a3e5e Reverting tof memory reduction change.  For some reason it's failing on jenkins build.
+pick 0355177 Fixing amplitude values overflowing (for 8 bit) in the amplitude iamge
+pick 95f3ecd Project for background modelling experiments
+pick 33dd4a0 Enable debug background model and log cleanup
+pick 0546416 Veneer: Friendly names for climbing labels
+pick e82e367 Veneer: Tweak hour-based historygram limits and scaling logic
+pick 548b0a7 Veneer: Some more tweaks for the hour histogram
+pick 6e106e4 small change in deep_depth_experiment
+pick da3215c Veneer: Externalize alarm push messages and change to 'Person detected'
+pick f08039b Enabled reduction of packet size for queued tof frames
+pick f25a4c1 update library
+pick 441ee8f reduce logging
+pick 9c33295 Veneer: Allow wit.ai parser to be configured non-strict for alpha
+pick 878dcb0 Fixing build break
+pick acc50e1 delay on boot in the event it's a app reset.  Need to let user space camera apps to load
+pick fb3edbd many improvements in data collection, logging, visualization server and cmanip library
+pick 9be79f8 Add an option to filp the range in filter_tracks
+pick ec75793 Add vertical distance detector
+pick d914ab7 background model output in jarvis format
+pick a52ac00 Wit-ai: attributes and training data for climbing up/down stairs and similar actions
+pick 5b7cfe7 Veneer / Wit.ai: First rough pass at "... while * was {here,gone}"
+pick 17ab661 Veneer / Wit.ai: First rough pass at "... while * was {here,gone}" (fix tests, a few more training examples)
+pick 14848a7 Updated logging to catch out of sync key frames after flushing queue
+pick ab63349 1)Enabling single frequency output via config file 2) Consolidating a shard file to a single avi file - first commit
+pick f620818 Finishing up convert_shard_to_video
+pick 066c314 Increase poll time for download to 15 minutes.
+pick e453c96 1) - Cut down OTA polling from 15 seconds to 15 minutes 2) - disable background modeling when connected to cb1 3) - connect to http://jarvis blah when connected to cb1, https://jarvis blah when not connected to test box
+pick 38fdbb4 Wit.ai: Show entity modes when importing the model to catch problems, plus a few other tweaks
+pick 7405f80 Wit.ai: Some more examples and tidy up some dangling expressions that were no longer used
+pick b773167 Fix android-sdk-update tool to handle some new output format changes and only install required platform SDK versions
+pick c9a74e9 Use Android SDK 23 across the board
+pick 44bf16f Use SDK 23 across the board
+pick 0cddf73 Rewrite running detector based L2 dist in xy plane
+pick a1edd12 Tune running detector for demo house
+pick d86e653 Reject sample by minimum depth
+pick 65c9b74 remove unused variables
+pick b9b3e79 change motion detector threshold for child
+pick b445269 Logging code to debug out of key frame sync issue
+pick d01d993 updated code with logging changes
+pick ca60826 SSID has quotes in it
+pick a065d9b Wit.ai: Fix (hopefully final) misconfigured training example
+pick 5bd8caa Doorman: Add support for a 'local' mode without S3 and Rabbit integration
+pick 19738ea Remove unnecessary config
+pick aea434e Doorman: In local mode, show list of connected devices and their IP on sensor-debug page
+pick 63e30bd Doorman: Log SensorFrame details when rejecting due to missing keyframes
+pick fad1203 Tag Android sdk version for android-sdk-update script
+pick fe9b970 Veneer: Store site.timezone in the database explicitly. Default from location if not configured.
+pick 99c5b46 Veneer: Don't enable RabbitMQ integration for functional tests
+pick 40875db Upgrade to android-maven-plugin 4.4.3 and remove workaround
+pick ace3457 Veneer: Make janitor tools run in a transaction correctly
+pick 987bdcc A debug tool for investigating depth computation / background modelling issues -- first commit
+pick d684744 Lighthouse!
+pick 43e9d07 Veneer: Add tool for checking/reprovisioning sensor target URLs
+pick 6b178af Jarvis: Remove code to publish keyframes into mongo, they are no longer used
+pick 0fc7d6a Veneer: Tweak implicit time range for one-sided interval queries
+pick 4181160 Timelapse logging
+pick c4fadc1 Add script for slacking
+pick 12fd276 add a flag to online_learning/label
+pick 1b3c0af Combine all arguments after first as message to aviod quoting hell when calling scripts from scripts
+pick bbef498 Protos for ClassSummaryWidget and UserPresenceWidget
+pick b0b6b92 Tune and clean up running and jumping detector
+pick 5e3a6e6 walking cassie still misdetected as running
+pick 64d851e improve vertical distance
+pick d760702 Veneer: Return partial people widget from history queries
+pick af51d0c Veneer: Populate 'magnitude' value in classification summary
+pick 256c6fe Completing the implementation of the debug tool
+pick 5a7049f Removing data_dump_server exectable
+pick 1fb166d Re-enable Spring Dev Tools during during development
+pick 601fb79 Exclude build-time deps from bundle jars
+pick daadd79 Veneer: Return enter/exit times in UserPresenceWidget. Note that either or both values can be +/- Infinity
+pick f05eaec Wit.ai: More training examples for complex queries. Also ensure presence/absence training examples are well balanced because the difference between them is often just a "not"
+pick 1d0e3ea Doorman: Add support for HID barcode scanner in the sensor debug page
+pick 4d5377f Update detector condition
+pick 8a1fb88 Reworking how system properties are setup, making way for adding in configuration parameters and factory tweaks.
+pick d3e8473 Simulate network environment based on system property configuration. Setting persist.lighthouse.loadnonet to true will cause driver library to load and stream data to the point of sending out over the network.  This will not cause flushing of queues and gaurantee data does not go over the network. Set persist.lighthouse.loadnonet to false to disable this and go to end user mode.
+pick 34b6976 Increase pet running threshold and fix debug tool
+pick 22b6524 use upper bound in vertical distance
+pick ff2520c ignore child class unless highly confident
+pick ba218e6 Add adult label to TP
+pick d4f464e Wit.ai: Use 'child' label for children. A few more training examples.
+pick bdd8092 bug fix and change cassie running threshold
+pick 63e57ff Don't show small object halos in timelapses
+pick 05e0252 Disable asserts on apred.rows() == cmap.size()
+pick 086f3f9 adjust cassie running threshold again
+pick 54b2416 Better error handling for events in jarvis
+pick 017c5fc Integrating background model to Sherlock
+pick d25211e Veneer: Support NLP query about a user ("What did X do")
+pick da411d8 Tidy up wit query parser a bit
+pick 231729a Set default doorman URL to stormtrooper. Previously it defaulted to unset. This will pick up video from both Alpha and Beta camaras. If needed, it can still be set with --doorman_host and --doorman_port.
+pick 85c1d69 bug fix in debuggin tool
+pick 2d68514 adjust running threshold for cassie
+pick 31c0a90 Improve test logging
+pick c41a881 Reverse 54b2416286a8ed78578064aff12d0a0e3903419b. That breaks event snippet generation
+pick eba07f6 Wit.ai support for person filter queries and more training examples for presence/absence.
+pick 95a5b43 Veneer: Check for SeeMetaData permission for NLP
+pick b715384 Veneer: Return voice_hints from meta call
+pick b864c94 Tune running threshold for cassie
+pick f5f71fb fetch videos from db.events instead of db.tracks
+pick 36c4386 Stray light experiments added to sherlock
+pick 2651339 Use seperatly compiled, non-system versions of boost, cpp-netlib, and pcl. See README-branch.txt
+pick 8236ef8 Add additional lock to VAReader
+pick 4c4f77e Wit.ai: Some more examples (since I left / got back)
+pick 34cd606 Stray light adaptive amplitude filter tuning
+pick 867ab20 Reverse commit 2651339
+pick 15daba6 Wit.ai: script for dumping expressions.json in a readable form
+pick 5e9201a Wit.ai: more examples
+pick c0c2982 Doorman: Attempt to fix functional test timing issue
+pick f3bc80f different way to calcuate radius for running
+pick adefc78 Compute total confusion matrix
+pick 894c117 process tracks in parallel
+pick f04453f add VA::clearIndex to eval TP
+pick c01beb0 process all TDs with a single execution
+pick 5cfe56a Do not manually set archive path
+pick cce65d5 Wit.ai
+pick ed7f145 Veneer: Warn when wit.ai confidence is lower than configurable threshold
+pick 5ba550d Wit.ai: Enable comparison between wit apps in `query-model`
+pick 1f9279d tinc: adding timothee laptop
+pick b38fe6e import tracks from userDB directly to annotationDB
+pick 1df83bb print interpret_results in a certain format
+pick eb7bd3d Skip processing for frames where foreground object can't be found
+pick c351082 Use seperatly compiled, non-system versions of boost, cpp-netlib, and pcl. See README-branch.txt
+pick f342d95 Ugly hack to get the sensor id into the loaded track. This will be removed once we fix mongodb. This should fix the remainder of issue #29
+pick 1b2328f Reverse c351082 (again)
+pick c2c1965 Patch site ID problem in deep_dpeth_exp/debugTP
+pick bfc3ed1 Patch site ID problem in annotations/import_track
+pick 62d50fd Build boost, pcl, and cpp-netlib; make everything else use our build boost. NOTE: ros still uses the system boost -- That doesn't seem to break anything
+pick 04c3d4f Add internal boost and pcl deps. Remove version number from findBoost.
+pick 3fafbf2 Create include dir for cpp_netlib
+pick 623eacc catch exception everywhere
+pick 1b27930 moved blob.h and blob_serializer.h from jarvis to online_learning to avoid dependency cycles
+pick d2689c8 bug fix in annotations/import_track
+pick 5767775 Tweak query-model script
+pick 2d5f8ad Wit.ai: Expand training data at build time for 'individual' and 'camera_name'. This results in better results for trait entities when dynamic values are used at runtime.
+pick 601fa9a Wit.ai: More training examples
+pick 9b019db Moar wit.ai
+pick 07750f2 deep_depth_exp Makefile clean up
+
+# Rebase ea7a196..c6d71f1 onto ea7a196
+#
+# Commands:
+#  p, pick = use commit
+#  r, reword = use commit, but edit the commit message
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
+#  f, fixup = like "squash", but discard this commit's log message
+#  x, exec = run command (the rest of the line) using shell
+#
+# These lines can be re-ordered; they are executed from top to bottom.
+#
+# If you remove a line here THAT COMMIT WILL BE LOST.
+#
+# However, if you remove everything, the rebase will be aborted.
+#
+# Note that empty commits are commented out

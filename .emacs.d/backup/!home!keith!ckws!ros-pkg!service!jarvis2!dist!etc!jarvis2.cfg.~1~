@@ -1,0 +1,2 @@
+# Basic jarvis2 config. Site and environment are configures seperatly.
+# You probably should use jarvis2-<env>-<device> to run

@@ -1,0 +1,21 @@
+#include "bag_of_tricks/timestamp.h"
+
+#include <boost/date_time.hpp>
+
+namespace bg = boost::gregorian;
+namespace bpt = boost::posix_time;
+
+std::string TimeConvert::timestampToISO8601(Timestamp ts)
+{
+  time_t sec=ts/1000;
+  int ms=ts%1000;
+  struct tm t;
+  localtime_r(&sec, &t);
+  // tmtoff is in secs
+  int tzoff_h = t.tm_gmtoff/3600;
+  int tzoff_m = t.tm_gmtoff%3600;
+  char buf[strlen("2017-06-15T11:54:29.000-07:00")+1];
+  sprintf(buf, "%4d-%02d-%02dT%02d:%02d:%02d.%03d%+d:%02d", t.tm_year+1900, t.tm_mon+1, t.tm_mday,
+          t.tm_hour, t.tm_min, t.tm_sec, ms, tzoff_h, tzoff_m);
+  return buf;
+}
