@@ -76,7 +76,9 @@ else
 fi
 
 # shell options
-shopt -s checkjobs cmdhist histappend no_empty_cmd_completion nocaseglob
+# OS X doesn't like checkjobs
+#shopt -s checkjobs cmdhist histappend no_empty_cmd_completion nocaseglob
+shopt -s cmdhist histappend no_empty_cmd_completion nocaseglob
 
 PS1='\n\[\033['$promptColor'm\]\u@\h\[\033[00m\]:\[\033['$promptColor'm\]\W\[\033[00m\]\[$gitclrbeg\]$git_prompt\[$gitclrend\]\$ '
 
@@ -105,7 +107,7 @@ stty erase 
 
 unset command_not_found_handle
 
-source /home/keith/emacs/config/standalone-prompt.sh
+source $HOME/emacs/config/standalone-prompt.sh
 
 export HISTSIZE=INFINITE
 export HISTFILESIZE=10000
@@ -129,3 +131,5 @@ export HTOPRC="/home/keith/.config/htop/htoprc"
 alias psjarvis="ps uaxww | grep -e 'jarvis2|tlgen|barista'"
 alias emacs="/usr/bin/emacs -u keith"
 alias ls="ls -H"
+export PATH=$HOME/bin:$PATH
+
