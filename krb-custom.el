@@ -51,7 +51,7 @@
  '(menu-bar-mode nil)
  '(mode-line-inverse-video t t)
  '(muse-project-alist (quote (("WikiPlanner" ("~/plans" "index")))))
- '(ns-antialias-text nil t)
+ '(ns-antialias-text nil)
  '(package-archives
    (quote
     (("gnu" . "http://elpa.gnu.org/packages/")

@@ -131,5 +131,6 @@ export HTOPRC="/home/keith/.config/htop/htoprc"
 alias psjarvis="ps uaxww | grep -e 'jarvis2|tlgen|barista'"
 alias emacs="/usr/bin/emacs -u keith"
 alias ls="ls -H"
+alias mactinc="sudo /usr/local/sbin/tincd -n snitch --logfile /var/log/tincd.log --pidfile /var/run/tincd.pid"
 export PATH=$HOME/bin:$PATH
 
