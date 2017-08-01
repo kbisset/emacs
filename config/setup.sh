@@ -1,23 +1,29 @@
 #!/bin/bash
 if [ ! -L ~/.bashrc ]; then
     echo "Setting up bashrc"
-    mv .bashrc .bashrc.orig
-    ln -s emacs/config/.bashrc
+    mv ~/.bashrc ~/.bashrc.orig
+    ln -s ~/emacs/config/.bashrc .
 fi
 
-if [ ! -f ~/.inputrc ]; then
+if [ ! -L ~/.inputrc ]; then
     echo "Setting up inputrc"
-    ln -s emacs/config/.inputrc
+    ln -s ~/emacs/config/.inputrc .
 fi
 
-if [ ! -f ~/.emacs ]; then
+if [ ! -L ~/.emacs ]; then
     echo "Setting up emacs"
-    ln -s emacs/.emacs .
+    ln -s ~/emacs/.emacs ~
 fi
 
-if [ ! -d ~/.fonts ]; then
+if [ ! -L ~/.fonts ]; then
     echo "Setting up fontd"
-    ln -s emacs/config/fonts ~/.fonts
+    ln -s ~/emacs/config/fonts ~/.fonts
+    ~/.fonts/install.sh
+fi
+
+if [ ! -L ~/.emacs.d ]; then
+    echo "Setting up emacs package repo"
+    ln -s ~/emacs/config/.emacs.d ~/.emacs.d
     ~/.fonts/install.sh
 fi
 
@@ -30,17 +36,17 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
     fi
 fi
 
-if [ ! -f ~/.gitconfig ]; then
+if [ ! -L ~/.gitconfig ]; then
     echo "Setting up git"
     ln -s ~/emacs/config/.gitconfig ~/.gitconfig
 fi
 
-if [ ! -d ~/bin ]; then
+if [ ! -L ~/bin ]; then
     echo "Setting up bin"
     ln -s ~/emacs/config/bin ~/bin
 fi
 
-if [ ! -f ~/.config/htop/htoprc ]; then
+if [ ! -L ~/.config/htop/htoprc ]; then
     echo "Setting up htop"
     mkdir -p ~/.config/htop
     ln -s ~/emacs/config/htoprc ~/.config/htop

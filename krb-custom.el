@@ -35,6 +35,10 @@
        (flyspell-mode)))) t)
  '(browse-url-browser-function (quote browse-url-generic))
  '(browse-url-generic-program "open")
+ '(compilation-always-kill t)
+ '(compilation-auto-jump-to-first-error t)
+ '(compilation-onewin-mode t)
+ '(compilation-scroll-output (quote first-error))
  '(ediff-control-frame-upward-shift 0)
  '(ediff-narrow-control-frame-leftward-shift -60)
  '(font-lock-maximum-decoration t)
@@ -51,14 +55,15 @@
  '(menu-bar-mode nil)
  '(mode-line-inverse-video t t)
  '(muse-project-alist (quote (("WikiPlanner" ("~/plans" "index")))))
- '(ns-antialias-text nil)
+ '(ns-antialias-text nil t)
+ '(package-archive-priorities (quote (("melpa-stable" . 10) ("melpa" . 5))))
  '(package-archives
    (quote
     (("gnu" . "http://elpa.gnu.org/packages/")
      ("melpa.stable" . "http://melpa.org/packages/"))))
  '(package-selected-packages
    (quote
-    (magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
+    (flycheck-clang-analyzer magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
  '(paren-match-face (quote paren-face-match-light))
  '(paren-sexp-mode t)
  '(ps-printer-name "/Users/kbisset/tmp/emacs.ps")
@@ -78,7 +83,8 @@
  '(savehist-mode t)
  '(sudoku-download t)
  '(sudoku-download-method "wget")
- '(uniquify-buffer-name-style (quote post-forward) nil (uniquify)))
+ '(uniquify-buffer-name-style (quote post-forward) nil (uniquify))
+ '(vc-handled-backends (quote (RCS CVS SVN SCCS SRC Bzr Hg Mtn))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

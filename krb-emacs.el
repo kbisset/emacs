@@ -1741,8 +1741,11 @@ Return a list of one element based on major mode."
 (add-to-list 'package-archives
              '("MELPA Stable" . "https://stable.melpa.org/packages/") 
              '("MELPA" . "https://melpa.org/packages/"))
+;; for compilation-onewin.el - curently broken
+;;             '("user42" . "https://download.tuxfamily.org/user42/elpa/packages/"))
 (package-initialize)
 (require 'use-package)
+
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
@@ -1760,3 +1763,22 @@ Return a list of one element based on major mode."
                     (ediff-get-region-contents ediff-current-difference 'B ediff-control-buffer))))
 (defun add-d-to-ediff-mode-map () (define-key ediff-mode-map "d" 'ediff-copy-both-to-C))
 (add-hook 'ediff-keymap-setup-hook 'add-d-to-ediff-mode-map)
+
+;; Split windows Vertically
+(setq split-width-threshold 9999)
+
+;; From https://www.emacswiki.org/emacs/HorizontalSplitting
+(defun split-vertically-for-temp-buffers ()
+  "Split the window vertically for temp buffers."
+  (when (and (one-window-p t)
+             (not (active-minibuffer-window)))
+    (split-window-vertically)))
+
+(add-hook 'temp-buffer-setup-hook 'split-vertically-for-temp-buffers)
+
+(require 'magit)
+(global-set-key (kbd "C-x g") 'magit-status)
+(global-set-key (kbd "C-x M-g") 'magit-dispatch-popup)
+
+(provide 'krb-emacs)
+;;; krb-emacs.el ends here
