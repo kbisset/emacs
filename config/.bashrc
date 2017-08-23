@@ -133,7 +133,7 @@ alias emacs="/usr/bin/emacs -u keith"
 OS=$(uname -s)
 if [ $OS == "Linux" ]; then
     alias ls="ls -FH --color=auto"
-elif [ $OS == "DARWIN" ]; then
+elif [ $OS == "Darwin" ]; then
     alias ls="ls -FH"
     export CLICOLOR=1
 else
