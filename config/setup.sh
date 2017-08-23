@@ -41,6 +41,11 @@ if [ ! -L ~/.gitconfig ]; then
     ln -s ~/emacs/config/.gitconfig ~/.gitconfig
 fi
 
+if [ ! -L ~/.gitcommitmessagetemplate.txt ]; then
+    echo "Setting up git(2)"
+    ln -s ~/emacs/config/.gitcommitmessagetemplate.txt ~/.gitcommitmessagetemplate.txt
+fi
+
 if [ ! -L ~/bin ]; then
     echo "Setting up bin"
     ln -s ~/emacs/config/bin ~/bin

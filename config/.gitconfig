@@ -9,6 +9,9 @@
 [color]
   ui = auto
 
+[commit]
+  template=~/.gitcommitmessagetemplate.txt
+  
 [difftool]
 prompt = false
 
