@@ -1,2 +1,12 @@
 *~
 .emacs.d/history
+/config/bin/callgrind_annotate
+/config/bin/callgrind_control
+/config/bin/cg_annotate
+/config/bin/cg_diff
+/config/bin/cg_merge
+/config/bin/ms_print
+/config/bin/valgrind
+/config/bin/valgrind-di-server
+/config/bin/valgrind-listener
+/config/bin/vgdb
