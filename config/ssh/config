@@ -82,14 +82,14 @@ Host vm
   LogLevel FATAL
 
 Host vm-direct
-  HostName 172.28.128.3
-  User vagrant
+  HostName 172.28.128.2
+#  User ubuntu
 #  Port 2222
   UserKnownHostsFile /dev/null
   StrictHostKeyChecking no
-  PasswordAuthentication no
-  IdentityFile "/Users/keith/software/snitch/.vagrant/machines/default/virtualbox/private_key"
-  IdentitiesOnly yes
+#  PasswordAuthentication no
+#  IdentityFile "/Users/keith/software/snitch/.vagrant/machines/default/virtualbox/private_key"
+#  IdentitiesOnly yes
   LogLevel FATAL
 
 host katrina

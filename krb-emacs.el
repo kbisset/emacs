@@ -70,6 +70,8 @@
 
 ; protobuf files
 (add-to-list 'auto-mode-alist '("\\.proto$" . protobuf-mode))
+
+(add-to-list 'auto-mode-alist '("\\.jsonnet$" . js-mode))
 (autoload 'protobuf-mode "protobuf-mode"
   "Mode for editing Google protobuf files" t)
 
