@@ -146,3 +146,8 @@ export PATH=$HOME/bin:$PATH
 export PROTOC=/home/keith/ckws/devel/bin/protoc
 export DOORMAN_URL=https://video.lighthouse.ai:38080
 
+if [[ ! -z "$(which ccache)" ]] ; then
+    export CC="ccache gcc"
+    export CXX="ccache g++"
+    ccache -M30G > /dev/null
+fi

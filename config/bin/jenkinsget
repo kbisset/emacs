@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ "$1" = "-V" ]; then
     for artifact in jarvis2 tlgen barista; do
@@ -14,12 +14,18 @@ elif [ "$1" = "--url" ]; then
 elif [ "X$1" != "X" ]; then
     branch=$1
     build=$2
+    
+    if [[ ${branch} == "release-"* ]]; then
+        sep="."
+    else
+        sep="-"
+    fi
     if [ "X$3" != "X" ]; then
         artifact=$3
     else
         artifact="jarvis2"
     fi
-    URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/${branch}/${build}/artifact/build/jarvis2/dist/jarvis-${branch}-${build}-${artifact}.tgz
+    URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/${branch}/${build}/artifact/build/jarvis2/dist/jarvis-${branch}${sep}${build}-${artifact}.tgz
     UNZIP=0
 # else
 #     URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/master/lastSuccessfulBuild/artifact/\*zip\*/archive.zip
