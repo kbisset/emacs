@@ -1,4 +1,3 @@
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -44,6 +43,7 @@
  '(flycheck-clang-language-standard "c++14")
  '(font-lock-maximum-decoration t)
  '(global-font-lock-mode t)
+ '(global-whitespace-mode t)
  '(gnus-check-new-newsgroups (quote ask-server) t)
  '(gnus-nntp-server nil t)
  '(gnus-read-active-file (quote some) t)
@@ -65,7 +65,7 @@
      ("melpa.stable" . "http://melpa.org/packages/"))))
  '(package-selected-packages
    (quote
-    (flycheck-clang-analyzer magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
+    (jenkins-watch flycheck-clang-analyzer magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
  '(paren-match-face (quote paren-face-match-light))
  '(paren-sexp-mode t)
  '(ps-printer-name "/Users/kbisset/tmp/emacs.ps")
@@ -86,7 +86,12 @@
  '(sudoku-download t)
  '(sudoku-download-method "wget")
  '(uniquify-buffer-name-style (quote post-forward) nil (uniquify))
- '(vc-handled-backends (quote (RCS CVS SVN SCCS SRC Bzr Hg Mtn))))
+ '(vc-handled-backends (quote (RCS CVS SVN SCCS SRC Bzr Hg Mtn)))
+ '(whitespace-action (quote (cleanup auto-cleanup)))
+ '(whitespace-line-column 100)
+ '(whitespace-style
+   (quote
+    (face trailing lines empty indentation::space space-after-tab space-before-tab))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -94,10 +99,15 @@
  ;; If there is more than one, they won't work right.
  '(default ((t (:inherit nil :stipple nil :background "black" :foreground "wheat" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 120 :width normal :foundry "nil" :family "Source Code Pro"))))
  '(border ((t nil)))
+ '(flycheck-error ((t (:underline "Red1"))))
+ '(flycheck-fringe-error ((t (:inherit error :foreground "red"))))
+ '(flycheck-info ((t (:underline "chartreuse"))))
+ '(flycheck-warning ((t (:underline "orange"))))
  '(flymake-errline ((((class color)) (:background "LightPink" :foreground "black"))))
  '(flymake-warnline ((((class color)) (:background "LightBlue2" :foreground "black"))))
  '(mode-line-highlight ((((class color) (min-colors 88)) (:background "red" :foreground "black"))))
  '(mode-line-inactive ((default (:inherit mode-line)) (((class color) (min-colors 88) (background dark)) (:background "grey30" :foreground "red" :weight light))))
  '(paren-face-match-light ((t (:slant italic))))
  '(region ((t (:background "selectedTextBackgroundColor" :foreground "selectedTextColor"))))
- '(smerge-refined-changed ((t (:background "dark green")))))
+ '(smerge-refined-changed ((t (:background "dark green"))))
+ '(whitespace-trailing ((t (:background "grey20")))))

@@ -1,20 +1,19 @@
 #!/bin/bash
 
 if [ "$1" = "-V" ]; then
-    for artifact in jarvis2 tlgen barista; do
+    for artifact in jarvis2 tlgen barista wave-rider generate_shareable; do
         if [ -f /opt/jarvis/${artifact}/VERSION ]; then
-            echo -n "${artifact}\t"
+            echo -n "${artifact}	"
             grep Version: /opt/jarvis/${artifact}/VERSION
         fi
     done
     exit 0
 elif [ "$1" = "--url" ]; then
     URL=$2
-    UNZIP=0
 elif [ "X$1" != "X" ]; then
     branch=$1
     build=$2
-    
+
     if [[ ${branch} == "release-"* ]]; then
         sep="."
     else
@@ -26,15 +25,6 @@ elif [ "X$1" != "X" ]; then
         artifact="jarvis2"
     fi
     URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/${branch}/${build}/artifact/build/jarvis2/dist/jarvis-${branch}${sep}${build}-${artifact}.tgz
-    UNZIP=0
-# else
-#     URL=http://jenkins-tinc.ubercam.net:8080/job/jarvis/job/master/lastSuccessfulBuild/artifact/\*zip\*/archive.zip
-#     UNZIP=1
 fi
 
 wget --auth-no-challenge --http-user=keith --http-password=495a55e89b0fec70cad0b436b833a917 $URL
-if [ $UNZIP -eq 1 ]; then
-    unzip archive.zip
-    mv archive/build/jarvis2/dist/*.tgz .
-    rm -rf archive archive.zip
-fi

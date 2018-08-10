@@ -2,6 +2,15 @@ if test -f $HOME/.bashrc.local ; then
     source $HOME/.bashrc.local
 fi
 
+runclock() {
+    while sleep 1; do
+        tput sc;
+        tput cup 0 $(($(tput cols)-8));
+        echo -e "\e[30m\e[47m`date +%R:%S`\e[39m";
+        tput rc;
+    done &
+}
+
 setTabTitle() {
     echo -ne "\033]1;$*\007"   
 }
@@ -115,7 +124,7 @@ export HISTCONTROL=ignoredups:ignoredups
 
 export ROSCONSOLE_FORMAT='[${severity}] [${time}] [${thread}]: ${message}'
 export HTOPRC=/home/keith/emacs/config/htoprc
-export LESS="-n-R-X-P--Less-- ?f%f:stdin. ?pB(%pB\%):."
+export LESS="-i-n-R-X-P--Less-- ?f%f:stdin. ?pB(%pB\%):."
 
 if test -f /opt/ros/indigo/setup.bash ; then
     source /opt/ros/indigo/setup.bash
@@ -151,3 +160,4 @@ if [[ ! -z "$(which ccache)" ]] ; then
     export CXX="ccache g++"
     ccache -M30G > /dev/null
 fi
+
