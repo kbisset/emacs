@@ -66,8 +66,8 @@ host github
    IdentityFile ~/.ssh/macbook-git
    ControlPath ~/.ssh/master-%r@%h:%p
    ControlMaster auto
-   GSSAPIAuthentication no
-   GSSAPIKeyExchange no
+#   GSSAPIAuthentication no
+#   GSSAPIKeyExchange no
    AddressFamily inet
 
 Host vm
@@ -97,8 +97,8 @@ host katrina
    IdentityFile ~/.ssh/macbook-katrina
    ControlPath ~/.ssh/master-%r@%h:%p
    ControlMaster auto
-   GSSAPIAuthentication no
-   GSSAPIKeyExchange no
+#   GSSAPIAuthentication no
+#   GSSAPIKeyExchange no
    AddressFamily inet
 
 Host cloud
@@ -121,3 +121,19 @@ Host logs
     Port 22
     User ubuntu
      
+# AWS hosts
+Host graphite-prod
+     User ubuntu
+     Hostname ec2-18-236-106-103.us-west-2.compute.amazonaws.com
+
+Host redeliver-prod
+     User ubuntu
+     Hostname ec2-34-210-116-67.us-west-2.compute.amazonaws.com
+
+Host rabbitmq-prod
+     User ubuntu
+     Hostname ec2-54-191-127-159.us-west-2.compute.amazonaws.com
+
+Host canary-prod
+     User ubuntu
+     Hostname ec2-52-41-148-191.us-west-2.compute.amazonaws.com

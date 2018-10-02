@@ -65,7 +65,7 @@
      ("melpa.stable" . "http://melpa.org/packages/"))))
  '(package-selected-packages
    (quote
-    (jenkins-watch flycheck-clang-analyzer magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
+    (jenkins-watch markdown-mode flycheck-clang-analyzer magit with-editor flycheck-status-emoji flycheck-pos-tip flycheck-google-cpplint flycheck-color-mode-line)))
  '(paren-match-face (quote paren-face-match-light))
  '(paren-sexp-mode t)
  '(ps-printer-name "/Users/kbisset/tmp/emacs.ps")
